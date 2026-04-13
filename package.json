@@ -1,6 +1,6 @@
 {
   "name": "vexa-haxball-client",
-  "version": "1.1.2",
+  "version": "1.1.8",
   "description": "Advanced Modular HaxBall Electron Client",
   "author": "Vexa",
   "homepage": "https://vexa.gg",
@@ -11,10 +11,9 @@
   "main": "launcher/main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder --win",
+    "build": "electron-builder --win --publish always",
     "build:client": "electron-builder --win --config electron-builder-client.json",
     "package:client": "node package_client.js",
-    "build:full": "npm run build && npm run build:client && npm run package:client",
     "build:full": "npm run build && npm run build:client && npm run package:client"
   },
   "dependencies": {
