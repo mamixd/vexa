@@ -13,7 +13,7 @@ const InstallerManager = require('./installer');
 
 let mainWindow;
 let installer;
-const GITHUB_REPO = 'username/vexa-client'; // User should change this
+const GITHUB_REPO = 'mamixd/vexa'; 
 let APP_DATA_PATH;
 let VERSION_FILE;
 
@@ -61,21 +61,50 @@ app.whenReady().then(() => {
 
 // IPC Handlers
 ipcMain.handle('check-update', async () => {
-    const clientPath = path.join(APP_DATA_PATH, 'game'); 
-    const clientExe = path.join(clientPath, 'vexa-client.exe');
-    const isInstalled = fs.existsSync(clientExe);
-    console.log('[Launcher] Checking install at:', clientExe, 'Found:', isInstalled);
+    try {
+        const clientPath = path.join(APP_DATA_PATH, 'game'); 
+        const clientExe = path.join(clientPath, 'vexa-client.exe');
+        const isInstalled = fs.existsSync(clientExe);
+        
+        let localVersion = 'Yüklü Değil';
+        if (isInstalled && fs.existsSync(VERSION_FILE)) {
+            const versionData = await fs.readJson(VERSION_FILE);
+            localVersion = versionData.version || '0.0.0';
+        }
 
-    return {
-        updateAvailable: false,
-        isInstalled: isInstalled,
-        latestVersion: '1.0.0',
-        localVersion: isInstalled ? '1.0.0' : 'Yüklü Değil',
-        patchNotes: isInstalled 
-            ? 'Vexa Launcher kullanımınıza hazır. Keyifli oyunlar!' 
-            : 'Oyun dosyaları bulunamadı. Lütfen "İNDİR" butonuna basarak kurulumu yapın.',
-        downloadUrl: 'https://github.com/mamixd/vexa/releases/download/Vexa/app.zip' // Central download URL
-    };
+        console.log(`[Launcher] Checking for updates on GitHub: ${GITHUB_REPO}...`);
+        const response = await axios.get(`https://api.github.com/repos/${GITHUB_REPO}/releases/latest`, {
+            headers: { 'User-Agent': 'VexaLauncher-AutoUpdate' }
+        });
+
+        const latestRelease = response.data;
+        const latestVersion = latestRelease.tag_name || '0.0.0';
+        
+        // Find the app.zip asset
+        const asset = latestRelease.assets.find(a => a.name === 'app.zip');
+        const downloadUrl = asset ? asset.browser_download_url : null;
+
+        const updateAvailable = isInstalled && (latestVersion !== localVersion);
+
+        return {
+            updateAvailable: updateAvailable,
+            isInstalled: isInstalled,
+            latestVersion: latestVersion,
+            localVersion: localVersion,
+            patchNotes: latestRelease.body || 'Yeni güncelleme mevcut!',
+            downloadUrl: downloadUrl || (latestRelease.assets[0] ? latestRelease.assets[0].browser_download_url : '')
+        };
+    } catch (error) {
+        console.error('[Launcher] Update check failed:', error.message);
+        return {
+            updateAvailable: false,
+            isInstalled: false, // Fallback to setup if API fails?
+            latestVersion: 'N/A',
+            localVersion: 'Hata',
+            patchNotes: 'Güncelleme sunucusuna bağlanılamadı. Lütfen internet bağlantınızı kontrol edin.',
+            error: error.message
+        };
+    }
 });
 
 ipcMain.handle('start-download', async (event, url) => {

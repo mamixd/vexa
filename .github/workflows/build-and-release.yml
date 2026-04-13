@@ -25,7 +25,22 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Build and Publish
+      - name: Build Launcher and Publish Setup
         run: npm run build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Client
+        run: npm run build:client
+
+      - name: Package Client (app.zip)
+        run: npm run package:client
+
+      - name: Upload app.zip to Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: app.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

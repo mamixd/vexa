@@ -20,8 +20,7 @@ async function createPackage() {
     }
 
     zip.addLocalFolder(buildPath);
-
-    const zipName = 'VexaClient-v1.0.0.zip';
+    const zipName = 'app.zip';
     zip.writeZip(path.join(root, zipName));
     console.log(`\nSUCCESS! Package created: ${zipName}`);
     console.log('Bu ZIP dosyasını GitHub Release kısmına yükleyebilirsin.');
