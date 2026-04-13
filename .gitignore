@@ -6,7 +6,7 @@ build/*.pfx
 .DS_Store
 .vs/
 out/
-package-lock.json
 bin/
 obj/
+
 *.exe
