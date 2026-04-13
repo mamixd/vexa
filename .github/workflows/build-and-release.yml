@@ -25,16 +25,10 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Build Launcher and Publish Setup
-        run: npm run build
+      - name: Build and Publish All (Launcher + Client)
+        run: npm run build:full
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build Client
-        run: npm run build:client
-
-      - name: Package Client (app.zip)
-        run: npm run package:client
 
       - name: Upload app.zip to Release
         uses: softprops/action-gh-release@v2

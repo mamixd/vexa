@@ -14,6 +14,7 @@
     "build": "electron-builder --win",
     "build:client": "electron-builder --win --config electron-builder-client.json",
     "package:client": "node package_client.js",
+    "build:full": "npm run build && npm run build:client && npm run package:client",
     "build-and-sign": "powershell -ExecutionPolicy Bypass -File ./build/build-and-sign.ps1",
     "trust-cert": "powershell -ExecutionPolicy Bypass -File ./build/trust-certificate.ps1",
     "build:fixer": "powershell -ExecutionPolicy Bypass -File ./build/compile-fixer.ps1",
