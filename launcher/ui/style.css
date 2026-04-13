@@ -1,0 +1,202 @@
+:root {
+    --bg-dark: #0d1117;
+    --bg-card: #161b22;
+    --cyan: #00c8ff;
+    --cyan-glow: rgba(0, 200, 255, 0.4);
+    --text-main: #ffffff;
+    --text-dim: #8b949e;
+    --red: #f85149;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Outfit', sans-serif;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    width: 1000px;
+    height: 650px;
+    overflow: hidden;
+    user-select: none;
+}
+
+/* Title Bar */
+.title-bar {
+    height: 60px;
+    background: #000;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    -webkit-app-region: drag;
+    border-bottom: 2px solid var(--cyan);
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: 900;
+    letter-spacing: 2px;
+}
+
+.logo span {
+    color: var(--cyan);
+    font-weight: 300;
+    margin-left: 5px;
+}
+
+.controls {
+    -webkit-app-region: no-drag;
+}
+
+.control-btn {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 20px;
+    cursor: pointer;
+    margin-left: 15px;
+    transition: color 0.2s;
+}
+
+.control-btn:hover {
+    color: var(--text-main);
+}
+
+#close:hover {
+    color: var(--red);
+}
+
+/* Container */
+.container {
+    display: flex;
+    height: 590px;
+}
+
+/* Sidebar (Patch Notes) */
+.sidebar {
+    width: 350px;
+    background: var(--bg-card);
+    padding: 25px;
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.sidebar h3 {
+    font-size: 14px;
+    color: var(--cyan);
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+}
+
+.patch-notes-content {
+    height: 480px;
+    overflow-y: auto;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-dim);
+    padding-right: 10px;
+}
+
+.patch-notes-content::-webkit-scrollbar {
+    width: 4px;
+}
+
+.patch-notes-content::-webkit-scrollbar-thumb {
+    background: var(--bg-dark);
+    border-radius: 10px;
+}
+
+/* Main Content */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 40px;
+    background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+    position: relative;
+}
+
+.status-panel {
+    margin-top: 100px;
+}
+
+#status-text {
+    font-size: 32px;
+    font-weight: 900;
+    letter-spacing: 1px;
+}
+
+#version-text {
+    color: var(--text-dim);
+    margin-top: 10px;
+}
+
+/* Action Panel */
+.action-panel {
+    margin-bottom: 20px;
+}
+
+.play-btn {
+    width: 280px;
+    height: 70px;
+    background: var(--cyan);
+    border: none;
+    color: #000;
+    font-size: 24px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    cursor: pointer;
+    box-shadow: 0 0 20px var(--cyan-glow);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%);
+}
+
+.play-btn:hover:not(.disabled) {
+    transform: scale(1.05);
+    box-shadow: 0 0 40px var(--cyan-glow);
+}
+
+.play-btn.disabled {
+    background: #444;
+    color: #888;
+    cursor: default;
+    box-shadow: none;
+    opacity: 0.5;
+}
+
+/* Progress */
+#progress-container {
+    margin-bottom: 20px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    width: 0%;
+    height: 100%;
+    background: var(--cyan);
+    box-shadow: 0 0 10px var(--cyan);
+    transition: width 0.1s;
+}
+
+#progress-label {
+    text-align: right;
+    font-size: 12px;
+    color: var(--cyan);
+    margin-top: 5px;
+}
+
+.hidden {
+    display: none;
+}

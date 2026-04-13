@@ -1,0 +1,28 @@
+{
+  "appId": "com.vexa.client",
+  "productName": "vexa-client",
+  "asar": true,
+  "directories": {
+    "output": "dist/client",
+    "buildResources": "build"
+  },
+  "files": [
+    "electron/**/*",
+    "inject/**/*",
+    "hxalltool/**/*",
+    "shared/**/*",
+    "node_modules/**/*",
+    "package.json"
+  ],
+  "extraMetadata": {
+    "main": "electron/main.js"
+  },
+  "copyright": "Copyright © 2026 Vexa Software",
+  "win": {
+    "target": "dir",
+    "icon": "build/icon.ico",
+    "publisherName": "Vexa Software",
+    "legalTrademarks": "Vexa",
+    "verifyUpdateCodeSignature": false
+  }
+}

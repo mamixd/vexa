@@ -1,0 +1,12 @@
+node_modules/
+dist/
+build/icon.ico
+build/*.pfx
+*.log
+.DS_Store
+.vs/
+out/
+package-lock.json
+bin/
+obj/
+*.exe

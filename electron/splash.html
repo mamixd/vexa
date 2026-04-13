@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Vexa HaxBall Client</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0d1117;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Outfit', sans-serif;
+            color: white;
+            overflow: hidden;
+            /* Kenar çizgisi kaldırıldı */
+        }
+
+        .logo {
+            font-size: 46px; /* Biraz küçültüldü */
+            font-weight: 900;
+            letter-spacing: 3px;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+        .logo span:first-child { color: #ffffff; }
+        .logo span:last-child { 
+            color: #00c8ff; 
+            font-weight: 300;
+        }
+
+        .subtitle {
+            color: #484f58; /* Daha soluk */
+            font-size: 10px;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            margin-bottom: 50px;
+        }
+
+        .loader-container {
+            width: 260px; /* Biraz daraltıldı */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .loader-bar {
+            width: 100%;
+            height: 2px; /* Daha ince */
+            background: rgba(255, 255, 255, 0.05);
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .loader-bar-fill {
+            width: 0%;
+            height: 100%;
+            background: #00c8ff;
+            animation: loading 3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes loading {
+            0%   { width: 0%; }
+            20%  { width: 10%; }
+            50%  { width: 60%; }
+            80%  { width: 90%; }
+            100% { width: 100%; }
+        }
+
+        .status {
+            color: #00c8ff;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            opacity: 0.8;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.4; transform: scale(0.98); }
+            50% { opacity: 1; transform: scale(1); }
+        }
+
+        .glow {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(0,200,255,0.05) 0%, transparent 70%);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="glow"></div>
+    <div class="logo">
+        <span>Vexa</span><span>Client</span>
+    </div>
+    <div class="subtitle">MODULAR HAXBALL EXPERIENCE</div>
+    
+    <div class="loader-container">
+        <div class="loader-bar">
+            <div class="loader-bar-fill"></div>
+        </div>
+        <div class="status">SİSTEMLER BAŞLATILIYOR...</div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vexa Launcher</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="title-bar">
+        <div class="logo">VEXA<span>LAUNCHER</span></div>
+        <div class="controls">
+            <button id="minimize" class="control-btn">─</button>
+            <button id="close" class="control-btn">×</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="sidebar">
+            <h3>YAMA NOTLARI</h3>
+            <div id="patch-notes" class="patch-notes-content">
+                Yama notları yükleniyor...
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="status-panel">
+                <div id="status-text">GÜNCELLEMELER KONTROL EDİLİYOR...</div>
+                <div id="version-text">Sürüm: --</div>
+            </div>
+
+            <div class="action-panel">
+                <div id="progress-container" class="hidden">
+                    <div class="progress-bar">
+                        <div id="progress-fill" class="progress-fill"></div>
+                    </div>
+                    <div id="progress-label">0%</div>
+                </div>
+
+                <button id="action-btn" class="play-btn disabled">OYNA</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>
