@@ -42,7 +42,7 @@ npm run build:full
 
 ### 🌐 Bağlantılar
 
-🔗 [**Vexa Client - Giriş**](vexaclient.rf.gd)
+🔗 [**Vexa Client - Giriş**](https://vexaclient.rf.gd/?i=1)
 
 ---
 *Vexa ile sahaların hakimi ol!* 🏆
