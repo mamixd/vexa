@@ -1,58 +1,48 @@
-# Advanced Modular HaxBall Client System
+# 🎮 Vexa Haxball Client 🎮
 
-This project is a custom, AI-integrated HaxBall Client created using a modern stack (Node.js, WebSockets, Python, FastAPI) and customized frontend.
+Vexa, Haxball tutkunları için geliştirilmiş, ultra hızlı ve modüler bir Electron istemcisidir. Gecikmelere elveda deyin ve özel arayüzün tadını çıkarın! 🚀
 
-## Architecture
+---
 
-1. **Frontend**: Premium HTML/CSS/JS client UI wrapping the game iframe. Includes scalable Glassmorphism CSS, and dynamic custom header features controlled from an admin dashboard.
-2. **Node.js Server**: Acts as the real-time middleware. Sets up WebSockets with the frontend for bidirectional data stream, handles basic REST requests. Provides headless automation logic setup (`bot.js`).
-3. **Python Server**: Exposes an AI/ML capable FastAPI server (`python-ai`). Ready to process game ticks and chat filters.
+### ✨ Öne Çıkanlar
 
-## Setup Instructions
+*   **⚡ Jet Hızı:** En düşük gecikme süresi için optimize edilmiş altyapı.
+*   **🎨 Özel Arayüz:** Göz yormayan, oyuncu dostu modern karanlık tema.
+*   **📡 Akıllı Bağlantı:** Tek tıkla güncel oyun dosyalarına erişim.
+*   **🎮 Discord Status:** Ne oynadığını arkadaşlarına göster!
 
-### 1. Requirements
-- Node.js (v18+)
-- Python (v3.10+)
+---
 
-### 2. Install Dependencies
+### 📦 Kurulum ve Çalıştırma
 
-**Node.js:**
+Vexa'yı saniyeler içinde kurup oynamaya başlayabilirsiniz:
+
+1.  **İndir:** [Gitmanyol/Releases](https://github.com/mamixd/vexa/releases) sayfasına git.
+2.  **Kur:** `vexa-launcher-setup.exe` dosyasını çalıştır.
+3.  **Oyna:** Launcher açılınca "İNDİR" butonuna bas ve sahalara dön!
+
+---
+
+### 🛠️ Teknik Komutlar (Geliştiriciler)
+
+Dosyaları kurcalamak isteyenler için:
+
 ```bash
-cd nodejs
+# Bağımlılıkları yükle
 npm install
-```
 
-**Python:**
-```bash
-cd python
-# Creating a virtual env is recommended: python -m venv venv
-pip install -r requirements.txt
-```
-
-### 3. Run Systems
-
-Open two split terminals.
-
-**Terminal 1 (Node.js & Frontend Serve):**
-```bash
-cd nodejs
+# İstemciyi çalıştır
 npm start
+
+# Her şeyi derle (Build)
+npm run build:full
 ```
-*Your application will run on `http://localhost:3000`. The frontend UI is served directly from this server.*
 
-**Terminal 2 (Python AI Service):**
-```bash
-cd python
-python main.py
-```
-*The FastAPI swagger UI is available at `http://localhost:8000/docs`.*
+---
 
-### Features Implemented
-- Dynamic Editable Header: Use the side Admin Dashboard on the UI to modify the title. It broadcasts in real-time.
-- Multi-Language setup with a unified `shared/config.json`.
-- Skeleton for injecting bot scripts natively on a Headless host endpoint.
-- Chat filtering and AI simulation logic ready in `ai.py`.
+### 🌐 Bağlantılar
 
+🔗 [**Vexa Client - Giriş**](vexaclient.rf.gd)
 
-
-signtool sign /f C:\Sertifika.pfx /p 1234 /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 "C:\Users\Mami\Desktop\Yeni klasör\dist\Vexa HaxBall Client Setup 1.0.0.exe"
+---
+*Vexa ile sahaların hakimi ol!* 🏆
