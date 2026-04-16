@@ -1,6 +1,6 @@
 {
   "name": "vexa-haxball-client",
-  "version": "1.1.10",
+  "version": "1.1.11",
   "description": "Advanced Modular HaxBall Electron Client",
   "author": "Vexa",
   "homepage": "https://vexa.gg",
@@ -90,7 +90,7 @@
     "compression": "maximum",
     "publish": {
       "provider": "github",
-      "owner": "mamixd",
+      "owner": "vexa-client",
       "repo": "vexa"
     }
   }
