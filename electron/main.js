@@ -45,7 +45,7 @@ function setActivity(state, details, nick) {
 
 rpc.on('ready', () => {
     if (rpcEnabled) {
-        setActivity('Ba\u015flat\u0131c\u0131da', 'Ana Men\u00fc');
+        setActivity('Choosing a room...', 'Main Menu');
     }
 });
 
