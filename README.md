@@ -16,7 +16,6 @@ Biz de Discord'dayız! [Buraya tıklayarak](https://vexaclient.rf.gd/discord) to
 * Otomatik istemci güncellemeleri
 * Gelişmiş zengin "Discord Görünümü" (Discord RPC)
 * Sohbet içi komut kısayolları (`/a`, `/e`, vb.)
-* Koyu tema ve oyuncu odaklı cam (Glassmorphism) arayüz
 
 ---
 
