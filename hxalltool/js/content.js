@@ -266,11 +266,11 @@ moduleObserver = new MutationObserver(function(mutations) {
 			const nickWait = waitForElement('[data-hook="input"]');
 			nickWait.then(function(nicknameInput) { 
 				myNick = nicknameInput.value;
-				if(window.haxballAPI) window.haxballAPI.updateRPC('Vexa Client', 'Giri\u015f Yap\u0131yor', myNick);
+				if(window.haxballAPI) window.haxballAPI.updateRPC('Choosing a nickname...', 'Main Menu', myNick);
 				
 				nicknameInput.addEventListener('input', function() {
 					myNick = nicknameInput.value;
-					if(window.haxballAPI) window.haxballAPI.updateRPC('Vexa Client', 'Giri\u015f Yap\u0131yor', myNick);
+					if(window.haxballAPI) window.haxballAPI.updateRPC('Choosing a nickname...', 'Main Menu', myNick);
 				});
 				
 				muteExceptions = ['humpyhost','Hostinho',myNick];
@@ -281,7 +281,7 @@ moduleObserver = new MutationObserver(function(mutations) {
 		
 		// 2. Oda Listesi
 		if (classes.includes("roomlist-view")) {
-			if(window.haxballAPI) window.haxballAPI.updateRPC('Vexa Client', 'Oda Listesinde', myNick);
+			if(window.haxballAPI) window.haxballAPI.updateRPC('Choosing a room...', 'Main Menu', myNick);
 			
 			// RESTORE NAVBAR
 			const navBar = document.getElementsByClassName('header')[0];
@@ -323,7 +323,7 @@ moduleObserver = new MutationObserver(function(mutations) {
 		
 		// 3. Oyun İçi / Maç
 		if (className.includes("game-view")) {
-			if(window.haxballAPI) window.haxballAPI.updateRPC('Vexa Client', 'HaxBall Oynuyor', myNick);
+			if(window.haxballAPI) window.haxballAPI.updateRPC('Playing a match...', 'In Game', myNick);
 			
 			muted = new Set();
 			muteAllToggle = false;

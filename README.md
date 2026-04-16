@@ -17,7 +17,7 @@ Vexa, Haxball tutkunları için geliştirilmiş, ultra hızlı ve modüler bir E
 
 Vexa'yı saniyeler içinde kurup oynamaya başlayabilirsiniz:
 
-1.  **İndir:** [Gitmanyol/Releases](https://github.com/mamixd/vexa/releases) sayfasına git.
+1.  **İndir:** [Gitmanyol/Releases](https://github.com/vexa-client/vexa/releases) sayfasına git.
 2.  **Kur:** `vexa-launcher-setup.exe` dosyasını çalıştır.
 3.  **Oyna:** Launcher açılınca "İNDİR" butonuna bas ve sahalara dön!
 

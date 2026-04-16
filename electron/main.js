@@ -28,14 +28,18 @@ function setActivity(state, details, nick) {
     }
     
     rpc.setActivity({
-        details: details || 'Modern HaxBall Deneyimi',
-        state: state || 'Vexa Client',
+        details: details || 'Main Menu',
+        state: state || 'Choosing a room...',
         startTimestamp: appStartTime,
         largeImageKey: 'logo', 
         largeImageText: 'Vexa Client',
         smallImageKey: nick ? 'logo' : undefined,
         smallImageText: nick ? `${nick}` : undefined,
         instance: false,
+        buttons: [
+            { label: 'Discord', url: 'https://vexaclient.rf.gd/discord' },
+            { label: 'GitHub', url: 'https://github.com/vexa-client/vexa' }
+        ]
     }).catch(err => console.error('Discord RPC Error:', err));
 }
 

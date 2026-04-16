@@ -84,7 +84,7 @@ class InstallerManager {
             await fs.remove(stagingPath);
             await fs.ensureDir(stagingPath);
 
-            this.notify('Dosyalar ayıklanıyor (200MB+ Optimize)...');
+            this.notify('Dosyalar ayıklanıyor...');
             await extract(this.zipPath, { dir: stagingPath });
 
             this.notify('Dosya yapısı taranıyor ve izole ediliyor...');

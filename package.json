@@ -6,7 +6,7 @@
   "homepage": "https://vexa.gg",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mamixd/vexa.git"
+    "url": "https://github.com/vexa-client/vexa.git"
   },
   "main": "launcher/main.js",
   "scripts": {

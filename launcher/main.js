@@ -13,9 +13,37 @@ const InstallerManager = require('./installer');
 
 let mainWindow;
 let installer;
-const GITHUB_REPO = 'mamixd/vexa'; 
+const GITHUB_REPO = 'vexa-client/vexa'; 
 let APP_DATA_PATH;
 let VERSION_FILE;
+
+// --- Discord RPC (Launcher State) ---
+const DiscordRPC = require('discord-rpc');
+const clientId = '1472302829392629924';
+const rpc = new DiscordRPC.Client({ transport: 'ipc' });
+const appStartTime = Date.now();
+
+DiscordRPC.register(clientId);
+
+rpc.on('ready', () => {
+    rpc.setActivity({
+        details: 'Launcher',
+        state: 'Getting ready to play...',
+        startTimestamp: appStartTime,
+        largeImageKey: 'logo',
+        largeImageText: 'Vexa Client',
+        instance: false,
+        buttons: [
+            { label: 'Discord', url: 'https://vexaclient.rf.gd/discord' },
+            { label: 'GitHub', url: 'https://github.com/vexa-client/vexa' }
+        ]
+    }).catch(console.error);
+});
+
+rpc.login({ clientId }).catch(err => {
+    console.warn('Could not connect to Discord RPC from launcher:', err.message);
+});
+// ------------------------------------
 
 function initializePaths() {
     // Oyun dosyaları artık her zaman Launcher'ın (.exe) yanına kurulacak.
@@ -130,6 +158,8 @@ ipcMain.handle('launch-game', async () => {
     const clientExe = path.join(APP_DATA_PATH, 'game', 'vexa-client.exe');
     const localDevPath = path.join(__dirname, '..');
     const isDev = !app.isPackaged;
+
+    if (rpc) rpc.destroy().catch(() => {});
 
     if (fs.existsSync(clientExe)) {
         spawn(`"${clientExe}"`, [], { detached: true, stdio: 'ignore', shell: true });
