@@ -50,9 +50,12 @@ rpc.on('ready', () => {
 });
 
 if (rpcEnabled) {
-    rpc.login({ clientId }).catch(err => {
-        console.warn('Could not connect to Discord RPC:', err.message);
-    });
+    // Discord'un Launcher bağlantısını tam olarak kopardığından emin olmak için 1.5 saniye bekleyip bağlanıyoruz
+    setTimeout(() => {
+        rpc.login({ clientId }).catch(err => {
+            console.warn('Could not connect to Discord RPC:', err.message);
+        });
+    }, 1500);
 }
 
 // --- Settings IPC ---

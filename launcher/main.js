@@ -159,7 +159,15 @@ ipcMain.handle('launch-game', async () => {
     const localDevPath = path.join(__dirname, '..');
     const isDev = !app.isPackaged;
 
-    if (rpc) rpc.destroy().catch(() => {});
+    if (rpc) {
+        try {
+            await rpc.clearActivity();
+            await rpc.destroy();
+        } catch (e) {}
+    }
+    
+    // Discord IPC'nin bağlantı kopmasını algılaması için kısa bir gecikme
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     if (fs.existsSync(clientExe)) {
         spawn(`"${clientExe}"`, [], { detached: true, stdio: 'ignore', shell: true });
