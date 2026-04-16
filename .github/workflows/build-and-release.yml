@@ -34,9 +34,33 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
+          name: "Vexa Client ${{ github.ref_name }}"
+          body: |
+            ## 🚀 Vexa Client ${{ github.ref_name }}
+
+            Vexa'nın bu sürümünü aşağıdaki bağlantıdan indirebilirsiniz.
+
+            ### 📥 Kurulum
+            1. `vexa-launcher-setup-*.exe` dosyasını indirin
+            2. Kurulumu çalıştırın
+            3. Launcher açıldıktan sonra **İNDİR** butonuna basın, oyun dosyaları otomatik kurulur
+
+            ### ✨ Özellikler
+            - Sınırsız FPS desteği (monitör yenileme hızına tam uyum)
+            - Otomatik güncelleme sistemi
+            - Discord Rich Presence (Discord'da anlık oyun durumu)
+            - Reklamsız oyun deneyimi
+            - Sohbet kısayolları: `/a` (avatar), `/e` (extrapolation)
+
+            ### ⚠️ Antivirüs Uyarısı
+            Windows "Bilinmeyen Yayıncı" uyarısı verebilir. Bu normal bir durumdur, **"Yine de Çalıştır"** diyerek devam edebilirsiniz.
+
+            ---
+            📌 Sorun yaşarsanız [Discord sunucumuza](https://vexaclient.rf.gd/discord) katılın.
           files: |
             dist/*.exe
             app.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
