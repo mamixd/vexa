@@ -29,6 +29,12 @@ Ardından:
 
 > *Antivirüs yazılımınız çalışmayı engelliyorsa / uyarı veriyorsa, bunun sebebi istemcimizin veya kurulum dosyamızın henüz Microsoft tarafından resmi olarak imzalanmamış olmasıdır (False Positive). "Yine de Çalıştır" diyerek güvenle kullanabilirsiniz.*
 
+🛡️ **Güvenlik (VirusTotal) Tarama Sonuçları:**
+Şeffaflık adına, indirdiğiniz dosyaların VirusTotal tarama sonuçlarını aşağıdan inceleyebilirsiniz:
+* [Vexa Setup (Kurulum Dosyası) - VirusTotal Raporu](BURAYA_SETUP_LINKINI_YAPISTIR)
+* [Vexa Launcher (vexa-launcher.exe) - VirusTotal Raporu](BURAYA_LAUNCHER_LINKINI_YAPISTIR)
+* [Vexa Client (vexa-client.exe) - VirusTotal Raporu](BURAYA_CLIENT_LINKINI_YAPISTIR)
+
 ---
 
 ## 🐛 Bilinen Sorunlar
