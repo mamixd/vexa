@@ -31,9 +31,9 @@ Ardından:
 
 🛡️ **Güvenlik (VirusTotal) Tarama Sonuçları:**
 Şeffaflık adına, indirdiğiniz dosyaların VirusTotal tarama sonuçlarını aşağıdan inceleyebilirsiniz:
-* [Vexa Setup (Kurulum Dosyası) - VirusTotal Raporu](BURAYA_SETUP_LINKINI_YAPISTIR)
-* [Vexa Launcher (vexa-launcher.exe) - VirusTotal Raporu](BURAYA_LAUNCHER_LINKINI_YAPISTIR)
-* [Vexa Client (vexa-client.exe) - VirusTotal Raporu](BURAYA_CLIENT_LINKINI_YAPISTIR)
+* [Vexa Setup (Kurulum Dosyası) - VirusTotal Raporu](https://www.virustotal.com/gui/file/ec4732e6b5932919b7fc08413d2a494df5cc678ecf69f60d9af2324b77abae7f/detection)
+* [Vexa Launcher (vexa-launcher.exe) - VirusTotal Raporu](https://www.virustotal.com/gui/file/c809ca25db64eb1f3e4b52d153378fd64a90ef918f3d5ad09de8b311c717d677?nocache=1)
+* [Vexa Client (vexa-client.exe) - VirusTotal Raporu](https://www.virustotal.com/gui/file/d73c2b66b9432f35106716f6f00eba57ec0054909fc673f798ab86574bd594cb?nocache=1)
 
 ---
 
