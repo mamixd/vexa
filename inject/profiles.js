@@ -423,10 +423,12 @@
 
             const profileBtn = document.createElement('button');
             profileBtn.id = 'vexa-profile-btn';
+            profileBtn.innerHTML = '<span style="display:inline-flex; width:7px; height:7px; border-radius:50%; background:#a855f7; box-shadow:0 0 10px rgba(168,85,247,0.75); margin-right:8px;"></span><span id="current-profile-name">...</span>';
             profileBtn.innerHTML = '👤 <span id="current-profile-name">...</span>';
-            profileBtn.style.cssText = "background:#0a0a0a !important; color:#888 !important; border:1px solid #222 !important; border-radius:1px; padding:6px 14px; font-size:12px; font-weight:bold; cursor:pointer; transition:color 0.2s, background 0.2s; white-space:nowrap;";
-            profileBtn.onmouseover = () => { profileBtn.style.color = '#fff'; profileBtn.style.background = '#111'; };
-            profileBtn.onmouseout = () => { profileBtn.style.color = '#888'; profileBtn.style.background = '#0a0a0a'; };
+            profileBtn.innerHTML = '<span style="display:inline-flex; width:7px; height:7px; border-radius:50%; background:#a855f7; box-shadow:0 0 10px rgba(168,85,247,0.75); margin-right:8px;"></span><span id="current-profile-name">...</span>';
+            profileBtn.style.cssText = "display:inline-flex; align-items:center; background:#101114 !important; color:#c9d1d9 !important; border:1px solid rgba(255,255,255,0.08) !important; border-radius:8px; padding:9px 13px; font-size:12px; font-weight:800; cursor:pointer; transition:color 0.2s, background 0.2s, border-color 0.2s, transform 0.2s; white-space:nowrap;";
+            profileBtn.onmouseover = () => { profileBtn.style.color = '#fff'; profileBtn.style.background = '#1b1d22'; profileBtn.style.borderColor = 'rgba(16,185,129,0.45)'; profileBtn.style.transform = 'translateY(-1px)'; };
+            profileBtn.onmouseout = () => { profileBtn.style.color = '#c9d1d9'; profileBtn.style.background = '#101114'; profileBtn.style.borderColor = 'rgba(255,255,255,0.08)'; profileBtn.style.transform = 'translateY(0)'; };
             profileBtn.onclick = window.profileManage;
 
             rightWrapper.insertBefore(profileBtn, rightWrapper.firstChild);

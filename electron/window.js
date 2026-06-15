@@ -7,8 +7,9 @@ function createWindow(options) {
         width: options.width || 1200,
         height: options.height || 800,
         title: options.title || 'HaxBall Client',
-        show: false, // Yükleme bitene kadar gizle
-        backgroundColor: '#1c1c1e', // Arka plan rengi (açılışta beyaz flash önler)
+        autoHideMenuBar: true,
+        show: false,
+        backgroundColor: '#1c1c1e',
         webPreferences: {
             preload: options.preload,
             contextIsolation: true,
@@ -16,6 +17,7 @@ function createWindow(options) {
             webSecurity: false
         }
     });
+    win.setMenuBarVisibility(false);
 
     session.defaultSession.clearCache();
 
@@ -52,7 +54,8 @@ function createWindow(options) {
             const contentJsPath = path.join(__dirname, '../hxalltool/js/content.js');
             if (fs.existsSync(contentJsPath)) allScripts.push(fs.readFileSync(contentJsPath, 'utf-8'));
 
-            const payload = `window.ELECTRON_SCREEN_HZ = ${hz};\n${allScripts.join('\n')}\n;void 0;`;
+            const injectBaseUrl = 'file:///' + path.join(__dirname, '../inject').replace(/\\/g, '/');
+            const payload = `window.ELECTRON_SCREEN_HZ = ${hz};\nwindow.VEXA_INJECT_BASE_URL = ${JSON.stringify(injectBaseUrl)};\n${allScripts.join('\n')}\n;void 0;`;
 
             win.webContents.executeJavaScript(payload).catch(err => {
                 console.error("Failed to inject bundled scripts:", err);

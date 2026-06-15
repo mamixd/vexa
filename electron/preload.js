@@ -30,7 +30,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     generatePlayerAuthKey: () => Promise.resolve(null), // Returning null forces HaxBall to auto-generate a new auth!
     restartApp: () => ipcRenderer.send('restart-app'),
     saveCustomBackground: (filePath) => ipcRenderer.invoke('save-custom-bg', filePath),
-    deleteCustomBackground: (fileUrl) => ipcRenderer.invoke('delete-custom-bg', fileUrl)
+    deleteCustomBackground: (fileUrl) => ipcRenderer.invoke('delete-custom-bg', fileUrl),
+    windowControl: (action) => ipcRenderer.send('window-control', action)
 });
-
 

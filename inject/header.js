@@ -38,6 +38,9 @@
     setTimeout(() => { clearInterval(tryInject); }, 60000);
 
     function hijackNativeHeader(headerElement) {
+        // Yüksekliği hemen sabitle - Ok butonunda küçülme önlenir
+        headerElement.style.minHeight = '48px';
+        headerElement.style.height = '48px';
         headerElement.innerHTML = '';
         
         // ==========================================
@@ -48,34 +51,60 @@
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            padding: '0 20px',
-            height: '55px', // Increased height slightly
-            backgroundColor: '#1c1c1e', // Klasik koyu gri ton
-            borderBottom: '2px solid #000',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.5)',
-            fontFamily: 'Tahoma, Arial, sans-serif' // Haxball Orijinal Fontu
+            padding: '0 16px',
+            height: '48px',
+            background: '#111214',
+            borderBottom: '1px solid #222426',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
+            fontFamily: 'Tahoma, Arial, sans-serif',
+            WebkitAppRegion: 'drag',
+            userSelect: 'none',
+            overflow: 'hidden'
         });
 
         // --- SOL: Orijinal Tarz Başlık ---
         const titleDiv = document.createElement('div');
-        titleDiv.innerHTML = '<span style="color:#eee; font-size:15px; font-weight:bold; letter-spacing:0.5px;">Vexa</span> <span style="color:#777; font-size:10px;">CLIENT</span>';
-        titleDiv.style.cssText = 'cursor:pointer; white-space:nowrap; flex-shrink:0;';
+        titleDiv.innerHTML = '<span style="display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; margin-right:10px; border-radius:8px; background:#1e2024; border:1px solid #2d3035; color:#c9d1d9; font-size:16px; font-weight:900;">V</span><span style="display:flex; flex-direction:column; line-height:1.05;"><span style="color:#e6eaf0; font-size:16px; font-weight:800;">Vexa</span><span style="color:#5c6370; font-size:10px; font-weight:700; letter-spacing:1.8px; text-transform:uppercase;">Client</span></span>';
+        titleDiv.style.cssText = 'cursor:pointer; white-space:nowrap; flex-shrink:0; display:flex; align-items:center; min-width:245px; -webkit-app-region:no-drag;';
         titleDiv.onclick = () => window.location.href = 'https://www.haxball.com/play'; 
 
         // --- ORTA: Oda Linki Yapıştırma Alanı ---
         const centerWrapper = document.createElement('div');
-        centerWrapper.style.cssText = "position:absolute; left:50%; transform:translateX(-50%); display:flex; align-items:center; background:#111; border:1px solid #282828; border-radius:1px; padding:2px; width:100%; max-width:500px; box-sizing:border-box;";
+        centerWrapper.style.cssText = "position:absolute; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:6px; background:#0d0f11; border:1px solid #232529; border-radius:8px; padding:5px; width:100%; max-width:610px; box-sizing:border-box; -webkit-app-region:no-drag;";
+
+        const linkIcon = document.createElement('span');
+        linkIcon.innerText = '⌁';
+        linkIcon.style.cssText = "display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:6px; background:#1a1c20; color:#5c6370; font-size:15px; font-weight:900; flex-shrink:0;";
         
         const linkInput = document.createElement('input');
         linkInput.type = 'text';
         linkInput.placeholder = 'Oda linkini buraya yapıştırın...';
-        linkInput.style.cssText = "flex:1; background:transparent; border:none; color:#ddd; font-size:12px; padding:4px 8px; outline:none;";
+        linkInput.placeholder = 'Oda linkini buraya yapıştırın...';
+        linkInput.style.cssText = "flex:1; background:transparent; border:none; color:#e5e7eb; font-size:12px; padding:8px 4px; outline:none; min-width:0;";
+
+        const pasteBtn = document.createElement('button');
+        pasteBtn.innerText = 'Yapıştır';
+        pasteBtn.style.cssText = "background:#1a1c20 !important; color:#8b949e !important; border:1px solid #2d3035 !important; border-radius:6px; padding:8px 10px; font-size:11px; font-weight:700; cursor:pointer; white-space:nowrap; transition:background 0.15s, color 0.15s;";
+        pasteBtn.onmouseover = () => { pasteBtn.style.background = '#22252b'; pasteBtn.style.color = '#c9d1d9'; pasteBtn.style.borderColor = '#3d4149'; };
+        pasteBtn.onmouseout = () => { pasteBtn.style.background = '#1a1c20'; pasteBtn.style.color = '#8b949e'; pasteBtn.style.borderColor = '#2d3035'; };
+        pasteBtn.onclick = async () => {
+            try {
+                const text = await navigator.clipboard.readText();
+                if (text) {
+                    linkInput.value = text.trim();
+                    linkInput.focus();
+                }
+            } catch(e) {
+                linkInput.focus();
+            }
+        };
         
         const joinBtn = document.createElement('button');
         joinBtn.innerText = "GİRİŞ";
-        joinBtn.style.cssText = "background:#0a0a0a !important; color:#ccc !important; border:1px solid #333 !important; border-radius:1px; padding:4px 15px; font-size:11px; font-weight:bold; cursor:pointer; white-space:nowrap; transition: background 0.2s;";
-        joinBtn.onmouseover = () => joinBtn.style.background = '#1a1a1a';
-        joinBtn.onmouseout = () => joinBtn.style.background = '#0a0a0a';
+        joinBtn.innerText = "GİRİŞ";
+        joinBtn.style.cssText = "background:#2d3035 !important; color:#e6eaf0 !important; border:1px solid #3d4149 !important; border-radius:6px; padding:8px 18px; font-size:11px; font-weight:800; cursor:pointer; white-space:nowrap; transition:background 0.15s, color 0.15s;";
+        joinBtn.onmouseover = () => { joinBtn.style.background = '#383d45'; joinBtn.style.color = '#fff'; };
+        joinBtn.onmouseout = () => { joinBtn.style.background = '#2d3035'; joinBtn.style.color = '#e6eaf0'; };
         
         joinBtn.onclick = () => {
             const url = linkInput.value.trim();
@@ -86,23 +115,28 @@
             if(e.key === 'Enter') joinBtn.click();
         });
 
+        centerWrapper.appendChild(linkIcon);
         centerWrapper.appendChild(linkInput);
+        centerWrapper.appendChild(pasteBtn);
         centerWrapper.appendChild(joinBtn);
 
         // --- SAĞ: Ayarlar ve Profil ---
         const rightWrapper = document.createElement('div');
         rightWrapper.id = "vexa-hdr-right";
-        rightWrapper.style.cssText = "display:flex; align-items:center; gap:8px; flex-shrink:0;";
+        rightWrapper.style.cssText = "display:flex; align-items:center; gap:8px; flex-shrink:0; min-width:300px; justify-content:flex-end; -webkit-app-region:no-drag;";
 
         const settingsBtn = document.createElement('button');
         settingsBtn.innerText = '⚙ Ayarlar';
         settingsBtn.id = "vexa-settings-btn";
-        settingsBtn.style.cssText = "background:#0a0a0a !important; color:#888 !important; border:1px solid #222 !important; border-radius:1px; padding:6px 14px; font-size:12px; font-weight:bold; cursor:pointer; transition:color 0.2s, background 0.2s; white-space:nowrap;";
-        settingsBtn.onmouseover = () => { settingsBtn.style.color = '#fff'; settingsBtn.style.background = '#111'; };
-        settingsBtn.onmouseout = () => { settingsBtn.style.color = '#888'; settingsBtn.style.background = '#0a0a0a'; };
+        settingsBtn.innerText = '⚙ Ayarlar';
+        settingsBtn.style.cssText = "background:#1a1c20 !important; color:#8b949e !important; border:1px solid #2d3035 !important; border-radius:6px; padding:8px 13px; font-size:12px; font-weight:700; cursor:pointer; transition:color 0.15s, background 0.15s; white-space:nowrap;";
+        settingsBtn.onmouseover = () => { settingsBtn.style.color = '#c9d1d9'; settingsBtn.style.background = '#22252b'; settingsBtn.style.borderColor = '#3d4149'; settingsBtn.style.transform = 'translateY(0)'; };
+        settingsBtn.onmouseout = () => { settingsBtn.style.color = '#8b949e'; settingsBtn.style.background = '#1a1c20'; settingsBtn.style.borderColor = '#2d3035'; settingsBtn.style.transform = 'translateY(0)'; };
         settingsBtn.onclick = openSettingsModal;
 
         rightWrapper.appendChild(settingsBtn);
+
+        // Pencere kontrolleri kaldırıldı - Windows'un kendi native kontrolleri kullanılıyor
 
         headerElement.appendChild(titleDiv);
         headerElement.appendChild(centerWrapper);
@@ -151,7 +185,7 @@
         modalOverlay.id = 'haxclient-settings-modal';
         Object.assign(modalOverlay.style, {
             position: 'fixed', top: '0', left: '0', width: '100%', height: '100%',
-            backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(3px)',
+            backgroundColor: 'rgba(3,7,18,0.68)', backdropFilter: 'blur(6px)',
             zIndex: '999999', display: 'flex', justifyContent: 'center', alignItems: 'center',
             fontFamily: 'Tahoma, Arial, sans-serif',
             opacity: '0', transition: 'opacity 0.2s ease'
@@ -159,24 +193,26 @@
 
         const modalBox = document.createElement('div');
         Object.assign(modalBox.style, {
-            width: '360px', backgroundColor: '#1c1c1e', border: '1px solid #333',
-            boxShadow: '0 10px 25px rgba(0,0,0,0.8)', padding: '20px', color: '#ccc', borderRadius: '4px',
-            transform: 'scale(0.8)', transition: 'transform 0.2s ease', opacity: '0'
+            width: '420px', maxWidth: 'calc(100vw - 32px)', maxHeight: 'calc(100vh - 48px)', overflowY: 'auto',
+            background: 'linear-gradient(180deg, #202124 0%, #17181b 100%)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            boxShadow: '0 24px 70px rgba(0,0,0,0.55)', padding: '18px', color: '#d1d5db', borderRadius: '8px',
+            transform: 'scale(0.94)', transition: 'transform 0.2s ease, opacity 0.2s ease', opacity: '0'
         });
 
         modalBox.innerHTML = `
             <!-- Header -->
-            <div style="display:flex; justify-content:space-between; border-bottom:1px solid #333; padding-bottom:12px; margin-bottom:15px;">
-                <h2 style="margin:0; font-size:16px; color:#fff; font-weight:bold;">İstemci Ayarları</h2>
-                <button id="close-modal-btn" style="background:none; border:none; color:#888; cursor:pointer; font-size:18px; line-height:1;">✕</button>
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:14px; margin-bottom:14px;">
+                <h2 style="margin:0; font-size:17px; color:#fff; font-weight:800;">İstemci Ayarları</h2>
+                <button id="close-modal-btn" style="background:#111318; border:1px solid rgba(255,255,255,0.08); border-radius:7px; color:#9ca3af; cursor:pointer; font-size:18px; line-height:1; width:32px; height:32px;">✕</button>
             </div>
 
             <!-- Tab Menu -->
-            <div style="display:flex; border-bottom:1px solid #28282c; margin-bottom:20px; gap:4px;">
-                <button id="set-tab-general-btn" style="flex:1; background:none; border:none; border-bottom:2px solid #10b981; color:#fff; padding:10px 0; cursor:pointer; font-weight:bold; font-size:12px; transition:0.2s; outline:none;">Genel</button>
-                <button id="set-tab-avatar-btn" style="flex:1; background:none; border:none; border-bottom:2px solid transparent; color:#888; padding:10px 0; cursor:pointer; font-weight:bold; font-size:12px; transition:0.2s; outline:none;">Avatar</button>
-                <button id="set-tab-shortcuts-btn" style="flex:1; background:none; border:none; border-bottom:2px solid transparent; color:#888; padding:10px 0; cursor:pointer; font-weight:bold; font-size:12px; transition:0.2s; outline:none;">Kısayollar</button>
-                <button id="set-tab-bg-btn" style="flex:1; background:none; border:none; border-bottom:2px solid transparent; color:#888; padding:10px 0; cursor:pointer; font-weight:bold; font-size:12px; transition:0.2s; outline:none;">Arka Plan</button>
+            <div style="display:flex; background:#111318; border:1px solid rgba(255,255,255,0.07); border-radius:8px; margin-bottom:18px; gap:4px; padding:4px;">
+                <button id="set-tab-general-btn" style="flex:1; background:#10b981; border:1px solid #17d59a; border-radius:6px; color:#06110d; padding:9px 0; cursor:pointer; font-weight:800; font-size:12px; transition:0.2s; outline:none;">Genel</button>
+                <button id="set-tab-avatar-btn" style="flex:1; background:transparent; border:1px solid transparent; border-radius:6px; color:#8b949e; padding:9px 0; cursor:pointer; font-weight:800; font-size:12px; transition:0.2s; outline:none;">Avatar</button>
+                <button id="set-tab-shortcuts-btn" style="flex:1; background:transparent; border:1px solid transparent; border-radius:6px; color:#8b949e; padding:9px 0; cursor:pointer; font-weight:800; font-size:12px; transition:0.2s; outline:none;">Kısayollar</button>
+                <button id="set-tab-bg-btn" style="flex:1; background:transparent; border:1px solid transparent; border-radius:6px; color:#8b949e; padding:9px 0; cursor:pointer; font-weight:800; font-size:12px; transition:0.2s; outline:none;">Arka Plan</button>
             </div>
 
             <!-- TAB 1: GENERAL SETTINGS -->
@@ -335,6 +371,9 @@
                     </div>
                 </div>
                 <div style="color:#555; font-size:10px; margin-bottom:10px;">Resim, GIF veya video (.mp4, .webm) yükleyin. Son 5 arka plan saklanır.</div>
+                <div style="color:#eee; font-size:13px; font-weight:bold; margin-bottom:8px;">Hazır Arka Planlar</div>
+                <div id="hax-bg-system-grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; min-height:74px; margin-bottom:14px;"></div>
+                <div style="color:#eee; font-size:13px; font-weight:bold; margin-bottom:8px;">Yüklenenler</div>
                 <div id="hax-bg-history-grid" style="display:grid; grid-template-columns:repeat(5, 1fr); gap:8px; min-height:60px;"></div>
             </div>
 
@@ -346,6 +385,24 @@
 
         modalOverlay.appendChild(modalBox);
         document.body.appendChild(modalOverlay);
+
+        modalBox.querySelectorAll('#set-tab-general-content > div, #set-tab-avatar-content > div').forEach((panel) => {
+            panel.style.background = '#111318';
+            panel.style.border = '1px solid rgba(255,255,255,0.07)';
+            panel.style.borderRadius = '8px';
+            panel.style.boxShadow = 'inset 0 1px 0 rgba(255,255,255,0.03)';
+        });
+        modalBox.querySelectorAll('input, select').forEach((field) => {
+            field.style.borderRadius = field.style.borderRadius || '6px';
+        });
+
+        const saveBtn = document.getElementById('save-modal-btn');
+        if (saveBtn) {
+            saveBtn.style.borderRadius = '7px';
+            saveBtn.style.padding = '10px 28px';
+            saveBtn.style.fontWeight = '800';
+            saveBtn.style.boxShadow = '0 10px 24px rgba(16,185,129,0.18)';
+        }
 
         // Load custom frames into inputs
         const customFrames = animConfig.customFrames.split(',');
@@ -465,16 +522,22 @@
         const allTabContents = [tabGenContent, tabAvContent, tabShortcutsContent, tabBgContent];
 
         function activateTab(activeBtn, activeContent) {
-            allTabBtns.forEach(b => { b.style.borderBottomColor = 'transparent'; b.style.color = '#888'; });
+            allTabBtns.forEach(b => {
+                b.style.background = 'transparent';
+                b.style.borderColor = 'transparent';
+                b.style.color = '#8b949e';
+            });
             allTabContents.forEach(c => { c.style.display = 'none'; });
-            activeBtn.style.borderBottomColor = '#10b981'; activeBtn.style.color = '#fff';
+            activeBtn.style.background = '#10b981';
+            activeBtn.style.borderColor = '#17d59a';
+            activeBtn.style.color = '#06110d';
             activeContent.style.display = 'block';
         }
 
         tabGenBtn.onclick = () => activateTab(tabGenBtn, tabGenContent);
         tabAvBtn.onclick = () => activateTab(tabAvBtn, tabAvContent);
         tabShortcutsBtn.onclick = () => { activateTab(tabShortcutsBtn, tabShortcutsContent); tabShortcutsContent.scrollTop = 0; };
-        tabBgBtn.onclick = () => { activateTab(tabBgBtn, tabBgContent); renderBgHistory(); };
+        tabBgBtn.onclick = () => { activateTab(tabBgBtn, tabBgContent); renderBgSystemPresets(); renderBgHistory(); };
 
         // Activate default tab
         if (defaultTab === 'avatar') {
@@ -536,8 +599,18 @@
         const bgTabFileInput = document.getElementById('hax-bg-tab-file-input');
         const bgTabUploadBtn = document.getElementById('hax-bg-tab-upload-btn');
         const bgTabResetBtn = document.getElementById('hax-bg-tab-reset-btn');
+        const bgSystemGrid = document.getElementById('hax-bg-system-grid');
         const bgHistoryGrid = document.getElementById('hax-bg-history-grid');
         const bgTabStatus = document.getElementById('hax-bg-tab-status');
+        const injectBaseUrl = (window.VEXA_INJECT_BASE_URL || 'file:///c:/Vexa/inject').replace(/\/$/, '');
+        const systemBackgrounds = [
+            {
+                id: 'nissan-silvia-rain',
+                name: 'Nissan Silvia Rain',
+                path: injectBaseUrl + '/backgrounds/nissan-silvia-s13-gloomy-rain.mp4',
+                type: 'video'
+            }
+        ];
 
         function getBgHistory() {
             try {
@@ -549,6 +622,98 @@
 
         function saveBgHistory(history) {
             localStorage.setItem('hax_bg_history', JSON.stringify(history));
+        }
+
+        function renderBgSystemPresets() {
+            if (!bgSystemGrid) return;
+            bgSystemGrid.innerHTML = '';
+            const activeBg = localStorage.getItem('hax_custom_bg');
+
+            systemBackgrounds.forEach((item) => {
+                const card = document.createElement('div');
+                const isActive = activeBg === item.path;
+                Object.assign(card.style, {
+                    position: 'relative',
+                    width: '100%',
+                    paddingBottom: '62%',
+                    borderRadius: '6px',
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                    border: isActive ? '2px solid #10b981' : '2px solid #333',
+                    boxShadow: isActive ? '0 0 8px rgba(16,185,129,0.4)' : 'none',
+                    transition: 'border 0.2s, box-shadow 0.2s',
+                    background: '#0a0a0a'
+                });
+
+                const inner = document.createElement('div');
+                Object.assign(inner.style, {
+                    position: 'absolute', top: '0', left: '0', width: '100%', height: '100%'
+                });
+
+                const isVideo = item.type === 'video' || item.path.match(/\.(mp4|webm|mkv|mov|avi)(\?|$)/i);
+                if (isVideo) {
+                    const vid = document.createElement('video');
+                    vid.src = item.path;
+                    vid.muted = true;
+                    vid.loop = true;
+                    vid.autoplay = true;
+                    vid.playsInline = true;
+                    Object.assign(vid.style, { width: '100%', height: '100%', objectFit: 'cover' });
+                    inner.appendChild(vid);
+                    vid.play().catch(() => {});
+                } else {
+                    const img = document.createElement('img');
+                    img.src = item.path;
+                    Object.assign(img.style, { width: '100%', height: '100%', objectFit: 'cover' });
+                    inner.appendChild(img);
+                }
+
+                const label = document.createElement('div');
+                label.innerText = item.name;
+                Object.assign(label.style, {
+                    position: 'absolute',
+                    left: '0',
+                    right: '0',
+                    bottom: '0',
+                    padding: '5px 6px',
+                    background: 'linear-gradient(transparent, rgba(0,0,0,0.85))',
+                    color: '#fff',
+                    fontSize: '10px',
+                    fontWeight: 'bold',
+                    lineHeight: '1.2',
+                    textShadow: '0 1px 2px #000',
+                    zIndex: '2'
+                });
+                inner.appendChild(label);
+
+                if (isActive) {
+                    const badge = document.createElement('div');
+                    badge.innerText = '✓';
+                    Object.assign(badge.style, {
+                        position: 'absolute', top: '4px', left: '4px',
+                        background: '#10b981', color: '#fff', borderRadius: '50%',
+                        width: '18px', height: '18px', fontSize: '11px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontWeight: 'bold', zIndex: '3'
+                    });
+                    inner.appendChild(badge);
+                }
+
+                card.appendChild(inner);
+                card.onclick = () => {
+                    localStorage.setItem('hax_custom_bg', item.path);
+                    localStorage.setItem('hax_custom_bg_name', item.name);
+                    updateBgTabStatus();
+                    window.dispatchEvent(new CustomEvent('hax-custom-bg-changed', { detail: { path: item.path } }));
+                    renderBgSystemPresets();
+                    renderBgHistory();
+                };
+
+                card.onmouseover = () => { if (!isActive) card.style.border = '2px solid #555'; };
+                card.onmouseout = () => { if (!isActive) card.style.border = '2px solid #333'; };
+
+                bgSystemGrid.appendChild(card);
+            });
         }
 
         function renderBgHistory() {
@@ -628,6 +793,7 @@
                         updateBgTabStatus();
                         window.dispatchEvent(new CustomEvent('hax-custom-bg-changed', { detail: { path: null } }));
                     }
+                    renderBgSystemPresets();
                     renderBgHistory();
                 };
 
@@ -653,6 +819,7 @@
                     localStorage.setItem('hax_custom_bg_name', item.name);
                     updateBgTabStatus();
                     window.dispatchEvent(new CustomEvent('hax-custom-bg-changed', { detail: { path: item.path } }));
+                    renderBgSystemPresets();
                     renderBgHistory();
                 };
 
@@ -704,6 +871,7 @@
                         localStorage.setItem('hax_custom_bg', res.path);
                         localStorage.setItem('hax_custom_bg_name', file.name);
                         updateBgTabStatus();
+                        renderBgSystemPresets();
                         renderBgHistory();
                         window.dispatchEvent(new CustomEvent('hax-custom-bg-changed', { detail: { path: res.path } }));
                     } else {
@@ -727,10 +895,12 @@
             localStorage.removeItem('hax_custom_bg');
             localStorage.removeItem('hax_custom_bg_name');
             updateBgTabStatus();
+            renderBgSystemPresets();
             renderBgHistory();
             window.dispatchEvent(new CustomEvent('hax-custom-bg-changed', { detail: { path: null } }));
         };
 
+        renderBgSystemPresets();
         renderBgHistory();
 
 

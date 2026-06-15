@@ -107,6 +107,14 @@
                 backdrop-filter: none !important;
                 -webkit-backdrop-filter: none !important;
             }
+            body.vexa-game-active .choose-nickname-view .dialog,
+            body.vexa-game-active .room-view .container,
+            body.vexa-game-active .dialog,
+            body.vexa-game-active .chatbox-view-contents,
+            body.vexa-game-active .game-state-view {
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+            }
 
             /* Custom Background Glassmorphic Overrides */
             body.vexa-has-custom-bg::before {
@@ -339,6 +347,79 @@
             }
             body.vexa-ui-transparent .chatbox-view-contents .input button:hover {
                 background-color: rgba(255, 255, 255, 0.12) !important;
+            }
+
+            /* Final background modes:
+               Transparent ON = no blur, no glass; Transparent OFF + custom bg = blurred glass. */
+            body.vexa-ui-transparent .choose-nickname-view .dialog,
+            body.vexa-ui-transparent .room-view .container,
+            body.vexa-ui-transparent .dialog,
+            body.vexa-ui-transparent .chatbox-view-contents,
+            body.vexa-ui-transparent .game-state-view,
+            body.vexa-ui-transparent .bottom-section {
+                background: rgba(8, 10, 14, 0.34) !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                border-color: rgba(255, 255, 255, 0.08) !important;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.26) !important;
+            }
+
+            body.vexa-ui-transparent .dialog .list,
+            body.vexa-ui-transparent .dialog .filters,
+            body.vexa-ui-transparent .dialog .header,
+            body.vexa-ui-transparent .room-view .list,
+            body.vexa-ui-transparent .room-view table,
+            body.vexa-ui-transparent .room-view tbody,
+            body.vexa-ui-transparent .room-view tr,
+            body.vexa-ui-transparent .room-view td,
+            body.vexa-ui-transparent .player-list-view .list,
+            body.vexa-ui-transparent .player-list-item,
+            body.vexa-ui-transparent .chatbox-view-contents .input,
+            body.vexa-ui-transparent .game-state-view,
+            body.vexa-ui-transparent .section,
+            body.vexa-ui-transparent .label-input {
+                background: transparent !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+            }
+
+            body.vexa-has-custom-bg:not(.vexa-ui-transparent) .choose-nickname-view .dialog,
+            body.vexa-has-custom-bg:not(.vexa-ui-transparent) .room-view .container,
+            body.vexa-has-custom-bg:not(.vexa-ui-transparent) .dialog,
+            body.vexa-has-custom-bg:not(.vexa-ui-transparent) .chatbox-view-contents,
+            body.vexa-has-custom-bg:not(.vexa-ui-transparent) .game-state-view {
+                background: rgba(10, 12, 18, 0.58) !important;
+                backdrop-filter: blur(14px) saturate(145%) !important;
+                -webkit-backdrop-filter: blur(14px) saturate(145%) !important;
+                border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                box-shadow: 0 14px 42px rgba(0, 0, 0, 0.38) !important;
+            }
+
+            body.vexa-has-custom-bg:not(.vexa-ui-transparent) .dialog .list,
+            body.vexa-has-custom-bg:not(.vexa-ui-transparent) .dialog .filters,
+            body.vexa-has-custom-bg:not(.vexa-ui-transparent) .dialog .header,
+            body.vexa-has-custom-bg:not(.vexa-ui-transparent) .room-view .list,
+            body.vexa-has-custom-bg:not(.vexa-ui-transparent) .room-view table,
+            body.vexa-has-custom-bg:not(.vexa-ui-transparent) .room-view tbody,
+            body.vexa-has-custom-bg:not(.vexa-ui-transparent) .room-view tr,
+            body.vexa-has-custom-bg:not(.vexa-ui-transparent) .room-view td,
+            body.vexa-has-custom-bg:not(.vexa-ui-transparent) .player-list-view .list,
+            body.vexa-has-custom-bg:not(.vexa-ui-transparent) .player-list-item,
+            body.vexa-has-custom-bg:not(.vexa-ui-transparent) .chatbox-view-contents .input,
+            body.vexa-has-custom-bg:not(.vexa-ui-transparent) .section,
+            body.vexa-has-custom-bg:not(.vexa-ui-transparent) .label-input {
+                background: rgba(4, 6, 10, 0.16) !important;
+                border-color: rgba(255, 255, 255, 0.05) !important;
+            }
+
+            body.vexa-has-custom-bg:not(.vexa-ui-transparent) .dialog input,
+            body.vexa-has-custom-bg:not(.vexa-ui-transparent) .dialog select,
+            body.vexa-has-custom-bg:not(.vexa-ui-transparent) .label-input input,
+            body.vexa-has-custom-bg:not(.vexa-ui-transparent) .room-view input,
+            body.vexa-has-custom-bg:not(.vexa-ui-transparent) .room-view select {
+                background: rgba(6, 8, 12, 0.34) !important;
+                border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                color: #fff !important;
             }
         `;
         const styleEl = document.createElement('style');
@@ -914,31 +995,46 @@
         }
 
         // 3. FPS & PING UI - Ana sayfaya (üst document) ekle, iframe'e DEĞİL
+        function getHeaderAwareTop() {
+            const header = document.querySelector('.header') || document.querySelector('header') || document.querySelector('#header');
+            if (!header || header.offsetHeight <= 0) return '15px';
+            const rect = header.getBoundingClientRect();
+            return Math.max(15, Math.ceil(rect.bottom + 8)) + 'px';
+        }
+
         function ensureFpsUI() {
-            if (document.getElementById('vexa-fps-counter')) return; 
+            const existingCounter = document.getElementById('vexa-fps-counter');
+            if (existingCounter) {
+                const nextTop = getHeaderAwareTop();
+                if (existingCounter.style.top !== nextTop) existingCounter.style.top = nextTop;
+                return;
+            }
 
             const fpsShow = localStorage.getItem('hax_fps_show') !== 'false';
+
+            // Oluşturulurken doğru pozisyonu hesapla - bekleme yok, animasyon yok
+            const initialTop = getHeaderAwareTop();
 
             const fpsContainer = document.createElement('div');
             fpsContainer.id = 'vexa-fps-counter';
             Object.assign(fpsContainer.style, {
-                position: 'fixed', top: '65px', left: '15px',
-                background: '#0a0a0a', 
+                position: 'fixed', top: '-60px', left: '15px',
+                background: '#0a0a0a',
                 border: '1px solid #333',
-                padding: '5px 12px', 
+                padding: '5px 12px',
                 color: '#888',
-                fontFamily: 'Tahoma, Arial, sans-serif', 
-                fontSize: '11px', 
+                fontFamily: 'Tahoma, Arial, sans-serif',
+                fontSize: '11px',
                 fontWeight: 'bold',
-                zIndex: '999999', 
+                zIndex: '999999',
                 boxShadow: '0 4px 12px rgba(0,0,0,0.8)',
                 pointerEvents: 'none',
-                display: fpsShow ? 'flex' : 'none', 
-                alignItems: 'center', 
+                display: fpsShow ? 'flex' : 'none',
+                alignItems: 'center',
                 gap: '8px',
                 letterSpacing: '1px',
                 textTransform: 'uppercase',
-                transition: 'top 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
+                transition: 'top 0.5s ease-out'
             });
             
             const statusLabel = document.createElement('span');
@@ -964,12 +1060,40 @@
             fpsContainer.appendChild(divider);
             fpsContainer.appendChild(pingTextNode);
             document.body.appendChild(fpsContainer);
+
+            // Animate from -60px to 85px
+            requestAnimationFrame(() => {
+                fpsContainer.style.top = '85px';
+            });
         }
 
         // İlk oluştur
         ensureFpsUI();
         // Her 2 saniyede kontrol et, kaybolmuşsa tekrar oluştur
         setInterval(ensureFpsUI, 2000);
+
+        // Header yükseklik değişimini anında yakala (ResizeObserver)
+        // Navbar açılınca/kapanınca, maç başlayınca/bitince header yüksekliği değişir
+        function startHeaderObserver() {
+            const header = document.querySelector('.header') || document.querySelector('header') || document.querySelector('#header');
+            if (!header) return;
+            
+            let lastHeaderHeight = header.offsetHeight;
+            
+            const ro = new ResizeObserver(() => {
+                const fpsEl = document.getElementById('vexa-fps-counter');
+                if (!fpsEl) return;
+                const currentHeight = header.offsetHeight;
+                if (currentHeight === lastHeaderHeight) return;
+                lastHeaderHeight = currentHeight;
+                const targetTop = getHeaderAwareTop();
+                fpsEl.style.transition = 'top 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+                fpsEl.style.top = targetTop;
+            });
+            ro.observe(header);
+        }
+        // Header enjekte edildikten hemen sonra observer'ı başlat
+        setTimeout(startHeaderObserver, 1000);
 
         // 4. Gerçek FPS Ölçüm Döngüsü (Chromium Native)
         function measureFPS() {
@@ -981,14 +1105,8 @@
                 const realFps = Math.round((frames / delta) * 1000);
                 lastKnownFps = realFps; 
 
-                // Header görünürlüğüne göre pozisyonu güncelle (Sadece saniyede bir kontrol et, performans için)
-                const fpsEl = document.getElementById('vexa-fps-counter');
-                if (fpsEl) {
-                    const header = document.querySelector('.header') || document.querySelector('header') || document.querySelector('#header');
-                    const isHeaderVisible = header && header.offsetHeight > 0;
-                    const targetTop = isHeaderVisible ? '85px' : '15px';
-                    if (fpsEl.style.top !== targetTop) fpsEl.style.top = targetTop;
-                }
+                // measureFPS içinde pozisyon güncellemesi artık ResizeObserver tarafından yapılıyor
+                // Burada sadece fallback olarak kontrol et (observer başlamadan önceki ilk saniye)
 
                 // UI güncellemesi (element hala varsa)
                 if (!fpsTextNode || !pingTextNode) {

@@ -104,6 +104,20 @@ ipcMain.on('toggle-discord-rpc', (event, state) => {
     }
 });
 
+ipcMain.on('window-control', (event, action) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (!win || win.isDestroyed()) return;
+
+    if (action === 'minimize') {
+        win.minimize();
+    } else if (action === 'maximize') {
+        if (win.isMaximized()) win.unmaximize();
+        else win.maximize();
+    } else if (action === 'close') {
+        win.close();
+    }
+});
+
 // --- FPS Unlock (Early Switches) ---
 if (settings.fpsEnabled) {
     app.commandLine.appendSwitch('disable-frame-rate-limit');
@@ -322,5 +336,4 @@ ipcMain.handle('delete-custom-bg', async (event, fileUrl) => {
         return { success: false, error: err.message };
     }
 });
-
 
