@@ -1,0 +1,29 @@
+{
+   "background": {
+      "persistent": false,
+      "scripts": [ "background.js" ]
+   },
+   "content_scripts": [ {
+      "js": [ "haxemotion.js" ],
+      "matches": [ "https://*.haxball.com/play*" ],
+      "run_at": "document_end"
+   } ],
+   "description": "Herhangi bir tuşa atamanızı yapın ve otomatik olarak avatarınız değişsin!",
+   "icons": {
+      "128": "HaxEmotionAvatar128.png",
+      "48": "HaxEmotionAvatar48.png"
+   },
+   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzsIhJHIinfZKmVjYZK7vc4a8lqXdGEa+IEnGzKeSJzvrQ4C/f6D3acW01PdHCHNJbIp5VpD9KI0d/qO27OxwxMcmccgPTDm9ieV0+60860GKKuHzdPG9e26WpitW9m4Fz2AybtsKanHSWWqIvl3B2BqqvafSXOSwHNfeNYyaDmNwTw1TBA0Ay3jGo3EnG36ZymBVx6GLdi+3CbOR9sUOscdMFDYpep1ACIXEyKplW2Knb+7yNEJoZ2+7XvuAL5RS/AIfVYqYu3PLaSzZ5YT1DB7QntHcV3aBj7aMy3qJXRIA3hmrnQ3e+O6tI8TPMyxzGsA1XQ+gLE877zJZ+lODHQIDAQAB",
+   "manifest_version": 2,
+   "name": "HaxBall Online | Avatar Reaction",
+   "page_action": {
+      "default_icon": {
+         "128": "HaxEmotionAvatar128.png",
+         "48": "HaxEmotionAvatar48.png"
+      },
+      "default_popup": "popup.html"
+   },
+   "permissions": [ "activeTab", "declarativeContent", "storage" ],
+   "update_url": "https://clients2.google.com/service/update2/crx",
+   "version": "1.0"
+}

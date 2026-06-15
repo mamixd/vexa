@@ -22,13 +22,13 @@ function createWindow(options) {
     if (options.url) {
         win.loadURL(options.url);
         
-        // DOM hazır olur olmaz enjekte et (reklam/resim yüklenmesini BEKLEMEz)
-        win.webContents.on('dom-ready', () => {
+        // Skriptleri HaxBall tam yüklendikten sonra enjekte et
+        win.webContents.on('did-finish-load', () => {
             const { screen } = require('electron');
             const hz = screen.getPrimaryDisplay().displayFrequency || 60;
 
             // List of core Vexa scripts
-            const vexaScripts = ['hx_polyfill.js', 'header.js', 'ui.js', 'client.js'];
+            const vexaScripts = ['hx_polyfill.js', 'header.js', 'profiles.js', 'avatar.js', 'ui.js', 'client.js'];
             
             // List of hxalltool scripts from manifest.json
             const extUtilityPath = path.join(__dirname, '../hxalltool/js/content_utility');
@@ -57,14 +57,36 @@ function createWindow(options) {
             win.webContents.executeJavaScript(payload).catch(err => {
                 console.error("Failed to inject bundled scripts:", err);
             });
-            setTimeout(() => {
-                if (win.isDestroyed()) return;
-                if (options.onReady) {
-                    options.onReady();
-                } else {
-                    win.show();
-                }
-            }, 500);
+
+            // Don't show window until Vexa systems are fully ready
+            if (!win.isVisible()) {
+                const checkReady = setInterval(() => {
+                    if (win.isDestroyed()) { clearInterval(checkReady); return; }
+                    win.webContents.executeJavaScript(`!!document.getElementById('vexa-hdr-right')`)
+                        .then(ready => {
+                            if (ready && !win.isDestroyed() && !win.isVisible()) {
+                                clearInterval(checkReady);
+                                win.maximize(); // Tam ekran yap
+                                if (options.onReady) {
+                                    options.onReady();
+                                } else {
+                                    win.show();
+                                }
+                            }
+                        })
+                        .catch(() => {});
+                }, 300);
+
+                // Safety: show after 15 seconds no matter what
+                setTimeout(() => {
+                    clearInterval(checkReady);
+                    if (!win.isDestroyed() && !win.isVisible()) {
+                        win.maximize();
+                        if (options.onReady) options.onReady();
+                        else win.show();
+                    }
+                }, 15000);
+            }
         });
 
         // HaxBall'ın "Emin misiniz?" uyarısını devre dışı bırak, direkt kapansın

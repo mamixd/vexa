@@ -8,7 +8,35 @@ function getSettingsPath() {
 
 const defaultSettings = {
     fpsEnabled: true,
-    rpcEnabled: true
+    fpsShow: true,
+    rpcEnabled: true,
+    pingBoosterEnabled: false,
+    netGraphEnabled: true,
+    animatedAvatar: {
+        enabled: false,
+        defaultAvatar: 'VX',
+        resetDuration: 2000,
+        hotkeys: { "1": "🔥", "2": "🤮", "3": "💀", "4": "🧤" }
+    },
+    profiles: [
+        {
+            id: 'default',
+            name: 'Default',
+            autosave: true,
+            avatar: null,
+            extrapolation: '0',
+            fav_rooms: [],
+            geo_override: null,
+            player_auth_key: null,
+            player_name: null,
+            animatedAvatar: {
+                enabled: false,
+                preset: 'moon',
+                customFrames: '',
+                speed: 500
+            }
+        }
+    ]
 };
 
 function loadSettings() {

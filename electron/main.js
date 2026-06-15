@@ -33,8 +33,8 @@ function setActivity(state, details, nick) {
         startTimestamp: appStartTime,
         largeImageKey: 'logo', 
         largeImageText: 'Vexa Client',
-        smallImageKey: nick ? 'logo' : undefined,
-        smallImageText: nick ? `${nick}` : undefined,
+        smallImageKey: (nick && nick.length >= 2) ? 'logo' : undefined,
+        smallImageText: (nick && nick.length >= 2) ? `${nick}` : undefined,
         instance: false,
         buttons: [
             { label: 'Discord', url: 'https://vexaclient.rf.gd/discord' },
@@ -69,6 +69,24 @@ ipcMain.handle('get-settings', () => {
     return loadSettings();
 });
 
+ipcMain.handle('set-setting', (event, key, value) => {
+    return saveSettings({ [key]: value });
+});
+
+ipcMain.on('restart-app', () => {
+    try {
+        app.relaunch({ args: process.argv.slice(1).filter(arg => arg !== '--relaunch') });
+    } catch (err) {
+        console.error('Failed to relaunch with args, trying default relaunch:', err);
+        try {
+            app.relaunch();
+        } catch (e) {
+            console.error('Relaunch failed completely:', e);
+        }
+    }
+    app.exit(0);
+});
+
 ipcMain.on('update-rpc', (event, data) => {
     setActivity(data.state, data.details, data.nick);
 });
@@ -91,6 +109,16 @@ if (settings.fpsEnabled) {
     app.commandLine.appendSwitch('disable-frame-rate-limit');
     app.commandLine.appendSwitch('disable-gpu-vsync');
     app.commandLine.appendSwitch('disable-background-timer-throttling');
+}
+if (settings.pingBoosterEnabled) {
+    app.commandLine.appendSwitch('ignore-gpu-blocklist');
+    app.commandLine.appendSwitch('enable-gpu-rasterization');
+    app.commandLine.appendSwitch('enable-zero-copy');
+    app.commandLine.appendSwitch('enable-webgl-draft-extensions');
+    app.commandLine.appendSwitch('disable-renderer-backgrounding');
+    app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
+    app.commandLine.appendSwitch('disable-ipc-flooding-protection');
+    app.commandLine.appendSwitch('max-gum-fps', '150');
 }
 app.commandLine.appendSwitch('ignore-certificate-errors');
 // -------------------
@@ -247,3 +275,52 @@ ipcMain.handle('log-haxball-event', (event, data) => {
     // You can route this data natively to the started Node servers here
     return { success: true };
 });
+
+ipcMain.handle('save-custom-bg', async (event, filePath) => {
+    try {
+        if (!fs.existsSync(filePath)) {
+            return { success: false, error: 'File does not exist' };
+        }
+        const ext = path.extname(filePath);
+        const userDataPath = app.getPath('userData');
+        const destPath = path.join(userDataPath, `custom_bg_${Date.now()}${ext}`);
+        fs.copyFileSync(filePath, destPath);
+        
+        // Format as a file:// URL
+        const fileUrl = 'file:///' + destPath.replace(/\\/g, '/');
+        return { success: true, path: fileUrl };
+    } catch (err) {
+        console.error('Error saving custom background:', err);
+        return { success: false, error: err.message };
+    }
+});
+
+ipcMain.handle('delete-custom-bg', async (event, fileUrl) => {
+    try {
+        if (!fileUrl) return { success: false, error: 'No file URL provided' };
+        let filePath = fileUrl;
+        if (fileUrl.startsWith('file:///')) {
+            filePath = fileUrl.substring(8);
+        }
+        filePath = path.normalize(filePath);
+        
+        if (fs.existsSync(filePath)) {
+            const fileName = path.basename(filePath);
+            const userDataPath = app.getPath('userData');
+            // Security check: ensure file is inside userData and starts with custom_bg_
+            const isInsideUserData = filePath.startsWith(userDataPath);
+            const isCustomBgFile = fileName.startsWith('custom_bg_') || fileName.startsWith('custom_bg.');
+            
+            if (isInsideUserData && isCustomBgFile) {
+                fs.unlinkSync(filePath);
+                return { success: true };
+            }
+        }
+        return { success: false, error: 'File not found or not eligible for deletion' };
+    } catch (err) {
+        console.error('Error deleting custom background:', err);
+        return { success: false, error: err.message };
+    }
+});
+
+

@@ -458,7 +458,26 @@ moduleObserver = new MutationObserver(function(mutations) {
 					popupWait.then(function (popup) {
 						if (!popup || !popup.firstChild) return;
 						const name = popup.firstChild.innerText;
-						if (name === 'Add-on Settings' || name === 'Choose nickname' || name === 'Leave room?') return;
+						if (name === 'Add-on Settings' || name === 'Choose nickname' || name === 'Leave room?' || name === 'Settings' || name === 'Create Room' || popup.classList.contains('settings-view')) return;
+					
+					// Admin olmadığımızda "Give Admin" ve "Kick" butonlarını devre dışı bırak
+					const gameframe = document.documentElement.getElementsByClassName("gameframe")[0];
+					const isAdmin = gameframe && gameframe.contentWindow && 
+						(gameframe.contentWindow.document.querySelector("[class$='view admin']") !== null);
+					
+					if (!isAdmin) {
+						const allBtns = popup.querySelectorAll('button');
+						allBtns.forEach(btn => {
+							const txt = btn.innerText.trim().toLowerCase();
+							if (txt === 'give admin' || txt === 'kick') {
+								btn.disabled = true;
+								btn.style.opacity = '0.3';
+								btn.style.pointerEvents = 'none';
+								btn.style.cursor = 'not-allowed';
+								btn.title = 'Admin değilsiniz';
+							}
+						});
+					}
 						
 						const muteBtn = document.createElement('button');
 						muteBtn.className = 'mb';

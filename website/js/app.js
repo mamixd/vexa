@@ -1,22 +1,30 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // Bento Box Mouse Glow Effect
-    const cards = document.querySelectorAll('.bento-card');
-    
-    document.querySelector('.bento-grid').addEventListener('mousemove', (e) => {
-        for(const card of cards) {
-            const rect = card.getBoundingClientRect(),
-                  x = e.clientX - rect.left,
-                  y = e.clientY - rect.top;
+// Vexa Client - Website Scripts (Human Touch Version)
 
-            card.style.setProperty("--mouse-x", `${x}px`);
-            card.style.setProperty("--mouse-y", `${y}px`);
-        }
+document.addEventListener('DOMContentLoaded', () => {
+    // Sayfa aşağı kayınca öğelerin belirmesi (Sağ panel için)
+    const observers = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+            }
+        });
+    }, {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
     });
 
-    const dlBtn = document.querySelector('.cyber-btn');
+    document.querySelectorAll('[data-anime]').forEach(el => {
+        observers.observe(el);
+    });
+
+    // İndirme butonu tıklandığında ufak bir log (Opsiyonel)
+    const dlBtn = document.querySelector('.btn-primary');
     if (dlBtn) {
         dlBtn.addEventListener('click', () => {
-            console.log("Downloading Vexa Client... Welcome to the Grid!");
+            console.log("Vexa Client indiriliyor... Sahalarda görüşmek üzere!");
         });
     }
+
+    // Mobil menü veya ek etkileşim gerekirse buraya eklenebilir.
+    // Şu anki sade yapı için bu kadarı "doğal ve temiz" hissettiriyor.
 });
