@@ -13,7 +13,7 @@
   <a href="https://github.com/vexa-client/vexa/releases/latest"><img src="https://img.shields.io/github/v/release/vexa-client/vexa?style=for-the-badge&color=00c853&label=Download" alt="Latest Release" /></a>
   <a href="https://github.com/vexa-client/vexa/actions"><img src="https://img.shields.io/github/actions/workflow/status/vexa-client/vexa/build-and-release.yml?style=for-the-badge&label=Build" alt="Build Status" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPLv3-blue?style=for-the-badge" alt="License" /></a>
-  <a href="https://vexaclient.rf.gd/discord"><img src="https://img.shields.io/badge/Discord-Join-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord" /></a>
+  <a href="https://vexa-client.github.io/discord"><img src="https://img.shields.io/badge/Discord-Join-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord" /></a>
 </p>
 
 ---
@@ -163,8 +163,8 @@ This project is licensed under the **GNU General Public License v3.0** — see t
 
 ## 🔗 Links
 
-- 🌐 **Website**: [vexa.gg](https://vexa.gg)
-- 💬 **Discord**: [Join Server](https://vexaclient.rf.gd/discord)
+- 🌐 **Website**: [vexa.gg]([https://vexa.gg](https://vexa-client.github.io/))
+- 💬 **Discord**: [Join Server](https://vexa-client.github.io/discord)
 - 📦 **Releases**: [GitHub Releases](https://github.com/vexa-client/vexa/releases)
 - 🐛 **Issues**: [Report a Bug](https://github.com/vexa-client/vexa/issues)
 
