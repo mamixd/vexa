@@ -45,6 +45,10 @@
     function applyLimiter(targetWindow) {
         const isFpsUnlocked = localStorage.getItem('hax_fps_limit') !== 'false';
         const monitorHz = window.ELECTRON_SCREEN_HZ || 60;
+        const configuredFpsCap = parseInt(localStorage.getItem('hax_fps_cap') || '', 10);
+        const unlockedFpsCap = Number.isFinite(configuredFpsCap)
+            ? Math.min(Math.max(configuredFpsCap, monitorHz), 360)
+            : Math.min(Math.max(monitorHz, 240), 360);
         
         // --- WebRTC PeerConnection Hook ---
         targetWindow._activePCs = targetWindow._activePCs || new Set();
@@ -87,6 +91,21 @@
                 z-index: -1;
                 pointer-events: none;
                 transform: rotate(-25deg);
+            }
+
+            body.vexa-game-active {
+                background: #718a5b !important;
+            }
+            body.vexa-game-active::before,
+            body.vexa-game-active #vexa-custom-bg-container {
+                display: none !important;
+            }
+            body.vexa-game-active.vexa-has-custom-bg .chatbox-view-contents,
+            body.vexa-game-active.vexa-has-custom-bg .game-state-view,
+            body.vexa-game-active.vexa-ui-transparent .chatbox-view-contents,
+            body.vexa-game-active.vexa-ui-transparent .game-state-view {
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
             }
 
             /* Custom Background Glassmorphic Overrides */
@@ -341,7 +360,12 @@
                 }
 
                 // Custom Background Senkronizasyonu
-                try { syncCustomBackgroundForDoc(doc); } catch(e) {}
+                try {
+                    const gameActive = syncGameRenderMode(doc);
+                    syncGameRenderMode(document, gameActive);
+                    syncCustomBackgroundForDoc(doc, gameActive);
+                    syncCustomBackgroundForDoc(document, gameActive);
+                } catch(e) {}
 
 
                 // Her zaman şeffaflık durumunu senkronize et (HaxBall sayfayı veya class'ları ezse bile)
@@ -395,7 +419,7 @@
         }
         setInterval(injectIframeContent, 100);
 
-        const targetFps = isFpsUnlocked ? 999 : monitorHz; 
+        const targetFps = isFpsUnlocked ? unlockedFpsCap : monitorHz;
         const frameTime = 1000 / targetFps;
 
         const originalRAF = targetWindow.requestAnimationFrame.bind(targetWindow);
@@ -409,15 +433,43 @@
         };
 
         if(isFpsUnlocked) {
-            console.log("[Vexa HaxBall Client] FPS Unlocker AKTİF");
+            console.log("[Vexa HaxBall Client] FPS Unlocker AKTİF (" + targetFps + " FPS cap)");
         } else {
             console.log("[Vexa HaxBall Client] FPS Unlocker KAPALI (" + monitorHz + " Hz)");
         }
 
         // --- Custom Background Engine ---
-        function syncCustomBackgroundForDoc(doc) {
+        function isGameActiveDoc(doc) {
+            if (!doc || !doc.body) return false;
+
+            const isVisible = (el) => {
+                if (!el) return false;
+                const style = doc.defaultView.getComputedStyle(el);
+                if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') return false;
+                const rect = el.getBoundingClientRect();
+                return rect.width > 0 && rect.height > 0;
+            };
+
+            const hasVisibleStartButton = Array.from(doc.querySelectorAll('button, .button, [role="button"]'))
+                .some((el) => isVisible(el) && /start\s*game/i.test((el.textContent || '').trim()));
+            if (hasVisibleStartButton) return false;
+
+            const gameView = doc.querySelector('.game-view');
+            const canvas = doc.querySelector('canvas');
+            return !!(isVisible(gameView) && isVisible(canvas));
+        }
+
+        function syncGameRenderMode(doc, forcedActive) {
+            if (!doc || !doc.body) return false;
+            const gameActive = typeof forcedActive === 'boolean' ? forcedActive : isGameActiveDoc(doc);
+            doc.body.classList.toggle('vexa-game-active', gameActive);
+            return gameActive;
+        }
+
+        function syncCustomBackgroundForDoc(doc, forcedGameActive) {
             if (!doc || !doc.body) return;
             const currentBgPath = localStorage.getItem('hax_custom_bg');
+            const gameActive = syncGameRenderMode(doc, forcedGameActive);
 
             if (currentBgPath) {
                 if (!doc.body.classList.contains('vexa-has-custom-bg')) {
@@ -453,6 +505,7 @@
                         video.loop = true;
                         video.muted = true;
                         video.playsInline = true;
+                        video.dataset.vexaBgVideo = 'true';
                         Object.assign(video.style, {
                             width: '100%',
                             height: '100%',
@@ -469,6 +522,15 @@
                             objectFit: 'cover'
                         });
                         container.appendChild(img);
+                    }
+                }
+
+                const bgVideo = container.querySelector('video[data-vexa-bg-video="true"]');
+                if (bgVideo) {
+                    if (gameActive && !bgVideo.paused) {
+                        bgVideo.pause();
+                    } else if (!gameActive && bgVideo.paused) {
+                        bgVideo.play().catch(err => console.log('Video play error:', err));
                     }
                 }
             } else {
@@ -924,7 +986,7 @@
                 if (fpsEl) {
                     const header = document.querySelector('.header') || document.querySelector('header') || document.querySelector('#header');
                     const isHeaderVisible = header && header.offsetHeight > 0;
-                    const targetTop = isHeaderVisible ? '65px' : '15px';
+                    const targetTop = isHeaderVisible ? '85px' : '15px';
                     if (fpsEl.style.top !== targetTop) fpsEl.style.top = targetTop;
                 }
 
@@ -978,7 +1040,7 @@
                 lastTime = now;
                 frames = 0;
             }
-            requestAnimationFrame(measureFPS);
+            originalRAF(measureFPS);
         }
         originalRAF(measureFPS);
 
