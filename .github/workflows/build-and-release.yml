@@ -6,61 +6,103 @@ permissions:
 on:
   push:
     tags:
-      - 'v*' # Trigger on version tags like v1.0.0
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to build, for example v1.1.15"
+        required: true
+        type: string
+
+concurrency:
+  group: release-${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+  cancel-in-progress: false
 
 jobs:
   release:
     runs-on: windows-latest
 
+    env:
+      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Validate Release Tag
+        shell: pwsh
+        run: |
+          if ($env:RELEASE_TAG -notmatch '^v\d+\.\d+\.\d+$') {
+            throw "Release tag must look like v1.2.3. Got: $env:RELEASE_TAG"
+          }
+
+      - name: Ensure Manual Tag Exists
+        if: github.event_name == 'workflow_dispatch'
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git fetch origin "refs/tags/$env:RELEASE_TAG:refs/tags/$env:RELEASE_TAG" 2>$null
+          if ($LASTEXITCODE -ne 0) {
+            git tag $env:RELEASE_TAG
+            git push origin "refs/tags/$env:RELEASE_TAG"
+          }
+
+      - name: Clean Old Releases and Tags
+        shell: pwsh
+        run: |
+          gh release list --limit 1000 --json tagName --jq '.[].tagName' |
+            Where-Object { $_ -and $_ -ne $env:RELEASE_TAG } |
+            ForEach-Object {
+              Write-Host "Deleting old release $_"
+              gh release delete $_ --yes --cleanup-tag
+            }
+
+          gh api "repos/$env:GITHUB_REPOSITORY/git/matching-refs/tags/" --jq '.[].ref' |
+            ForEach-Object { $_ -replace '^refs/tags/', '' } |
+            Where-Object { $_ -and $_ -ne $env:RELEASE_TAG } |
+            ForEach-Object {
+              Write-Host "Deleting old tag $_"
+              gh api -X DELETE "repos/$env:GITHUB_REPOSITORY/git/refs/tags/$_"
+            }
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: npm
 
       - name: Install Dependencies
-        run: npm install
+        run: npm ci
 
-      - name: Build and Publish All (Launcher + Client)
+      - name: Clean Build Output
+        shell: pwsh
+        run: |
+          Remove-Item -Recurse -Force dist, app.zip -ErrorAction SilentlyContinue
+
+      - name: Build Launcher and Client
         run: npm run build:full
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Artifacts to Release
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
         with:
-          name: "Vexa Client ${{ github.ref_name }}"
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: "Vexa Client ${{ env.RELEASE_TAG }}"
           body: |
-            ## 🚀 Vexa Client ${{ github.ref_name }}
+            ## Vexa Client ${{ env.RELEASE_TAG }}
 
-            Vexa'nın bu sürümünü aşağıdaki bağlantıdan indirebilirsiniz.
+            Vexa'nin bu surumunu asagidaki dosyalardan indirebilirsiniz.
 
-            ### 📥 Kurulum
-            1. `vexa-launcher-setup-*.exe` dosyasını indirin
-            2. Kurulumu çalıştırın
-            3. Launcher açıldıktan sonra **İNDİR** butonuna basın, oyun dosyaları otomatik kurulur
+            ### Kurulum
+            1. `vexa-launcher-setup-*.exe` dosyasini indirin.
+            2. Kurulumu calistirin.
+            3. Launcher acildiktan sonra oyun dosyalari otomatik kurulur.
 
-            ### ✨ Özellikler
-            - Sınırsız FPS desteği (monitör yenileme hızına tam uyum)
-            - Otomatik güncelleme sistemi
-            - Discord Rich Presence (Discord'da anlık oyun durumu)
-            - Reklamsız oyun deneyimi
-            - Sohbet kısayolları: `/a` (avatar), `/e` (extrapolation)
-
-            ### ⚠️ Antivirüs Uyarısı
-            Windows "Bilinmeyen Yayıncı" uyarısı verebilir. Bu normal bir durumdur, **"Yine de Çalıştır"** diyerek devam edebilirsiniz.
-
-            ---
-            📌 Sorun yaşarsanız [Discord sunucumuza](https://vexaclient.rf.gd/discord) katılın.
+            ### Not
+            Windows "Bilinmeyen Yayinci" uyarisi verebilir. Bu normaldir.
           files: |
             dist/*.exe
             app.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-
