@@ -34,7 +34,7 @@ rpc.on('ready', () => {
         largeImageText: 'Vexa Client',
         instance: false,
         buttons: [
-            { label: 'Discord', url: 'https://vexaclient.rf.gd/discord' },
+            { label: 'Discord', url: 'https://vexa-client.github.io/discord' },
             { label: 'GitHub', url: 'https://github.com/vexa-client/vexa' }
         ]
     }).catch(console.error);

@@ -37,7 +37,7 @@ function setActivity(state, details, nick) {
         smallImageText: (nick && nick.length >= 2) ? `${nick}` : undefined,
         instance: false,
         buttons: [
-            { label: 'Discord', url: 'https://vexaclient.rf.gd/discord' },
+            { label: 'Discord', url: 'https://vexa-client.github.io/discord' },
             { label: 'GitHub', url: 'https://github.com/vexa-client/vexa' }
         ]
     }).catch(err => console.error('Discord RPC Error:', err));

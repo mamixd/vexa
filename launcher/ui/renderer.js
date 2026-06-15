@@ -90,7 +90,7 @@ actionBtn.addEventListener('click', async () => {
                 // Set updateAvailable to true so next click triggers download
                 updateInfo.updateAvailable = true; 
                 if (!updateInfo.downloadUrl) {
-                    updateInfo.downloadUrl = 'https://github.com/vexa-client/vexa/releases/latest/download/app.zip';
+                    updateInfo.downloadUrl = 'https://github.com/vexa-client/vexa/releases/latest';
                 }
             } else {
                 statusText.innerText = 'BAŞLATMA HATASI';
