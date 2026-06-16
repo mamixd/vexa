@@ -27,12 +27,18 @@ async function init() {
             actionBtn.innerText = 'ŞİMDİ İNDİR';
             actionBtn.classList.remove('disabled');
             updateInfo.updateAvailable = true; // Fix: Set to true so first click triggers download flow
+            updateInfo.updateType = 'client';
         } else if (updateInfo.updateAvailable) {
-            statusText.innerText = 'GÜNCELLEME MEVCUT';
-            actionBtn.innerText = 'ŞİMDİ GÜNCELLE';
+            if (updateInfo.updateType === 'launcher') {
+                statusText.innerText = 'LAUNCHER GÜNCELLEME MEVCUT';
+                actionBtn.innerText = 'LAUNCHER GÜNCELLE';
+            } else {
+                statusText.innerText = 'OYUN GÜNCELLEMESİ MEVCUT';
+                actionBtn.innerText = 'ŞİMDİ GÜNCELLE';
+            }
             actionBtn.classList.remove('disabled');
         } else {
-            statusText.innerText = 'VEZA İÇİN HAZIRMISIN?';
+            statusText.innerText = 'VEXA İÇİN HAZIRMISIN?';
             actionBtn.innerText = 'OYNA';
             actionBtn.classList.remove('disabled');
         }
@@ -61,6 +67,12 @@ actionBtn.addEventListener('click', async () => {
         progressContainer.classList.remove('hidden');
 
         try {
+            if (updateInfo.updateType === 'launcher') {
+                statusText.innerText = 'LAUNCHER GÜNCELLENİYOR...';
+                await window.api.startLauncherUpdate(updateInfo.downloadUrl);
+                return;
+            }
+
             await window.api.startDownload(updateInfo.downloadUrl);
             statusText.innerText = 'AYIKLANIYOR...';
             await window.api.extractAndInstall(updateInfo.latestVersion);

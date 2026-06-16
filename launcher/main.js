@@ -34,7 +34,7 @@ rpc.on('ready', () => {
         largeImageText: 'Vexa Client',
         instance: false,
         buttons: [
-            { label: 'Discord', url: 'https://vexa-client.github.io/discord' },
+            { label: 'Download', url: 'https://vexa-client.github.io' },
             { label: 'GitHub', url: 'https://github.com/vexa-client/vexa' }
         ]
     }).catch(console.error);
@@ -107,20 +107,26 @@ ipcMain.handle('check-update', async () => {
 
         const latestRelease = response.data;
         const latestVersion = latestRelease.tag_name || '0.0.0';
-        
-        // Find the app.zip asset
-        const asset = latestRelease.assets.find(a => a.name === 'app.zip');
-        const downloadUrl = asset ? asset.browser_download_url : null;
 
-        const updateAvailable = isInstalled && (latestVersion !== localVersion);
+        const launcherAsset = latestRelease.assets.find(a => /^vexa-launcher-setup-.*\.exe$/i.test(a.name));
+        const clientAsset = latestRelease.assets.find(a => a.name === 'app.zip');
+        const launcherDownloadUrl = launcherAsset ? launcherAsset.browser_download_url : null;
+        const clientDownloadUrl = clientAsset ? clientAsset.browser_download_url : null;
+
+        const localLauncherVersion = app.getVersion();
+        const launcherUpdateAvailable = launcherAsset && (latestVersion !== localLauncherVersion);
+        const clientUpdateAvailable = isInstalled && clientAsset && (latestVersion !== localVersion);
+        const updateAvailable = launcherUpdateAvailable || clientUpdateAvailable;
 
         return {
             updateAvailable: updateAvailable,
+            updateType: launcherUpdateAvailable ? 'launcher' : (clientUpdateAvailable ? 'client' : 'none'),
             isInstalled: isInstalled,
             latestVersion: latestVersion,
             localVersion: localVersion,
+            localLauncherVersion: localLauncherVersion,
             patchNotes: latestRelease.body || 'Yeni güncelleme mevcut!',
-            downloadUrl: downloadUrl || (latestRelease.assets[0] ? latestRelease.assets[0].browser_download_url : '')
+            downloadUrl: launcherUpdateAvailable ? launcherDownloadUrl : (clientDownloadUrl || (latestRelease.assets[0] ? latestRelease.assets[0].browser_download_url : ''))
         };
     } catch (error) {
         console.error('[Launcher] Update check failed:', error.message);
@@ -142,6 +148,20 @@ ipcMain.handle('start-download', async (event, url) => {
     } catch (error) {
         console.error('[Main] Download error:', error);
         throw error;
+    }
+});
+
+ipcMain.handle('start-launcher-update', async (event, url) => {
+    try {
+        await installer.download(url, 'update.exe');
+        const result = await installer.installLauncherUpdate();
+        if (result.success) {
+            app.quit();
+        }
+        return result;
+    } catch (error) {
+        console.error('[Main] Launcher update error:', error);
+        return { error: error.message || String(error) };
     }
 });
 

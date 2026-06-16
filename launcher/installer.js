@@ -29,8 +29,9 @@ class InstallerManager {
         });
     }
 
-    async download(url) {
+    async download(url, fileName = 'update.zip') {
         this.notify('Sunucuya bağlanılıyor...');
+        const targetPath = path.join(this.appDataPath, fileName);
         const response = await axios({
             method: 'get',
             url: url,
@@ -43,7 +44,7 @@ class InstallerManager {
 
         const totalLength = parseInt(response.headers['content-length'], 10);
         let downloadedLength = 0;
-        const writer = fs.createWriteStream(this.zipPath);
+        const writer = fs.createWriteStream(targetPath);
 
         response.data.pipe(writer);
 
@@ -51,12 +52,11 @@ class InstallerManager {
             response.data.on('data', (chunk) => {
                 downloadedLength += chunk.length;
                 const progress = totalLength > 0 ? Math.round((downloadedLength / totalLength) * 100) : 0;
-                this.notify('Oyun indiriliyor...', progress);
+                this.notify('İndiriliyor...', progress);
             });
 
             writer.on('finish', async () => {
-                // DOĞRULAMA: İndirilen dosyanın boyutu doğru mu?
-                const stats = await fs.stat(this.zipPath);
+                const stats = await fs.stat(targetPath);
                 if (totalLength > 0 && stats.size !== totalLength) {
                     reject(new Error(`İndirme eksik tamamlandı! (Beklenen: ${totalLength}, İnen: ${stats.size} bayt)`));
                 } else {
@@ -68,6 +68,20 @@ class InstallerManager {
             writer.on('error', reject);
             response.data.on('error', reject);
         });
+    }
+
+    async installLauncherUpdate() {
+        const launcherUpdatePath = path.join(this.appDataPath, 'update.exe');
+        if (!fs.existsSync(launcherUpdatePath)) {
+            throw new Error('Launcher güncelleme dosyası bulunamadı.');
+        }
+
+        this.notify('Launcher güncellemesi başlatılıyor...');
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        // Execute the downloaded installer and exit.
+        spawn(`"${launcherUpdatePath}"`, ['/S'], { detached: true, stdio: 'ignore', shell: true }).unref();
+        return { success: true };
     }
 
     async install(version) {
