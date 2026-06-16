@@ -20,13 +20,33 @@ class InstallerManager {
 
     async killProcess(exeName = 'vexa-client.exe') {
         this.notify(`Eski süreçler kontrol ediliyor: ${exeName}...`);
-        return new Promise((resolve) => {
-            // Windows'ta süreci zorla kapatır, bulunamazsa hata vermez
-            const cmd = `taskkill /F /IM ${exeName} /T`;
-            spawn(cmd, { shell: true }).on('close', () => {
-                setTimeout(resolve, 1500); // İşletim sisteminin dosya kilitlerini bırakması için bekle
+        const processes = [exeName, 'vexa-launcher.exe', 'Vexa Launcher.exe', 'vexa-haxball-client.exe'];
+        
+        for (const proc of processes) {
+            await new Promise((resolve) => {
+                const cmd = `taskkill /F /IM ${proc} /T 2>nul`;
+                spawn(cmd, { shell: true }).on('close', () => {
+                    setTimeout(resolve, 800);
+                });
             });
-        });
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+
+    async safeRemove(dirPath, maxRetries = 5) {
+        for (let i = 0; i < maxRetries; i++) {
+            try {
+                await fs.remove(dirPath);
+                return;
+            } catch (err) {
+                if (i < maxRetries - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 500 * (i + 1)));
+                } else {
+                    throw err;
+                }
+            }
+        }
     }
 
     async download(url, fileName = 'update.zip') {
@@ -95,7 +115,7 @@ class InstallerManager {
             const stagingPath = path.join(this.appDataPath, 'staging');
             
             this.notify('Ön temizlik yapılıyor...');
-            await fs.remove(stagingPath);
+            await this.safeRemove(stagingPath);
             await fs.ensureDir(stagingPath);
 
             this.notify('Dosyalar ayıklanıyor...');
@@ -106,13 +126,13 @@ class InstallerManager {
             
             this.notify('Kurulum tamamlanıyor...');
             // Mevcut oyunu tamamen kaldır ve staging içeriğini oraya TAŞI
-            await fs.remove(this.gamePath);
+            await this.safeRemove(this.gamePath);
             await fs.move(stagingPath, this.gamePath, { overwrite: true });
 
             this.notify('Geçici dosyalar temizleniyor...');
-            await fs.remove(this.zipPath);
-            await fs.remove(stagingPath).catch(() => {}); // Ekstra temizlik
             
+            await this.safeRemove(this.zipPath).catch(() => {});
+            await this.safeRemove(stagingPath).catch(() => {}); // Ekstra temizlik
             const versionFile = path.join(this.appDataPath, 'version.json');
             await fs.writeJson(versionFile, { version });
 
