@@ -4,6 +4,9 @@ const axios = require('axios');
 const extract = require('extract-zip');
 const { spawn } = require('child_process');
 
+const PARALLEL_DOWNLOAD_PARTS = 4;
+const PARALLEL_DOWNLOAD_MIN_SIZE = 16 * 1024 * 1024;
+
 class InstallerManager {
     constructor(mainWindow, appDataPath) {
         this.mainWindow = mainWindow;
@@ -12,16 +15,78 @@ class InstallerManager {
         this.zipPath = path.join(appDataPath, 'update.zip');
     }
 
-    notify(status, progress = null) {
+    notify(status, progress = null, details = null) {
         if (this.mainWindow && !this.mainWindow.isDestroyed()) {
-            this.mainWindow.webContents.send('installer-status', { status, progress });
+            this.mainWindow.webContents.send('installer-status', { status, progress, details });
         }
+    }
+
+    formatBytes(bytes) {
+        if (!Number.isFinite(bytes) || bytes <= 0) return '0 MB';
+        const units = ['B', 'KB', 'MB', 'GB'];
+        let value = bytes;
+        let unitIndex = 0;
+
+        while (value >= 1024 && unitIndex < units.length - 1) {
+            value /= 1024;
+            unitIndex++;
+        }
+
+        return `${value.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+    }
+
+    formatDuration(seconds) {
+        if (!Number.isFinite(seconds) || seconds <= 0) return '--';
+        const rounded = Math.ceil(seconds);
+        const minutes = Math.floor(rounded / 60);
+        const rest = rounded % 60;
+
+        if (minutes <= 0) return `${rest} sn`;
+        return `${minutes} dk ${rest.toString().padStart(2, '0')} sn`;
+    }
+
+    requestHeaders(extra = {}) {
+        return {
+            'User-Agent': 'VexaLauncher/Pro-Install-System',
+            'Accept': '*/*',
+            ...extra
+        };
+    }
+
+    createProgressReporter(totalLength) {
+        const startedAt = Date.now();
+        let lastNotifyAt = 0;
+
+        return (downloadedLength, status = 'İndiriliyor...', mode = null, force = false) => {
+            const progress = totalLength > 0 ? Math.min(100, Math.round((downloadedLength / totalLength) * 100)) : 0;
+            const now = Date.now();
+
+            if (!force && progress !== 100 && now - lastNotifyAt <= 350) return;
+
+            const elapsedSeconds = Math.max((now - startedAt) / 1000, 0.001);
+            const bytesPerSecond = downloadedLength / elapsedSeconds;
+            const remainingBytes = totalLength > 0 ? Math.max(totalLength - downloadedLength, 0) : 0;
+            const etaSeconds = bytesPerSecond > 0 && totalLength > 0 ? remainingBytes / bytesPerSecond : 0;
+            const modeText = mode ? ` • ${mode}` : '';
+            const details = {
+                downloaded: downloadedLength,
+                total: totalLength || null,
+                speed: bytesPerSecond,
+                eta: etaSeconds,
+                text: totalLength > 0
+                    ? `${this.formatBytes(downloadedLength)} / ${this.formatBytes(totalLength)} • ${this.formatBytes(bytesPerSecond)}/sn • ${this.formatDuration(etaSeconds)} kaldı${modeText}`
+                    : `${this.formatBytes(downloadedLength)} • ${this.formatBytes(bytesPerSecond)}/sn${modeText}`
+            };
+
+            this.notify(status, progress, details);
+            lastNotifyAt = now;
+        };
     }
 
     async killProcess(exeName = 'vexa-client.exe') {
         this.notify(`Eski süreçler kontrol ediliyor: ${exeName}...`);
         const processes = [exeName, 'vexa-launcher.exe', 'Vexa Launcher.exe', 'vexa-haxball-client.exe'];
-        
+
         for (const proc of processes) {
             await new Promise((resolve) => {
                 const cmd = `taskkill /F /IM ${proc} /T 2>nul`;
@@ -30,7 +95,7 @@ class InstallerManager {
                 });
             });
         }
-        
+
         await new Promise(resolve => setTimeout(resolve, 2000));
     }
 
@@ -49,21 +114,61 @@ class InstallerManager {
         }
     }
 
+    async getDownloadInfo(url) {
+        try {
+            const response = await axios({
+                method: 'head',
+                url,
+                maxRedirects: 10,
+                timeout: 15000,
+                headers: this.requestHeaders()
+            });
+
+            return {
+                totalLength: parseInt(response.headers['content-length'], 10) || 0,
+                acceptRanges: String(response.headers['accept-ranges'] || '').toLowerCase().includes('bytes')
+            };
+        } catch (error) {
+            console.warn('[Installer] HEAD request failed, using regular download:', error.message);
+            return { totalLength: 0, acceptRanges: false };
+        }
+    }
+
     async download(url, fileName = 'update.zip') {
         this.notify('Sunucuya bağlanılıyor...');
         const targetPath = path.join(this.appDataPath, fileName);
+
+        await fs.remove(targetPath).catch(() => {});
+
+        const downloadInfo = await this.getDownloadInfo(url);
+        const canUseParallel = downloadInfo.acceptRanges && downloadInfo.totalLength >= PARALLEL_DOWNLOAD_MIN_SIZE;
+
+        if (canUseParallel) {
+            try {
+                await this.downloadParallel(url, targetPath, downloadInfo.totalLength);
+                return;
+            } catch (error) {
+                console.warn('[Installer] Parallel download failed, falling back to stream:', error.message);
+                await fs.remove(targetPath).catch(() => {});
+                this.notify('Tek bağlantı ile deneniyor...', 0);
+            }
+        }
+
+        await this.downloadStream(url, targetPath, downloadInfo.totalLength);
+    }
+
+    async downloadStream(url, targetPath, knownLength = 0) {
         const response = await axios({
             method: 'get',
-            url: url,
+            url,
             responseType: 'stream',
-            headers: {
-                'User-Agent': 'VexaLauncher/Pro-Install-System',
-                'Accept': '*/*'
-            }
+            maxRedirects: 10,
+            headers: this.requestHeaders()
         });
 
-        const totalLength = parseInt(response.headers['content-length'], 10);
+        const totalLength = knownLength || parseInt(response.headers['content-length'], 10) || 0;
         let downloadedLength = 0;
+        const reportProgress = this.createProgressReporter(totalLength);
         const writer = fs.createWriteStream(targetPath);
 
         response.data.pipe(writer);
@@ -71,8 +176,7 @@ class InstallerManager {
         return new Promise((resolve, reject) => {
             response.data.on('data', (chunk) => {
                 downloadedLength += chunk.length;
-                const progress = totalLength > 0 ? Math.round((downloadedLength / totalLength) * 100) : 0;
-                this.notify('İndiriliyor...', progress);
+                reportProgress(downloadedLength, 'İndiriliyor...', 'tek bağlantı');
             });
 
             writer.on('finish', async () => {
@@ -81,6 +185,7 @@ class InstallerManager {
                     reject(new Error(`İndirme eksik tamamlandı! (Beklenen: ${totalLength}, İnen: ${stats.size} bayt)`));
                 } else {
                     console.log(`[Installer] Download verified: ${stats.size} bytes`);
+                    reportProgress(stats.size, 'İndiriliyor...', 'tek bağlantı', true);
                     resolve();
                 }
             });
@@ -88,6 +193,105 @@ class InstallerManager {
             writer.on('error', reject);
             response.data.on('error', reject);
         });
+    }
+
+    async downloadParallel(url, targetPath, totalLength) {
+        const partCount = Math.min(PARALLEL_DOWNLOAD_PARTS, Math.ceil(totalLength / PARALLEL_DOWNLOAD_MIN_SIZE));
+        const partSize = Math.ceil(totalLength / partCount);
+        const partProgress = new Array(partCount).fill(0);
+        const partPaths = [];
+        const reportProgress = this.createProgressReporter(totalLength);
+
+        this.notify('Hızlı indirme hazırlanıyor...', 0, {
+            downloaded: 0,
+            total: totalLength,
+            speed: 0,
+            eta: 0,
+            text: `${partCount} paralel bağlantı hazırlanıyor`
+        });
+
+        const tasks = Array.from({ length: partCount }, async (_, index) => {
+            const start = index * partSize;
+            const end = Math.min(start + partSize - 1, totalLength - 1);
+            const partPath = `${targetPath}.part${index}`;
+            partPaths[index] = partPath;
+            await fs.remove(partPath).catch(() => {});
+
+            await this.downloadRange(url, partPath, start, end, (bytes) => {
+                partProgress[index] = bytes;
+                const downloadedLength = partProgress.reduce((sum, value) => sum + value, 0);
+                reportProgress(downloadedLength, 'İndiriliyor...', `${partCount} paralel bağlantı`);
+            });
+        });
+
+        try {
+            await Promise.all(tasks);
+            await this.mergeParts(partPaths, targetPath);
+
+            const stats = await fs.stat(targetPath);
+            if (stats.size !== totalLength) {
+                throw new Error(`Parçalı indirme eksik tamamlandı! (Beklenen: ${totalLength}, İnen: ${stats.size} bayt)`);
+            }
+
+            reportProgress(stats.size, 'İndiriliyor...', `${partCount} paralel bağlantı`, true);
+            await Promise.all(partPaths.map((partPath) => fs.remove(partPath).catch(() => {})));
+        } catch (error) {
+            await Promise.all(partPaths.map((partPath) => fs.remove(partPath).catch(() => {})));
+            throw error;
+        }
+    }
+
+    async downloadRange(url, partPath, start, end, onProgress) {
+        const response = await axios({
+            method: 'get',
+            url,
+            responseType: 'stream',
+            maxRedirects: 10,
+            headers: this.requestHeaders({ Range: `bytes=${start}-${end}` }),
+            validateStatus: (status) => status === 206
+        });
+
+        let downloaded = 0;
+        const expectedSize = end - start + 1;
+        const writer = fs.createWriteStream(partPath);
+
+        response.data.pipe(writer);
+
+        return new Promise((resolve, reject) => {
+            response.data.on('data', (chunk) => {
+                downloaded += chunk.length;
+                onProgress(downloaded);
+            });
+
+            writer.on('finish', async () => {
+                const stats = await fs.stat(partPath);
+                if (stats.size !== expectedSize) {
+                    reject(new Error(`Parça eksik indi: ${stats.size}/${expectedSize}`));
+                    return;
+                }
+
+                resolve();
+            });
+
+            writer.on('error', reject);
+            response.data.on('error', reject);
+        });
+    }
+
+    async mergeParts(partPaths, targetPath) {
+        await fs.remove(targetPath).catch(() => {});
+
+        for (const partPath of partPaths) {
+            await new Promise((resolve, reject) => {
+                const reader = fs.createReadStream(partPath);
+                const writer = fs.createWriteStream(targetPath, { flags: 'a' });
+
+                reader.on('error', reject);
+                writer.on('error', reject);
+                writer.on('finish', resolve);
+                reader.pipe(writer);
+            });
+        }
     }
 
     async installLauncherUpdate() {
@@ -99,7 +303,6 @@ class InstallerManager {
         this.notify('Launcher güncellemesi başlatılıyor...');
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        // Execute the downloaded installer and exit.
         spawn(`"${launcherUpdatePath}"`, ['/S'], { detached: true, stdio: 'ignore', shell: true }).unref();
         return { success: true };
     }
@@ -107,13 +310,12 @@ class InstallerManager {
     async install(version) {
         const originalNoAsar = process.noAsar;
         try {
-            // ASAR desteğini geçici olarak kapat (Ayıklama sırasında "Invalid Package" hatasını önler)
-            process.noAsar = true; 
+            process.noAsar = true;
 
             await this.killProcess();
 
             const stagingPath = path.join(this.appDataPath, 'staging');
-            
+
             this.notify('Ön temizlik yapılıyor...');
             await this.safeRemove(stagingPath);
             await fs.ensureDir(stagingPath);
@@ -123,16 +325,15 @@ class InstallerManager {
 
             this.notify('Dosya yapısı taranıyor ve izole ediliyor...');
             await this.robustFlattenStructure(stagingPath);
-            
+
             this.notify('Kurulum tamamlanıyor...');
-            // Mevcut oyunu tamamen kaldır ve staging içeriğini oraya TAŞI
             await this.safeRemove(this.gamePath);
             await fs.move(stagingPath, this.gamePath, { overwrite: true });
 
             this.notify('Geçici dosyalar temizleniyor...');
-            
+
             await this.safeRemove(this.zipPath).catch(() => {});
-            await this.safeRemove(stagingPath).catch(() => {}); // Ekstra temizlik
+            await this.safeRemove(stagingPath).catch(() => {});
             const versionFile = path.join(this.appDataPath, 'version.json');
             await fs.writeJson(versionFile, { version });
 
@@ -145,9 +346,6 @@ class InstallerManager {
         }
     }
 
-    /**
-     * Recursive Flattening: Find the primary application folder and promote it within STAGING.
-     */
     async robustFlattenStructure(targetDir) {
         const findAppRoot = async (dir) => {
             const entries = await fs.readdir(dir);
@@ -165,17 +363,14 @@ class InstallerManager {
         };
 
         const appRoot = await findAppRoot(targetDir);
-        
+
         if (appRoot && appRoot !== targetDir) {
             console.log(`[Installer] Detected app root at: ${appRoot}. Normalizing staging area...`);
-            
+
             const tempFlat = path.join(this.appDataPath, 'temp_flat');
             await fs.remove(tempFlat);
-            
-            // appRoot'u temp_flat'e taşı
+
             await fs.move(appRoot, tempFlat);
-            
-            // stagingPath'i temizle ve temp_flat'i oraya kopyala
             await fs.remove(targetDir);
             await fs.ensureDir(targetDir);
             await fs.copy(tempFlat, targetDir);

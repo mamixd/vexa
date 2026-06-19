@@ -5,6 +5,7 @@ const actionBtn = document.getElementById('action-btn');
 const progressContainer = document.getElementById('progress-container');
 const progressFill = document.getElementById('progress-fill');
 const progressLabel = document.getElementById('progress-label');
+const progressDetails = document.getElementById('progress-details');
 
 let updateInfo = null;
 
@@ -49,13 +50,64 @@ async function init() {
 }
 
 function formatPatchNotes(text) {
-    // Basic markdown to HTML conversion for patch notes
-    return text
-        .replace(/\r\n/g, '<br>')
-        .replace(/\n/g, '<br>')
-        .replace(/### (.*)/g, '<h3 style="color:white; margin:15px 0 5px 0;">$1</h3>')
-        .replace(/## (.*)/g, '<h2 style="color:var(--cyan); margin:20px 0 10px 0;">$1</h2>')
-        .replace(/\* (.*)/g, '<li style="margin-left:15px; list-style:square;">$1</li>');
+    const escapeHtml = (value) => String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    const inline = (value) => escapeHtml(value)
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    const lines = String(text || '').replace(/\r\n/g, '\n').split('\n');
+    const html = [];
+    let listType = null;
+
+    const closeList = () => {
+        if (!listType) return;
+        html.push(`</${listType}>`);
+        listType = null;
+    };
+
+    for (const line of lines) {
+        const trimmed = line.trim();
+
+        if (!trimmed) {
+            closeList();
+            continue;
+        }
+
+        if (trimmed.startsWith('### ')) {
+            closeList();
+            html.push(`<h3>${inline(trimmed.slice(4))}</h3>`);
+        } else if (trimmed.startsWith('## ')) {
+            closeList();
+            html.push(`<h2>${inline(trimmed.slice(3))}</h2>`);
+        } else if (trimmed.startsWith('# ')) {
+            closeList();
+            html.push(`<h1>${inline(trimmed.slice(2))}</h1>`);
+        } else if (/^[-*]\s+/.test(trimmed)) {
+            if (listType !== 'ul') {
+                closeList();
+                html.push('<ul>');
+                listType = 'ul';
+            }
+            html.push(`<li>${inline(trimmed.replace(/^[-*]\s+/, ''))}</li>`);
+        } else if (/^\d+\.\s+/.test(trimmed)) {
+            if (listType !== 'ol') {
+                closeList();
+                html.push('<ol>');
+                listType = 'ol';
+            }
+            html.push(`<li>${inline(trimmed.replace(/^\d+\.\s+/, ''))}</li>`);
+        } else {
+            closeList();
+            html.push(`<p>${inline(trimmed)}</p>`);
+        }
+    }
+
+    closeList();
+    return html.join('');
 }
 
 actionBtn.addEventListener('click', async () => {
@@ -135,6 +187,10 @@ window.api.onInstallerStatus((data) => {
         progressFill.style.width = `${data.progress}%`;
         progressLabel.innerText = `${data.progress}%`;
         progressContainer.classList.remove('hidden');
+    }
+
+    if (data.details && data.details.text) {
+        progressDetails.innerText = data.details.text;
     }
 });
 

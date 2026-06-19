@@ -14,6 +14,7 @@ const InstallerManager = require('./installer');
 let mainWindow;
 let installer;
 const GITHUB_REPO = 'vexa-client/vexa'; 
+const PATCH_NOTES_RAW_URL = 'https://raw.githubusercontent.com/vexa-client/vexa/main/launcher/patch-notes.md';
 let APP_DATA_PATH;
 let VERSION_FILE;
 
@@ -128,6 +129,20 @@ ipcMain.handle('check-update', async () => {
         const clientUpdateAvailable = isInstalled && clientAsset && !isSameVersion(latestVersion, localVersion);
         const updateType = initialInstallRequired ? 'client' : (launcherUpdateAvailable ? 'launcher' : (clientUpdateAvailable ? 'client' : 'none'));
         const updateAvailable = launcherUpdateAvailable || clientUpdateAvailable;
+        let patchNotes = latestRelease.body || 'Yeni güncelleme mevcut!';
+
+        try {
+            const notesResponse = await axios.get(PATCH_NOTES_RAW_URL, {
+                timeout: 10000,
+                headers: { 'User-Agent': 'VexaLauncher-PatchNotes' }
+            });
+
+            if (typeof notesResponse.data === 'string' && notesResponse.data.trim()) {
+                patchNotes = notesResponse.data;
+            }
+        } catch (notesError) {
+            console.warn('[Launcher] Raw patch notes unavailable:', notesError.message);
+        }
 
         return {
             updateAvailable: updateAvailable || initialInstallRequired,
@@ -136,7 +151,7 @@ ipcMain.handle('check-update', async () => {
             latestVersion: latestVersion,
             localVersion: localVersion,
             localLauncherVersion: localLauncherVersion,
-            patchNotes: latestRelease.body || 'Yeni güncelleme mevcut!',
+            patchNotes: patchNotes,
             downloadUrl: updateType === 'launcher' ? launcherDownloadUrl : clientDownloadUrl,
             launcherDownloadUrl: launcherDownloadUrl,
             clientDownloadUrl: clientDownloadUrl
