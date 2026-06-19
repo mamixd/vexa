@@ -123,19 +123,23 @@ ipcMain.handle('check-update', async () => {
         const clientDownloadUrl = clientAsset ? clientAsset.browser_download_url : null;
 
         const localLauncherVersion = normalizeVersion(app.getVersion());
-        const launcherUpdateAvailable = launcherAsset && !isSameVersion(latestVersion, localLauncherVersion);
+        const initialInstallRequired = !isInstalled && Boolean(clientAsset);
+        const launcherUpdateAvailable = isInstalled && launcherAsset && !isSameVersion(latestVersion, localLauncherVersion);
         const clientUpdateAvailable = isInstalled && clientAsset && !isSameVersion(latestVersion, localVersion);
+        const updateType = initialInstallRequired ? 'client' : (launcherUpdateAvailable ? 'launcher' : (clientUpdateAvailable ? 'client' : 'none'));
         const updateAvailable = launcherUpdateAvailable || clientUpdateAvailable;
 
         return {
-            updateAvailable: updateAvailable,
-            updateType: launcherUpdateAvailable ? 'launcher' : (clientUpdateAvailable ? 'client' : 'none'),
+            updateAvailable: updateAvailable || initialInstallRequired,
+            updateType: updateType,
             isInstalled: isInstalled,
             latestVersion: latestVersion,
             localVersion: localVersion,
             localLauncherVersion: localLauncherVersion,
             patchNotes: latestRelease.body || 'Yeni güncelleme mevcut!',
-            downloadUrl: launcherUpdateAvailable ? launcherDownloadUrl : (clientDownloadUrl || (latestRelease.assets[0] ? latestRelease.assets[0].browser_download_url : ''))
+            downloadUrl: updateType === 'launcher' ? launcherDownloadUrl : clientDownloadUrl,
+            launcherDownloadUrl: launcherDownloadUrl,
+            clientDownloadUrl: clientDownloadUrl
         };
     } catch (error) {
         console.error('[Launcher] Update check failed:', error.message);

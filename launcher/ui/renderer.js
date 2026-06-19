@@ -26,8 +26,9 @@ async function init() {
             statusText.innerText = 'KURULUM GEREKLİ';
             actionBtn.innerText = 'ŞİMDİ İNDİR';
             actionBtn.classList.remove('disabled');
-            updateInfo.updateAvailable = true; // Fix: Set to true so first click triggers download flow
+            updateInfo.updateAvailable = true; // First install uses the same download flow.
             updateInfo.updateType = 'client';
+            updateInfo.downloadUrl = updateInfo.clientDownloadUrl || updateInfo.downloadUrl;
         } else if (updateInfo.updateAvailable) {
             if (updateInfo.updateType === 'launcher') {
                 statusText.innerText = 'LAUNCHER GÜNCELLEME MEVCUT';
@@ -61,6 +62,13 @@ actionBtn.addEventListener('click', async () => {
     if (actionBtn.classList.contains('disabled')) return;
 
     if (updateInfo.updateAvailable) {
+        if (!updateInfo.downloadUrl) {
+            statusText.innerText = 'İNDİRME LİNKİ BULUNAMADI';
+            statusText.style.color = 'var(--red)';
+            patchNotes.innerText = 'GitHub release içinde app.zip dosyası bulunamadı. Lütfen son release dosyalarını kontrol edin.';
+            return;
+        }
+
         // Start Update Flow
         actionBtn.classList.add('disabled');
         actionBtn.innerText = 'GÜNCELLENİYOR...';
