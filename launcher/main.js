@@ -1,10 +1,9 @@
-const { app, BrowserWindow, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const axios = require('axios');
 const fs = require('fs-extra');
 const { spawn } = require('child_process');
 
-// Bypassing security checks for insecure downloads (HTTP) and certificate errors
 app.commandLine.appendSwitch('ignore-certificate-errors');
 app.commandLine.appendSwitch('allow-insecure-localhost');
 app.commandLine.appendSwitch('disable-features', 'InsecureDownloadWarnings');
@@ -13,8 +12,11 @@ const InstallerManager = require('./installer');
 
 let mainWindow;
 let installer;
-const GITHUB_REPO = 'vexa-client/vexa'; 
-const PATCH_NOTES_RAW_URL = 'https://raw.githubusercontent.com/vexa-client/vexa/main/launcher/patch-notes.md';
+const GITHUB_REPO = 'vexa-client/vexa';
+const RELEASE_API_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
+const PATCH_NOTES_RAW_URL = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/launcher/patch-notes.md`;
+const FALLBACK_CLIENT_DOWNLOAD_URL = `https://github.com/${GITHUB_REPO}/releases/latest/download/app.zip`;
+const FALLBACK_RELEASE_URL = `https://github.com/${GITHUB_REPO}/releases/latest`;
 let APP_DATA_PATH;
 let VERSION_FILE;
 
@@ -26,7 +28,74 @@ function isSameVersion(left, right) {
     return normalizeVersion(left) === normalizeVersion(right);
 }
 
-// --- Discord RPC (Launcher State) ---
+async function readLocalInstallState() {
+    const clientPath = path.join(APP_DATA_PATH, 'game');
+    const clientExe = path.join(clientPath, 'vexa-client.exe');
+    const isInstalled = fs.existsSync(clientExe);
+    let localVersion = 'Yüklü Değil';
+
+    if (isInstalled && fs.existsSync(VERSION_FILE)) {
+        try {
+            const versionData = await fs.readJson(VERSION_FILE);
+            localVersion = normalizeVersion(versionData.version || '0.0.0');
+        } catch (error) {
+            console.warn('[Launcher] Local version file unreadable:', error.message);
+            localVersion = '0.0.0';
+        }
+    }
+
+    return { isInstalled, localVersion };
+}
+
+async function getPatchNotes(fallbackText) {
+    try {
+        const notesResponse = await axios.get(PATCH_NOTES_RAW_URL, {
+            timeout: 10000,
+            headers: { 'User-Agent': 'VexaLauncher-PatchNotes' }
+        });
+
+        if (typeof notesResponse.data === 'string' && notesResponse.data.trim()) {
+            return notesResponse.data;
+        }
+    } catch (error) {
+        console.warn('[Launcher] Raw patch notes unavailable:', error.message);
+    }
+
+    return fallbackText || 'Yeni güncelleme mevcut!';
+}
+
+function createFallbackUpdateInfo(error, installState) {
+    const localLauncherVersion = normalizeVersion(app.getVersion());
+    const canInstallClient = !installState.isInstalled;
+    const patchNotes = [
+        '# Bağlantı Modu',
+        '',
+        'GitHub API şu an cevap vermedi, ama launcher kilitlenmedi.',
+        '',
+        '## Kullanılabilir işlemler',
+        '- Oyun kuruluysa **OYNA** butonu çalışır.',
+        '- Oyun dosyası yoksa doğrudan `app.zip` fallback bağlantısı denenir.',
+        '- İnternet bağlantın düzeldikten sonra sürüm kontrolü tekrar normal çalışır.',
+        '',
+        `## Detay`,
+        `- Hata: \`${error.message || error}\``
+    ].join('\n');
+
+    return {
+        updateAvailable: canInstallClient,
+        updateType: canInstallClient ? 'client' : 'none',
+        isInstalled: installState.isInstalled,
+        latestVersion: installState.localVersion === 'Yüklü Değil' ? localLauncherVersion : installState.localVersion,
+        localVersion: installState.localVersion,
+        localLauncherVersion,
+        patchNotes,
+        downloadUrl: canInstallClient ? FALLBACK_CLIENT_DOWNLOAD_URL : null,
+        launcherDownloadUrl: FALLBACK_RELEASE_URL,
+        clientDownloadUrl: FALLBACK_CLIENT_DOWNLOAD_URL,
+        connectionWarning: error.message || String(error)
+    };
+}
+
 const DiscordRPC = require('discord-rpc');
 const clientId = '1472302829392629924';
 const rpc = new DiscordRPC.Client({ transport: 'ipc' });
@@ -44,7 +113,7 @@ rpc.on('ready', () => {
         instance: false,
         buttons: [
             { label: 'Download', url: 'https://vexa-client.github.io' },
-            { label: 'GitHub', url: 'https://github.com/vexa-client/vexa' }
+            { label: 'GitHub', url: `https://github.com/${GITHUB_REPO}` }
         ]
     }).catch(console.error);
 });
@@ -52,16 +121,12 @@ rpc.on('ready', () => {
 rpc.login({ clientId }).catch(err => {
     console.warn('Could not connect to Discord RPC from launcher:', err.message);
 });
-// ------------------------------------
 
 function initializePaths() {
-    // Oyun dosyaları artık her zaman Launcher'ın (.exe) yanına kurulacak.
-    // AppData'ya kurulduğu için yazma izni sorunu yaşanmayacak.
     const exeDir = path.dirname(process.execPath);
-    APP_DATA_PATH = app.isPackaged ? exeDir : app.getPath('userData'); 
-    
+    APP_DATA_PATH = app.isPackaged ? exeDir : app.getPath('userData');
     VERSION_FILE = path.join(APP_DATA_PATH, 'version.json');
-    
+
     console.log('[Launcher] Yerel Mod Aktif (Launcher yanında).');
     console.log('[Launcher] Hedef Klasör:', APP_DATA_PATH);
 }
@@ -81,11 +146,9 @@ function createWindow() {
         show: false
     });
 
-    // Initialize the installer with the window and path
     installer = new InstallerManager(mainWindow, APP_DATA_PATH);
-
     mainWindow.loadFile(path.join(__dirname, 'ui', 'index.html'));
-    
+
     mainWindow.once('ready-to-show', () => {
         mainWindow.show();
     });
@@ -96,76 +159,48 @@ app.whenReady().then(() => {
     createWindow();
 });
 
-// IPC Handlers
 ipcMain.handle('check-update', async () => {
-    try {
-        const clientPath = path.join(APP_DATA_PATH, 'game'); 
-        const clientExe = path.join(clientPath, 'vexa-client.exe');
-        const isInstalled = fs.existsSync(clientExe);
-        
-        let localVersion = 'Yüklü Değil';
-        if (isInstalled && fs.existsSync(VERSION_FILE)) {
-            const versionData = await fs.readJson(VERSION_FILE);
-            localVersion = normalizeVersion(versionData.version || '0.0.0');
-        }
+    const installState = await readLocalInstallState();
 
+    try {
         console.log(`[Launcher] Checking for updates on GitHub: ${GITHUB_REPO}...`);
-        const response = await axios.get(`https://api.github.com/repos/${GITHUB_REPO}/releases/latest`, {
+        const response = await axios.get(RELEASE_API_URL, {
+            timeout: 12000,
             headers: { 'User-Agent': 'VexaLauncher-AutoUpdate' }
         });
 
         const latestRelease = response.data;
         const latestTag = latestRelease.tag_name || '0.0.0';
         const latestVersion = normalizeVersion(latestTag);
-
-        const launcherAsset = latestRelease.assets.find(a => /^vexa-launcher-setup-.*\.exe$/i.test(a.name));
-        const clientAsset = latestRelease.assets.find(a => a.name === 'app.zip');
-        const launcherDownloadUrl = launcherAsset ? launcherAsset.browser_download_url : null;
-        const clientDownloadUrl = clientAsset ? clientAsset.browser_download_url : null;
+        const assets = Array.isArray(latestRelease.assets) ? latestRelease.assets : [];
+        const launcherAsset = assets.find(asset => /^vexa-launcher-setup-.*\.exe$/i.test(asset.name));
+        const clientAsset = assets.find(asset => asset.name === 'app.zip');
+        const launcherDownloadUrl = launcherAsset ? launcherAsset.browser_download_url : FALLBACK_RELEASE_URL;
+        const clientDownloadUrl = clientAsset ? clientAsset.browser_download_url : FALLBACK_CLIENT_DOWNLOAD_URL;
 
         const localLauncherVersion = normalizeVersion(app.getVersion());
-        const initialInstallRequired = !isInstalled && Boolean(clientAsset);
-        const launcherUpdateAvailable = isInstalled && launcherAsset && !isSameVersion(latestVersion, localLauncherVersion);
-        const clientUpdateAvailable = isInstalled && clientAsset && !isSameVersion(latestVersion, localVersion);
+        const initialInstallRequired = !installState.isInstalled;
+        const launcherUpdateAvailable = installState.isInstalled && launcherAsset && !isSameVersion(latestVersion, localLauncherVersion);
+        const clientUpdateAvailable = installState.isInstalled && clientAsset && !isSameVersion(latestVersion, installState.localVersion);
         const updateType = initialInstallRequired ? 'client' : (launcherUpdateAvailable ? 'launcher' : (clientUpdateAvailable ? 'client' : 'none'));
-        const updateAvailable = launcherUpdateAvailable || clientUpdateAvailable;
-        let patchNotes = latestRelease.body || 'Yeni güncelleme mevcut!';
-
-        try {
-            const notesResponse = await axios.get(PATCH_NOTES_RAW_URL, {
-                timeout: 10000,
-                headers: { 'User-Agent': 'VexaLauncher-PatchNotes' }
-            });
-
-            if (typeof notesResponse.data === 'string' && notesResponse.data.trim()) {
-                patchNotes = notesResponse.data;
-            }
-        } catch (notesError) {
-            console.warn('[Launcher] Raw patch notes unavailable:', notesError.message);
-        }
+        const updateAvailable = initialInstallRequired || launcherUpdateAvailable || clientUpdateAvailable;
+        const patchNotes = await getPatchNotes(latestRelease.body || 'Yeni güncelleme mevcut!');
 
         return {
-            updateAvailable: updateAvailable || initialInstallRequired,
-            updateType: updateType,
-            isInstalled: isInstalled,
-            latestVersion: latestVersion,
-            localVersion: localVersion,
-            localLauncherVersion: localLauncherVersion,
-            patchNotes: patchNotes,
+            updateAvailable,
+            updateType,
+            isInstalled: installState.isInstalled,
+            latestVersion,
+            localVersion: installState.localVersion,
+            localLauncherVersion,
+            patchNotes,
             downloadUrl: updateType === 'launcher' ? launcherDownloadUrl : clientDownloadUrl,
-            launcherDownloadUrl: launcherDownloadUrl,
-            clientDownloadUrl: clientDownloadUrl
+            launcherDownloadUrl,
+            clientDownloadUrl
         };
     } catch (error) {
         console.error('[Launcher] Update check failed:', error.message);
-        return {
-            updateAvailable: false,
-            isInstalled: false, // Fallback to setup if API fails?
-            latestVersion: 'N/A',
-            localVersion: 'Hata',
-            patchNotes: 'Güncelleme sunucusuna bağlanılamadı. Lütfen internet bağlantınızı kontrol edin.',
-            error: error.message
-        };
+        return createFallbackUpdateInfo(error, installState);
     }
 });
 
@@ -211,10 +246,9 @@ ipcMain.handle('launch-game', async () => {
         try {
             await rpc.clearActivity();
             await rpc.destroy();
-        } catch (e) {}
+        } catch (error) {}
     }
-    
-    // Discord IPC'nin bağlantı kopmasını algılaması için kısa bir gecikme
+
     await new Promise(resolve => setTimeout(resolve, 500));
 
     if (fs.existsSync(clientExe)) {
@@ -224,12 +258,12 @@ ipcMain.handle('launch-game', async () => {
         console.log('Dev mode: Launching local client...');
         const electronPath = process.execPath;
         const clientMainPath = path.join(localDevPath, 'electron', 'main.js');
-        
-        spawn(`"${electronPath}"`, [`"${clientMainPath}"`], { 
-            detached: true, 
-            stdio: 'ignore', 
+
+        spawn(`"${electronPath}"`, [`"${clientMainPath}"`], {
+            detached: true,
+            stdio: 'ignore',
             cwd: localDevPath,
-            shell: true 
+            shell: true
         });
         app.quit();
     } else {

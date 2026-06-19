@@ -12,22 +12,14 @@ let updateInfo = null;
 async function init() {
     try {
         updateInfo = await window.api.checkUpdate();
-        
-        if (updateInfo.error) {
-            statusText.innerText = 'BAĞLANTI HATASI';
-            statusText.style.color = 'var(--red)';
-            patchNotes.innerText = 'GitHub API bağlantısı kurulamadı. Lütfen internetinizi kontrol edin.';
-            return;
-        }
-
         versionText.innerText = `Sürüm: ${updateInfo.localVersion} ${updateInfo.updateAvailable ? '(Güncelleme Mevcut)' : '(Güncel)'}`;
         patchNotes.innerHTML = formatPatchNotes(updateInfo.patchNotes || 'Herhangi bir yama notu bulunamadı.');
 
         if (!updateInfo.isInstalled) {
-            statusText.innerText = 'KURULUM GEREKLİ';
+            statusText.innerText = updateInfo.connectionWarning ? 'BAĞLANTI MODU' : 'KURULUM GEREKLİ';
             actionBtn.innerText = 'ŞİMDİ İNDİR';
             actionBtn.classList.remove('disabled');
-            updateInfo.updateAvailable = true; // First install uses the same download flow.
+            updateInfo.updateAvailable = true;
             updateInfo.updateType = 'client';
             updateInfo.downloadUrl = updateInfo.clientDownloadUrl || updateInfo.downloadUrl;
         } else if (updateInfo.updateAvailable) {
@@ -40,11 +32,14 @@ async function init() {
             }
             actionBtn.classList.remove('disabled');
         } else {
-            statusText.innerText = 'VEXA İÇİN HAZIRMISIN?';
+            statusText.innerText = updateInfo.connectionWarning ? 'ÇEVRİMDIŞI HAZIR' : 'VEXA İÇİN HAZIR MISIN?';
             actionBtn.innerText = 'OYNA';
             actionBtn.classList.remove('disabled');
         }
     } catch (err) {
+        statusText.innerText = 'BAŞLATMA HATASI';
+        statusText.style.color = 'var(--red)';
+        patchNotes.innerText = err.message || String(err);
         console.error(err);
     }
 }
@@ -121,7 +116,6 @@ actionBtn.addEventListener('click', async () => {
             return;
         }
 
-        // Start Update Flow
         actionBtn.classList.add('disabled');
         actionBtn.innerText = 'GÜNCELLENİYOR...';
         progressContainer.classList.remove('hidden');
@@ -136,20 +130,20 @@ actionBtn.addEventListener('click', async () => {
             await window.api.startDownload(updateInfo.downloadUrl);
             statusText.innerText = 'AYIKLANIYOR...';
             await window.api.extractAndInstall(updateInfo.latestVersion);
-            
-            // Success
+
             statusText.innerText = 'GÜNCELLEME TAMAMLANDI';
             progressContainer.classList.add('hidden');
             setTimeout(() => {
-                location.reload(); // Refresh to show Play button
+                location.reload();
             }, 1000);
         } catch (err) {
             statusText.innerText = 'GÜNCELLEME HATASI';
             statusText.style.color = 'var(--red)';
+            actionBtn.innerText = 'TEKRAR DENE';
+            actionBtn.classList.remove('disabled');
             console.error(err);
         }
     } else {
-        // Launch Flow
         statusText.innerText = 'BAŞLATILIYOR...';
         const result = await window.api.launchGame();
         if (result && result.error) {
@@ -158,12 +152,9 @@ actionBtn.addEventListener('click', async () => {
                 statusText.style.color = 'var(--cyan)';
                 actionBtn.innerText = 'ŞİMDİ İNDİR';
                 actionBtn.classList.remove('disabled');
-                
-                // Set updateAvailable to true so next click triggers download
-                updateInfo.updateAvailable = true; 
-                if (!updateInfo.downloadUrl) {
-                    updateInfo.downloadUrl = 'https://github.com/vexa-client/vexa/releases/latest';
-                }
+                updateInfo.updateAvailable = true;
+                updateInfo.updateType = 'client';
+                updateInfo.downloadUrl = updateInfo.clientDownloadUrl || 'https://github.com/vexa-client/vexa/releases/latest/download/app.zip';
             } else {
                 statusText.innerText = 'BAŞLATMA HATASI';
                 statusText.style.color = 'var(--red)';
