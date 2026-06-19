@@ -42,7 +42,7 @@ async function hydrateLatestRelease() {
 
         if (installer?.browser_download_url) {
             downloadButton.href = installer.browser_download_url;
-            downloadButton.textContent = "Windows setup indir";
+            downloadButton.textContent = "HaxBall Client indir";
             downloadButton.classList.remove("is-loading");
             status.textContent = `${installer.name} otomatik seçildi.`;
         } else {
