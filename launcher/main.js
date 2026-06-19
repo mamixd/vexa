@@ -17,6 +17,14 @@ const GITHUB_REPO = 'vexa-client/vexa';
 let APP_DATA_PATH;
 let VERSION_FILE;
 
+function normalizeVersion(version) {
+    return String(version || '0.0.0').trim().replace(/^v/i, '');
+}
+
+function isSameVersion(left, right) {
+    return normalizeVersion(left) === normalizeVersion(right);
+}
+
 // --- Discord RPC (Launcher State) ---
 const DiscordRPC = require('discord-rpc');
 const clientId = '1472302829392629924';
@@ -97,7 +105,7 @@ ipcMain.handle('check-update', async () => {
         let localVersion = 'Yüklü Değil';
         if (isInstalled && fs.existsSync(VERSION_FILE)) {
             const versionData = await fs.readJson(VERSION_FILE);
-            localVersion = versionData.version || '0.0.0';
+            localVersion = normalizeVersion(versionData.version || '0.0.0');
         }
 
         console.log(`[Launcher] Checking for updates on GitHub: ${GITHUB_REPO}...`);
@@ -106,16 +114,17 @@ ipcMain.handle('check-update', async () => {
         });
 
         const latestRelease = response.data;
-        const latestVersion = latestRelease.tag_name || '0.0.0';
+        const latestTag = latestRelease.tag_name || '0.0.0';
+        const latestVersion = normalizeVersion(latestTag);
 
         const launcherAsset = latestRelease.assets.find(a => /^vexa-launcher-setup-.*\.exe$/i.test(a.name));
         const clientAsset = latestRelease.assets.find(a => a.name === 'app.zip');
         const launcherDownloadUrl = launcherAsset ? launcherAsset.browser_download_url : null;
         const clientDownloadUrl = clientAsset ? clientAsset.browser_download_url : null;
 
-        const localLauncherVersion = app.getVersion();
-        const launcherUpdateAvailable = launcherAsset && (latestVersion !== localLauncherVersion);
-        const clientUpdateAvailable = isInstalled && clientAsset && (latestVersion !== localVersion);
+        const localLauncherVersion = normalizeVersion(app.getVersion());
+        const launcherUpdateAvailable = launcherAsset && !isSameVersion(latestVersion, localLauncherVersion);
+        const clientUpdateAvailable = isInstalled && clientAsset && !isSameVersion(latestVersion, localVersion);
         const updateAvailable = launcherUpdateAvailable || clientUpdateAvailable;
 
         return {

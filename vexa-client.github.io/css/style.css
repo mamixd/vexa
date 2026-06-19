@@ -163,7 +163,7 @@ h1 {
 
 .download-card {
     display: grid;
-    grid-template-columns: 1fr auto auto;
+    grid-template-columns: 1fr auto;
     align-items: center;
     gap: 12px;
     margin-top: 34px;
@@ -200,8 +200,7 @@ h1 {
     margin: 0;
 }
 
-.btn-primary,
-.btn-secondary {
+.btn-primary {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -220,20 +219,13 @@ h1 {
     color: #04120d;
 }
 
-.btn-primary:hover,
-.btn-secondary:hover {
+.btn-primary:hover {
     transform: translateY(-1px);
 }
 
 .btn-primary.is-loading {
     opacity: 0.8;
     pointer-events: none;
-}
-
-.btn-secondary {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--line);
-    color: var(--text);
 }
 
 .product-preview {
@@ -564,8 +556,7 @@ h2 {
         grid-template-columns: 1fr;
     }
 
-    .btn-primary,
-    .btn-secondary {
+    .btn-primary {
         width: 100%;
     }
 
