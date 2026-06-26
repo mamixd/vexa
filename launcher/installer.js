@@ -303,7 +303,15 @@ class InstallerManager {
         this.notify('Launcher güncellemesi başlatılıyor...');
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        spawn(`"${launcherUpdatePath}"`, ['/S'], { detached: true, stdio: 'ignore', shell: true }).unref();
+        const scriptPath = path.join(this.appDataPath, 'update.bat');
+        const batContent = `
+@echo off
+timeout /t 2 /nobreak > NUL
+"${launcherUpdatePath}" /S
+`;
+        await fs.writeFile(scriptPath, batContent);
+        spawn('cmd.exe', ['/c', `"${scriptPath}"`], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
+        
         return { success: true };
     }
 

@@ -123,7 +123,10 @@ actionBtn.addEventListener('click', async () => {
         try {
             if (updateInfo.updateType === 'launcher') {
                 statusText.innerText = 'LAUNCHER GÜNCELLENİYOR...';
-                await window.api.startLauncherUpdate(updateInfo.downloadUrl);
+                const result = await window.api.startLauncherUpdate(updateInfo.downloadUrl);
+                if (result && result.error) {
+                    throw new Error(result.error);
+                }
                 return;
             }
 
