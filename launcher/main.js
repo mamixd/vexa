@@ -164,10 +164,25 @@ ipcMain.handle('check-update', async () => {
 
     try {
         console.log(`[Launcher] Checking for updates on GitHub: ${GITHUB_REPO}...`);
-        const response = await axios.get(RELEASE_API_URL, {
-            timeout: 12000,
-            headers: { 'User-Agent': 'VexaLauncher-AutoUpdate' }
-        });
+
+        let response;
+        const maxRetries = 3;
+        const timeouts = [15000, 25000, 35000];
+
+        for (let attempt = 0; attempt < maxRetries; attempt++) {
+            try {
+                console.log(`[Launcher] API attempt ${attempt + 1}/${maxRetries} (timeout: ${timeouts[attempt]}ms)...`);
+                response = await axios.get(RELEASE_API_URL, {
+                    timeout: timeouts[attempt],
+                    headers: { 'User-Agent': 'VexaLauncher-AutoUpdate' }
+                });
+                break;
+            } catch (retryError) {
+                console.warn(`[Launcher] Attempt ${attempt + 1} failed: ${retryError.message}`);
+                if (attempt === maxRetries - 1) throw retryError;
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+        }
 
         const latestRelease = response.data;
         const latestTag = latestRelease.tag_name || '0.0.0';
