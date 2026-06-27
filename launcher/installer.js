@@ -1,4 +1,5 @@
 const path = require('path');
+const os = require('os');
 const fs = require('fs-extra');
 const axios = require('axios');
 const extract = require('extract-zip');
@@ -116,7 +117,8 @@ class InstallerManager {
 
     async download(url, fileName = 'update.zip') {
         this.notify('Sunucuya bağlanılıyor...');
-        const targetPath = path.join(this.appDataPath, fileName);
+        const targetDir = fileName === 'update.exe' ? os.tmpdir() : this.appDataPath;
+        const targetPath = path.join(targetDir, fileName);
 
         await fs.remove(targetPath).catch(() => {});
 
@@ -289,7 +291,8 @@ class InstallerManager {
     }
 
     async installLauncherUpdate() {
-        const launcherUpdatePath = path.join(this.appDataPath, 'update.exe');
+        const tempDir = os.tmpdir();
+        const launcherUpdatePath = path.join(tempDir, 'update.exe');
         if (!fs.existsSync(launcherUpdatePath)) {
             throw new Error('Launcher güncelleme dosyası bulunamadı.');
         }
@@ -297,14 +300,27 @@ class InstallerManager {
         this.notify('Launcher güncellemesi başlatılıyor...');
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        const scriptPath = path.join(this.appDataPath, 'update.bat');
+        const scriptPath = path.join(tempDir, 'update.bat');
+        const exePath = process.execPath;
+        const exeName = path.basename(exePath);
+        
+        // Timeout and taskkill to ensure the launcher is completely closed
         const batContent = `
 @echo off
+echo Guncelleme kuruluyor lutfen bekleyin...
 timeout /t 2 /nobreak > NUL
-"${launcherUpdatePath}" /S
+taskkill /F /IM "${exeName}" /T > NUL 2>&1
+timeout /t 1 /nobreak > NUL
+cd /d "%~dp0"
+start /wait "" "${launcherUpdatePath}" /S
+timeout /t 1 /nobreak > NUL
+start "" "${exePath}"
+del "%~f0"
 `;
         await fs.writeFile(scriptPath, batContent);
-        spawn('cmd.exe', ['/c', `"${scriptPath}"`], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
+        
+        // Execute the script in a new detached window, running from temp dir
+        spawn('cmd.exe', ['/c', 'start', '""', scriptPath], { detached: true, stdio: 'ignore', cwd: tempDir }).unref();
         
         return { success: true };
     }
