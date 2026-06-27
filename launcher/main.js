@@ -13,7 +13,7 @@ const InstallerManager = require('./installer');
 let mainWindow;
 let installer;
 const GITHUB_REPO = 'vexa-client/vexa';
-const RELEASE_API_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
+const VERSIONS_RAW_URL = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/versions.json`;
 const PATCH_NOTES_RAW_URL = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/launcher/patch-notes.md`;
 const FALLBACK_CLIENT_DOWNLOAD_URL = `https://github.com/${GITHUB_REPO}/releases/latest/download/app.zip`;
 const FALLBACK_RELEASE_URL = `https://github.com/${GITHUB_REPO}/releases/latest`;
@@ -163,49 +163,49 @@ ipcMain.handle('check-update', async () => {
     const installState = await readLocalInstallState();
 
     try {
-        console.log(`[Launcher] Checking for updates on GitHub: ${GITHUB_REPO}...`);
+        console.log(`[Launcher] Checking for updates via versions.json...`);
 
-        let response;
-        const maxRetries = 3;
-        const timeouts = [15000, 25000, 35000];
-
-        for (let attempt = 0; attempt < maxRetries; attempt++) {
-            try {
-                console.log(`[Launcher] API attempt ${attempt + 1}/${maxRetries} (timeout: ${timeouts[attempt]}ms)...`);
-                response = await axios.get(RELEASE_API_URL, {
-                    timeout: timeouts[attempt],
-                    headers: { 'User-Agent': 'VexaLauncher-AutoUpdate' }
-                });
-                break;
-            } catch (retryError) {
-                console.warn(`[Launcher] Attempt ${attempt + 1} failed: ${retryError.message}`);
-                if (attempt === maxRetries - 1) throw retryError;
-                await new Promise(resolve => setTimeout(resolve, 2000));
+        let versions = { launcher: '0.0.0', client: '0.0.0' };
+        let patchNotesRaw = 'Yeni güncelleme mevcut!';
+        
+        try {
+            const vRes = await axios.get(VERSIONS_RAW_URL, {
+                headers: { 'Cache-Control': 'no-cache', 'User-Agent': 'VexaLauncher-AutoUpdate' },
+                timeout: 10000
+            });
+            if (vRes.data && vRes.data.launcher) {
+                versions = vRes.data;
             }
+        } catch (e) {
+            console.warn('[Launcher] Failed to fetch versions.json:', e.message);
         }
 
-        const latestRelease = response.data;
-        const latestTag = latestRelease.tag_name || '0.0.0';
-        const latestVersion = normalizeVersion(latestTag);
-        const assets = Array.isArray(latestRelease.assets) ? latestRelease.assets : [];
-        const launcherAsset = assets.find(asset => /^vexa-launcher-setup-.*\.exe$/i.test(asset.name));
-        const clientAsset = assets.find(asset => asset.name === 'app.zip');
-        const launcherDownloadUrl = launcherAsset ? launcherAsset.browser_download_url : FALLBACK_RELEASE_URL;
-        const clientDownloadUrl = clientAsset ? clientAsset.browser_download_url : FALLBACK_CLIENT_DOWNLOAD_URL;
+        const latestLauncherVersion = normalizeVersion(versions.launcher);
+        const latestClientVersion = normalizeVersion(versions.client);
+
+        const launcherDownloadUrl = latestLauncherVersion !== '0.0.0' 
+            ? `https://github.com/${GITHUB_REPO}/releases/download/v${latestLauncherVersion}/vexa-launcher-setup-${latestLauncherVersion}.exe`
+            : FALLBACK_RELEASE_URL;
+            
+        const clientDownloadUrl = latestClientVersion !== '0.0.0'
+            ? `https://github.com/${GITHUB_REPO}/releases/download/v${latestClientVersion}/app.zip`
+            : FALLBACK_CLIENT_DOWNLOAD_URL;
 
         const localLauncherVersion = normalizeVersion(app.getVersion());
         const initialInstallRequired = !installState.isInstalled;
-        const launcherUpdateAvailable = installState.isInstalled && launcherAsset && !isSameVersion(latestVersion, localLauncherVersion);
-        const clientUpdateAvailable = installState.isInstalled && clientAsset && !isSameVersion(latestVersion, installState.localVersion);
+        
+        const launcherUpdateAvailable = installState.isInstalled && latestLauncherVersion !== '0.0.0' && !isSameVersion(latestLauncherVersion, localLauncherVersion);
+        const clientUpdateAvailable = installState.isInstalled && latestClientVersion !== '0.0.0' && !isSameVersion(latestClientVersion, installState.localVersion);
+        
         const updateType = initialInstallRequired ? 'client' : (launcherUpdateAvailable ? 'launcher' : (clientUpdateAvailable ? 'client' : 'none'));
         const updateAvailable = initialInstallRequired || launcherUpdateAvailable || clientUpdateAvailable;
-        const patchNotes = await getPatchNotes(latestRelease.body || 'Yeni güncelleme mevcut!');
+        const patchNotes = await getPatchNotes(patchNotesRaw);
 
         return {
             updateAvailable,
             updateType,
             isInstalled: installState.isInstalled,
-            latestVersion,
+            latestVersion: updateType === 'launcher' ? latestLauncherVersion : latestClientVersion,
             localVersion: installState.localVersion,
             localLauncherVersion,
             patchNotes,

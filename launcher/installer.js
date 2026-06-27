@@ -315,7 +315,7 @@ cd /d "%~dp0"
 start /wait "" "${launcherUpdatePath}" /S
 timeout /t 1 /nobreak > NUL
 start "" "${exePath}"
-del "%~f0"
+(goto) 2>nul & del "%~f0" & exit
 `;
         await fs.writeFile(scriptPath, batContent);
         
