@@ -4,8 +4,8 @@ const axios = require('axios');
 const extract = require('extract-zip');
 const { spawn } = require('child_process');
 
-const PARALLEL_DOWNLOAD_PARTS = 4;
-const PARALLEL_DOWNLOAD_MIN_SIZE = 16 * 1024 * 1024;
+const PARALLEL_DOWNLOAD_PARTS = 8;
+const PARALLEL_DOWNLOAD_MIN_SIZE = 4 * 1024 * 1024;
 
 class InstallerManager {
     constructor(mainWindow, appDataPath) {
@@ -114,38 +114,37 @@ class InstallerManager {
         }
     }
 
-    async getDownloadInfo(url) {
-        try {
-            const response = await axios({
-                method: 'head',
-                url,
-                maxRedirects: 10,
-                timeout: 15000,
-                headers: this.requestHeaders()
-            });
-
-            return {
-                totalLength: parseInt(response.headers['content-length'], 10) || 0,
-                acceptRanges: String(response.headers['accept-ranges'] || '').toLowerCase().includes('bytes')
-            };
-        } catch (error) {
-            console.warn('[Installer] HEAD request failed, using regular download:', error.message);
-            return { totalLength: 0, acceptRanges: false };
-        }
-    }
-
     async download(url, fileName = 'update.zip') {
         this.notify('Sunucuya bağlanılıyor...');
         const targetPath = path.join(this.appDataPath, fileName);
 
         await fs.remove(targetPath).catch(() => {});
 
-        const downloadInfo = await this.getDownloadInfo(url);
-        const canUseParallel = downloadInfo.acceptRanges && downloadInfo.totalLength >= PARALLEL_DOWNLOAD_MIN_SIZE;
+        console.log(`[Installer] Starting download: ${url}`);
+        this.notify('İndirme başlatılıyor...');
+
+        const response = await axios({
+            method: 'get',
+            url,
+            responseType: 'stream',
+            maxRedirects: 10,
+            timeout: 60000,
+            headers: this.requestHeaders()
+        });
+
+        const totalLength = parseInt(response.headers['content-length'], 10) || 0;
+        const acceptRanges = String(response.headers['accept-ranges'] || '').toLowerCase().includes('bytes');
+        const isGitHub = url.includes('github.com') || url.includes('githubusercontent.com');
+        const canUseParallel = (acceptRanges || isGitHub) && totalLength >= PARALLEL_DOWNLOAD_MIN_SIZE;
+
+        console.log(`[Installer] Response headers: size=${totalLength}, ranges=${acceptRanges}, github=${isGitHub}, parallel=${canUseParallel}`);
 
         if (canUseParallel) {
+            response.data.destroy();
+            console.log('[Installer] Stream aborted, switching to parallel download...');
+
             try {
-                await this.downloadParallel(url, targetPath, downloadInfo.totalLength);
+                await this.downloadParallel(url, targetPath, totalLength);
                 return;
             } catch (error) {
                 console.warn('[Installer] Parallel download failed, falling back to stream:', error.message);
@@ -154,19 +153,10 @@ class InstallerManager {
             }
         }
 
-        await this.downloadStream(url, targetPath, downloadInfo.totalLength);
+        await this.downloadStreamFromResponse(response, targetPath, totalLength);
     }
 
-    async downloadStream(url, targetPath, knownLength = 0) {
-        const response = await axios({
-            method: 'get',
-            url,
-            responseType: 'stream',
-            maxRedirects: 10,
-            headers: this.requestHeaders()
-        });
-
-        const totalLength = knownLength || parseInt(response.headers['content-length'], 10) || 0;
+    async downloadStreamFromResponse(response, targetPath, totalLength) {
         let downloadedLength = 0;
         const reportProgress = this.createProgressReporter(totalLength);
         const writer = fs.createWriteStream(targetPath);
@@ -247,7 +237,11 @@ class InstallerManager {
             url,
             responseType: 'stream',
             maxRedirects: 10,
-            headers: this.requestHeaders({ Range: `bytes=${start}-${end}` }),
+            timeout: 120000,
+            headers: this.requestHeaders({
+                Range: `bytes=${start}-${end}`,
+                Connection: 'keep-alive'
+            }),
             validateStatus: (status) => status === 206
         });
 
