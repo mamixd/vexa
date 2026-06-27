@@ -11,7 +11,7 @@ const defaultSettings = {
     fpsShow: true,
     rpcEnabled: true,
     pingBoosterEnabled: false,
-    netGraphEnabled: true,
+    netGraphEnabled: false,
     animatedAvatar: {
         enabled: false,
         defaultAvatar: 'VX',

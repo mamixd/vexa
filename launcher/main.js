@@ -105,14 +105,14 @@ DiscordRPC.register(clientId);
 
 rpc.on('ready', () => {
     rpc.setActivity({
-        details: 'Launcher',
-        state: 'Getting ready to play...',
+        details: 'Vexa Client',
+        state: 'Başlatıcıda',
         startTimestamp: appStartTime,
         largeImageKey: 'logo',
         largeImageText: 'Vexa Client',
         instance: false,
         buttons: [
-            { label: 'Download', url: 'https://vexa-client.github.io' },
+            { label: 'İndir', url: 'https://vexa-client.github.io' },
             { label: 'GitHub', url: `https://github.com/${GITHUB_REPO}` }
         ]
     }).catch(console.error);

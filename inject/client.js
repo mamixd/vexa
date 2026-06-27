@@ -355,8 +355,7 @@
             body.vexa-ui-transparent .room-view .container,
             body.vexa-ui-transparent .dialog,
             body.vexa-ui-transparent .chatbox-view-contents,
-            body.vexa-ui-transparent .game-state-view,
-            body.vexa-ui-transparent .bottom-section {
+            body.vexa-ui-transparent .game-state-view {
                 background: rgba(8, 10, 14, 0.34) !important;
                 backdrop-filter: none !important;
                 -webkit-backdrop-filter: none !important;
@@ -383,6 +382,15 @@
                 -webkit-backdrop-filter: none !important;
             }
 
+            /* Make bottom section containers completely transparent ALWAYS */
+            .bottom-section,
+            .chatbox-view,
+            .bottom-spacer {
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+
             body.vexa-has-custom-bg:not(.vexa-ui-transparent) .choose-nickname-view .dialog,
             body.vexa-has-custom-bg:not(.vexa-ui-transparent) .room-view .container,
             body.vexa-has-custom-bg:not(.vexa-ui-transparent) .dialog,
@@ -393,6 +401,7 @@
                 -webkit-backdrop-filter: blur(14px) saturate(145%) !important;
                 border: 1px solid rgba(255, 255, 255, 0.1) !important;
                 box-shadow: 0 14px 42px rgba(0, 0, 0, 0.38) !important;
+                border-radius: 8px !important;
             }
 
             body.vexa-has-custom-bg:not(.vexa-ui-transparent) .dialog .list,
@@ -1259,6 +1268,112 @@
             } catch (err) {}
         };
         setInterval(attachChatShortcutsListener, 1000);
+        // 9. Discord RPC - Dynamic Game State Observer
+        (() => {
+            if (!window.haxballAPI || !window.haxballAPI.updateRPC) return;
+
+            let lastRpcState = '';
+
+            function getIframeDoc() {
+                try {
+                    const iframe = document.querySelector('iframe.gameframe');
+                    if (iframe && iframe.contentDocument) return iframe.contentDocument;
+                } catch(e) {}
+                return null;
+            }
+
+            function getNickname() {
+                try {
+                    const doc = getIframeDoc();
+                    if (!doc) return '';
+                    const nickInput = doc.querySelector('.choose-nickname-view [data-hook="input"]');
+                    if (nickInput && nickInput.value) return nickInput.value;
+                    const stored = localStorage.getItem('player_name');
+                    if (stored) return stored;
+                } catch(e) {}
+                return '';
+            }
+
+            function isInGame() {
+                try {
+                    const doc = getIframeDoc();
+                    if (!doc) return false;
+                    const canvas = doc.querySelector('canvas');
+                    const gameView = doc.querySelector('.game-view');
+                    if (!canvas || !gameView) return false;
+                    const style = doc.defaultView.getComputedStyle(gameView);
+                    return style.display !== 'none' && style.visibility !== 'hidden';
+                } catch(e) {}
+                return false;
+            }
+
+            function isInRoom() {
+                try {
+                    const doc = getIframeDoc();
+                    if (!doc) return false;
+                    const roomView = doc.querySelector('.room-view');
+                    if (roomView) {
+                        const style = doc.defaultView.getComputedStyle(roomView);
+                        return style.display !== 'none';
+                    }
+                } catch(e) {}
+                return false;
+            }
+
+            function isChoosingNickname() {
+                try {
+                    const doc = getIframeDoc();
+                    if (!doc) return false;
+                    const nickView = doc.querySelector('.choose-nickname-view');
+                    if (nickView) {
+                        const style = doc.defaultView.getComputedStyle(nickView);
+                        return style.display !== 'none';
+                    }
+                } catch(e) {}
+                return false;
+            }
+
+            function getRoomName() {
+                try {
+                    const doc = getIframeDoc();
+                    if (!doc) return null;
+                    const roomName = doc.querySelector('.room-view .room-name');
+                    if (roomName && roomName.textContent.trim()) return roomName.textContent.trim();
+                    const barTitle = doc.querySelector('.bar-container .room-name');
+                    if (barTitle && barTitle.textContent.trim()) return barTitle.textContent.trim();
+                } catch(e) {}
+                return null;
+            }
+
+            function updateDiscordRPC() {
+                try {
+                    let state = '';
+                    let details = 'Vexa Client';
+                    const nick = getNickname();
+                    const roomName = getRoomName();
+
+                    if (isInGame()) {
+                        state = 'Maçta';
+                        if (roomName) details = roomName;
+                    } else if (isInRoom()) {
+                        state = 'Odada';
+                        if (roomName) details = roomName;
+                    } else if (isChoosingNickname()) {
+                        state = 'İsim Seçiyor';
+                    } else {
+                        state = 'Ana Menüde';
+                    }
+
+                    if (state !== lastRpcState) {
+                        lastRpcState = state;
+                        window.haxballAPI.updateRPC(state, details, nick);
+                    }
+                } catch(e) {}
+            }
+
+            setInterval(updateDiscordRPC, 3000);
+            setTimeout(updateDiscordRPC, 2000);
+        })();
     }
 
     // --- HBR2 Replay Loader Injector ---

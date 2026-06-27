@@ -3,62 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <title>Vexa HaxBall Client</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Rajdhani:wght@500;600;700&family=Michroma&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg: #050a0e;
+            --accent: #3cd89b;
+            --white: #f0f4f8;
+            --gray: #8a94a0;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            background: #0d1117;
+            background: transparent;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Outfit', system-ui, sans-serif;
+            color: var(--white);
+            overflow: hidden;
+        }
+
+        .card {
+            width: 400px;
+            height: 280px;
+            background: rgba(5, 10, 14, 0.92);
+            border: 1px solid rgba(60,216,155,0.12);
+            border-radius: 16px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            font-family: 'Outfit', sans-serif;
-            color: white;
+            position: relative;
             overflow: hidden;
-            /* Kenar çizgisi kaldırıldı */
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 40px rgba(60,216,155,0.05);
         }
 
+        /* ── Grid ── */
+        .grid {
+            position: absolute; inset: 0;
+            background-image:
+                linear-gradient(to right, rgba(255,255,255,.025) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255,255,255,.025) 1px, transparent 1px);
+            background-size: 30px 30px;
+            mask-image: radial-gradient(ellipse at center, rgba(0,0,0,0.4) 0%, transparent 80%);
+            -webkit-mask-image: radial-gradient(ellipse at center, rgba(0,0,0,0.4) 0%, transparent 80%);
+            pointer-events: none;
+        }
+
+        /* ── Glow ── */
+        .glow {
+            position: absolute;
+            width: 250px; height: 250px;
+            background: rgba(60,216,155,0.08);
+            border-radius: 50%;
+            filter: blur(80px);
+            bottom: -120px; right: -80px;
+            pointer-events: none;
+            animation: pulseGlow 6s infinite alternate ease-in-out;
+        }
+        @keyframes pulseGlow {
+            0%   { opacity: 0.6; transform: scale(1); }
+            100% { opacity: 1;   transform: scale(1.1); }
+        }
+
+        /* ── Logo ── */
         .logo {
-            font-size: 46px; /* Biraz küçültüldü */
-            font-weight: 900;
+            font-family: 'Michroma', sans-serif;
+            font-size: 36px;
             letter-spacing: 3px;
-            margin-bottom: 5px;
-            text-transform: uppercase;
+            margin-bottom: 6px;
+            line-height: 1;
+            position: relative;
+            z-index: 1;
         }
-        .logo span:first-child { color: #ffffff; }
-        .logo span:last-child { 
-            color: #00c8ff; 
-            font-weight: 300;
-        }
+        .logo-green { color: var(--accent); text-shadow: 0 0 20px rgba(60,216,155,0.35); }
+        .logo-white { color: var(--white); text-shadow: 0 0 10px rgba(255,255,255,0.1); }
 
         .subtitle {
-            color: #484f58; /* Daha soluk */
-            font-size: 10px;
-            letter-spacing: 6px;
+            color: var(--gray);
+            font-size: 8px;
+            font-weight: 600;
+            letter-spacing: 4px;
             text-transform: uppercase;
-            margin-bottom: 50px;
+            margin-bottom: 36px;
+            position: relative;
+            z-index: 1;
         }
 
+        /* ── Hide until fonts ready ── */
+        .card {
+            opacity: 0;
+            transform: scale(0.95);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        .card.ready {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* ── Loader ── */
         .loader-container {
-            width: 260px; /* Biraz daraltıldı */
+            width: 220px;
             display: flex;
             flex-direction: column;
             align-items: center;
+            position: relative;
+            z-index: 1;
         }
 
         .loader-bar {
             width: 100%;
-            height: 2px; /* Daha ince */
-            background: rgba(255, 255, 255, 0.05);
+            height: 2px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 2px;
             overflow: hidden;
-            margin-bottom: 15px;
+            margin-bottom: 14px;
         }
 
         .loader-bar-fill {
             width: 0%;
             height: 100%;
-            background: #00c8ff;
+            background: linear-gradient(90deg, var(--accent), #2af0a0);
+            border-radius: 2px;
+            box-shadow: 0 0 10px rgba(60,216,155,0.5);
             animation: loading 3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
@@ -71,44 +140,90 @@
         }
 
         .status {
-            color: #00c8ff;
-            font-size: 12px;
-            font-weight: 700;
+            color: var(--accent);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 11px;
+            font-weight: 600;
             letter-spacing: 2px;
-            opacity: 0.8;
-            animation: pulse 1.5s ease-in-out infinite;
+            animation: statusPulse 1.8s ease-in-out infinite;
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 0.4; transform: scale(0.98); }
-            50% { opacity: 1; transform: scale(1); }
+        @keyframes statusPulse {
+            0%, 100% { opacity: 0.4; }
+            50%      { opacity: 1; }
         }
 
-        .glow {
+        /* ── Decorative ring ── */
+        .ring {
             position: absolute;
-            width: 300px;
-            height: 300px;
-            background: radial-gradient(circle, rgba(0,200,255,0.05) 0%, transparent 70%);
+            width: 200px; height: 200px;
+            border: 1px solid rgba(60,216,155,0.05);
             border-radius: 50%;
-            top: 50%;
-            left: 50%;
+            top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             pointer-events: none;
+            animation: ringPulse 6s ease-in-out infinite;
+        }
+        @keyframes ringPulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.4; }
+            50%      { transform: translate(-50%, -50%) scale(1.08); opacity: 0.8; }
+        }
+
+        /* ── Particles via CSS ── */
+        .particle {
+            position: absolute;
+            width: 3px; height: 3px;
+            background: rgba(60,216,155,0.3);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: float linear infinite;
+        }
+        @keyframes float {
+            0%   { transform: translateY(0) translateX(0); opacity: 0; }
+            10%  { opacity: 1; }
+            90%  { opacity: 1; }
+            100% { transform: translateY(-280px) translateX(30px); opacity: 0; }
         }
     </style>
 </head>
 <body>
-    <div class="glow"></div>
-    <div class="logo">
-        <span>Vexa</span><span>Client</span>
-    </div>
-    <div class="subtitle">MODULAR HAXBALL EXPERIENCE</div>
-    
-    <div class="loader-container">
-        <div class="loader-bar">
-            <div class="loader-bar-fill"></div>
+    <div class="card">
+        <div class="grid"></div>
+        <div class="glow"></div>
+        <div class="ring"></div>
+
+        <!-- CSS particles -->
+        <div class="particle" style="left:15%;bottom:10%;animation-duration:4s;animation-delay:0s;width:2px;height:2px;"></div>
+        <div class="particle" style="left:35%;bottom:5%;animation-duration:5s;animation-delay:0.5s;"></div>
+        <div class="particle" style="left:55%;bottom:15%;animation-duration:4.5s;animation-delay:1s;width:2px;height:2px;"></div>
+        <div class="particle" style="left:75%;bottom:8%;animation-duration:3.8s;animation-delay:0.3s;"></div>
+        <div class="particle" style="left:85%;bottom:12%;animation-duration:5.5s;animation-delay:1.5s;width:1.5px;height:1.5px;"></div>
+        <div class="particle" style="left:25%;bottom:18%;animation-duration:4.2s;animation-delay:2s;width:2px;height:2px;"></div>
+        <div class="particle" style="left:65%;bottom:3%;animation-duration:3.5s;animation-delay:0.8s;"></div>
+        <div class="particle" style="left:45%;bottom:20%;animation-duration:6s;animation-delay:1.2s;width:1.5px;height:1.5px;"></div>
+
+        <div class="logo">
+            <span class="logo-green">VEXΛ</span> <span class="logo-white">CLIENT</span>
         </div>
-        <div class="status">SİSTEMLER BAŞLATILIYOR...</div>
+        <div class="subtitle">YENİ NESİL PERFORMANS. SINIRSIZ OLANAKLAR.</div>
+
+        <div class="loader-container">
+            <div class="loader-bar">
+                <div class="loader-bar-fill"></div>
+            </div>
+            <div class="status">SİSTEMLER BAŞLATILIYOR...</div>
+        </div>
     </div>
+
+    <script>
+        // Wait for fonts to load, then reveal card
+        document.fonts.ready.then(() => {
+            document.querySelector('.card').classList.add('ready');
+        });
+        // Fallback: show after 1s max
+        setTimeout(() => {
+            document.querySelector('.card').classList.add('ready');
+        }, 1000);
+    </script>
 </body>
 </html>

@@ -265,12 +265,12 @@ moduleObserver = new MutationObserver(function(mutations) {
 		if (classes.includes("choose-nickname-view")) {
 			const nickWait = waitForElement('[data-hook="input"]');
 			nickWait.then(function(nicknameInput) { 
-				myNick = nicknameInput.value;
-				if(window.haxballAPI) window.haxballAPI.updateRPC('Choosing a nickname...', 'Main Menu', myNick);
+				var myNick = "Player";
+				var nk = document.querySelector('[data-hook="input"]');
+				if(nk!=null) myNick = nk.value;
 				
 				nicknameInput.addEventListener('input', function() {
 					myNick = nicknameInput.value;
-					if(window.haxballAPI) window.haxballAPI.updateRPC('Choosing a nickname...', 'Main Menu', myNick);
 				});
 				
 				muteExceptions = ['humpyhost','Hostinho',myNick];
@@ -281,7 +281,6 @@ moduleObserver = new MutationObserver(function(mutations) {
 		
 		// 2. Oda Listesi
 		if (classes.includes("roomlist-view")) {
-			if(window.haxballAPI) window.haxballAPI.updateRPC('Choosing a room...', 'Main Menu', myNick);
 			
 			// RESTORE NAVBAR
 			const navBar = document.getElementsByClassName('header')[0];
@@ -323,7 +322,8 @@ moduleObserver = new MutationObserver(function(mutations) {
 		
 		// 3. Oyun İçi / Maç
 		if (className.includes("game-view")) {
-			if(window.haxballAPI) window.haxballAPI.updateRPC('Playing a match...', 'In Game', myNick);
+			var nk = document.querySelector('[data-hook="input"]');
+			if(nk!=null) myNick = nk.value;
 			
 			muted = new Set();
 			muteAllToggle = false;

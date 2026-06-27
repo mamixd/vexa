@@ -28,8 +28,8 @@ function setActivity(state, details, nick) {
     }
     
     rpc.setActivity({
-        details: details || 'Main Menu',
-        state: state || 'Choosing a room...',
+        details: details || 'Vexa Client',
+        state: state || 'Ana Menüde',
         startTimestamp: appStartTime,
         largeImageKey: 'logo', 
         largeImageText: 'Vexa Client',
@@ -37,7 +37,7 @@ function setActivity(state, details, nick) {
         smallImageText: (nick && nick.length >= 2) ? `${nick}` : undefined,
         instance: false,
         buttons: [
-            { label: 'Download', url: 'https://vexa-client.github.io' },
+            { label: 'İndir', url: 'https://vexa-client.github.io' },
             { label: 'GitHub', url: 'https://github.com/vexa-client/vexa' }
         ]
     }).catch(err => console.error('Discord RPC Error:', err));
@@ -45,7 +45,7 @@ function setActivity(state, details, nick) {
 
 rpc.on('ready', () => {
     if (rpcEnabled) {
-        setActivity('Choosing a room...', 'Main Menu');
+        setActivity();
     }
 });
 
