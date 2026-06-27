@@ -1,5 +1,5 @@
 ### 28 HAZ, 2026
-**Vexa Client v1.2.0 (Büyük Güncelleme)**
+**Vexa Client v1.1.6 (Büyük Güncelleme)**
 - **Yeni Launcher Arayüzü:** Eski duyuru ekranı kaldırıldı, yerine giriş ekranı (takma ad belirleme ve profil yönetimi) eklendi.
 - **Kişisel Avatar Sistemi:** Bilgisayarından kendi avatarını seçip yükleme, kırpma ve kaydetme özelliği eklendi. (Avatarın tüm pencerelerde oval ve uyumlu görünmesi sağlandı).
 - **Gelişmiş Discord RPC:** Discord entegrasyonu tamamen Türkçeleştirildi. Odadayken oda ismini, menüdeyken ve oyundayken gerçek zamanlı durumunu temiz ve profesyonel bir arayüzle gösterir.
