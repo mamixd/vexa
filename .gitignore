@@ -11,3 +11,5 @@ obj/
 
 *.exe
 app.zip
+bot.js
+package-lock.json
