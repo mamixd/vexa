@@ -1,15 +1,16 @@
-# Vexa Client v1.0.7
+### 27 HAZ, 2026
+**Vexa Client v1.1.4**
+- Yeni nesil modern kullanıcı arayüzü eklendi.
+- Kurulum ekranı ve indirme ilerleme animasyonları iyileştirildi.
+- Sistem optimizasyonları yapıldı.
 
-## Yenilikler
-- Launcher kurulum akışı daha stabil hale getirildi.
-- İlk kurulumda oyun paketi doğru şekilde `app.zip` üzerinden kuruluyor.
-- İndirme ekranına hız, toplam boyut ve kalan süre bilgisi eklendi.
-- Kurulum sırasında eski Vexa süreçleri otomatik kapatılıyor.
+### 16 MAY, 2026
+**Vexa Client v1.1.0**
+- İndirme ekranına detaylı bilgiler (hız, boyut) eklendi.
+- Kurulumda eski Vexa istemci süreçleri otomatik olarak sonlandırılıyor.
+- "Bilinmeyen Yayıncı" uyarılarında düzeltmeler.
 
-## Kurulum
-1. `vexa-launcher-setup-*.exe` dosyasını indirin.
-2. Kurulumu çalıştırın.
-3. Launcher açıldıktan sonra oyun dosyaları otomatik kurulur.
-
-## Not
-Windows "Bilinmeyen Yayıncı" uyarısı verebilir. Bu bağımsız client projeleri için normaldir.
+### 12 NİS, 2026
+**Vexa Client v1.0.0**
+- Vexa Client ilk sürüm yayınlandı.
+- Geleceğe hoş geldin.

@@ -1,5 +1,3 @@
-const statusText = document.getElementById('status-text');
-const versionText = document.getElementById('version-text');
 const patchNotes = document.getElementById('patch-notes');
 const actionBtn = document.getElementById('action-btn');
 const progressContainer = document.getElementById('progress-container');
@@ -9,120 +7,134 @@ const progressDetails = document.getElementById('progress-details');
 
 let updateInfo = null;
 
+/* ────────── init ────────── */
 async function init() {
     try {
         updateInfo = await window.api.checkUpdate();
-        versionText.innerText = `Sürüm: ${updateInfo.localVersion} ${updateInfo.updateAvailable ? '(Güncelleme Mevcut)' : '(Güncel)'}`;
-        patchNotes.innerHTML = formatPatchNotes(updateInfo.patchNotes || 'Herhangi bir yama notu bulunamadı.');
+        patchNotes.innerHTML = parseMarkdown(updateInfo.patchNotes || 'Yama notları bulunamadı.');
 
         if (!updateInfo.isInstalled) {
-            statusText.innerText = updateInfo.connectionWarning ? 'BAĞLANTI MODU' : 'KURULUM GEREKLİ';
-            actionBtn.innerText = 'ŞİMDİ İNDİR';
-            actionBtn.classList.remove('disabled');
+            setStatus('ready', 'Kuruluma Hazır', 'Her şey hazır! Vexa Client\'ın en güncel sürümü indirilmeye hazır.', 'İNDİR', false, 'download');
             updateInfo.updateAvailable = true;
             updateInfo.updateType = 'client';
             updateInfo.downloadUrl = updateInfo.clientDownloadUrl || updateInfo.downloadUrl;
         } else if (updateInfo.updateAvailable) {
             if (updateInfo.updateType === 'launcher') {
-                statusText.innerText = 'LAUNCHER GÜNCELLEME MEVCUT';
-                actionBtn.innerText = 'LAUNCHER GÜNCELLE';
+                setStatus('ready', 'Launcher Güncellemesi', 'Yeni launcher sürümü indirilmeye hazır.', 'GÜNCELLE', false, 'download');
             } else {
-                statusText.innerText = 'OYUN GÜNCELLEMESİ MEVCUT';
-                actionBtn.innerText = 'ŞİMDİ GÜNCELLE';
+                setStatus('ready', 'Oyun Güncellemesi', 'Her şey hazır! Vexa Client\'ın en güncel sürümü indirilmeye hazır.', 'İNDİR', false, 'download');
             }
-            actionBtn.classList.remove('disabled');
         } else {
-            statusText.innerText = updateInfo.connectionWarning ? 'ÇEVRİMDIŞI HAZIR' : 'VEXA İÇİN HAZIR MISIN?';
-            actionBtn.innerText = 'OYNA';
-            actionBtn.classList.remove('disabled');
+            setStatus('ready', 'Maceraya Hazır', 'Her şey hazır! Vexa Client en güncel sürümde.', 'OYNA', false, 'play');
         }
     } catch (err) {
-        statusText.innerText = 'BAŞLATMA HATASI';
-        statusText.style.color = 'var(--red)';
-        patchNotes.innerText = err.message || String(err);
+        setStatus('error', 'Başlatma Hatası', err.message || String(err), 'HATA', true, 'none');
         console.error(err);
     }
 }
 
-function formatPatchNotes(text) {
-    const escapeHtml = (value) => String(value)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    const inline = (value) => escapeHtml(value)
-        .replace(/`([^`]+)`/g, '<code>$1</code>')
-        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    const lines = String(text || '').replace(/\r\n/g, '\n').split('\n');
-    const html = [];
-    let listType = null;
+/* ────────── markdown → timeline HTML ────────── */
+function parseMarkdown(md) {
+    if (!md) return '';
 
-    const closeList = () => {
-        if (!listType) return;
-        html.push(`</${listType}>`);
-        listType = null;
-    };
+    const lines = md.split('\n');
+    let html = '';
+    let currentEntry = '';
+    let isFirst = true;
 
-    for (const line of lines) {
-        const trimmed = line.trim();
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
 
-        if (!trimmed) {
-            closeList();
+        if (line.startsWith('### ')) {
+            // Close previous entry
+            if (currentEntry) {
+                html += currentEntry + '</div></div>';
+            }
+            const dateStr = line.replace('### ', '').trim();
+            const badge = isFirst ? ' <span class="tl-badge">LATEST</span>' : '';
+            const cls = isFirst ? 'tl-entry' : 'tl-entry old';
+
+            currentEntry = '<div class="' + cls + '">'
+                + '<div class="tl-dot"></div>'
+                + '<div class="tl-date">' + dateStr + badge + '</div>'
+                + '<div class="tl-body">';
+            isFirst = false;
+        } else if (line.startsWith('**') && line.endsWith('**')) {
+            const title = line.replace(/\*\*/g, '').trim();
+            currentEntry += '<div class="tl-title">' + title + '</div>';
+        } else if (line.startsWith('- ')) {
+            const text = line.substring(2).trim();
+            currentEntry += '<p>' + text + '</p>';
+        } else if (line.startsWith('#')) {
             continue;
-        }
-
-        if (trimmed.startsWith('### ')) {
-            closeList();
-            html.push(`<h3>${inline(trimmed.slice(4))}</h3>`);
-        } else if (trimmed.startsWith('## ')) {
-            closeList();
-            html.push(`<h2>${inline(trimmed.slice(3))}</h2>`);
-        } else if (trimmed.startsWith('# ')) {
-            closeList();
-            html.push(`<h1>${inline(trimmed.slice(2))}</h1>`);
-        } else if (/^[-*]\s+/.test(trimmed)) {
-            if (listType !== 'ul') {
-                closeList();
-                html.push('<ul>');
-                listType = 'ul';
-            }
-            html.push(`<li>${inline(trimmed.replace(/^[-*]\s+/, ''))}</li>`);
-        } else if (/^\d+\.\s+/.test(trimmed)) {
-            if (listType !== 'ol') {
-                closeList();
-                html.push('<ol>');
-                listType = 'ol';
-            }
-            html.push(`<li>${inline(trimmed.replace(/^\d+\.\s+/, ''))}</li>`);
         } else {
-            closeList();
-            html.push(`<p>${inline(trimmed)}</p>`);
+            currentEntry += '<p>' + line + '</p>';
         }
     }
 
-    closeList();
-    return html.join('');
+    if (currentEntry) {
+        html += currentEntry + '</div></div>';
+    }
+
+    return html || '<div class="timeline-loading">Yama notları bulunamadı.</div>';
 }
 
+/* ────────── setStatus ────────── */
+function setStatus(type, title, desc, btnText, btnDisabled, btnIcon) {
+    const statusTitle = document.getElementById('status-title');
+    const statusDesc = document.getElementById('status-desc');
+    const statusIcon = document.getElementById('status-icon');
+    const btnTextEl = document.getElementById('btn-text');
+    const btnIconEl = document.getElementById('btn-icon');
+
+    statusTitle.innerText = title;
+    statusDesc.innerText = desc;
+    statusTitle.style.color = type === 'error' ? 'var(--red)' : (type === 'loading' ? 'var(--gray)' : 'var(--accent)');
+
+    statusIcon.className = 'status-icon ' + type;
+
+    if (type === 'success' || type === 'ready') {
+        statusIcon.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
+    } else if (type === 'error') {
+        statusIcon.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
+    } else {
+        statusIcon.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+    }
+
+    if (btnDisabled) {
+        actionBtn.classList.add('disabled');
+    } else {
+        actionBtn.classList.remove('disabled');
+    }
+
+    btnTextEl.innerText = btnText;
+
+    if (btnIcon === 'download') {
+        btnIconEl.innerHTML = '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line>';
+    } else if (btnIcon === 'play') {
+        btnIconEl.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"></polygon>';
+    } else {
+        btnIconEl.innerHTML = '<circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>';
+    }
+}
+
+/* ────────── click handler ────────── */
 actionBtn.addEventListener('click', async () => {
     if (actionBtn.classList.contains('disabled')) return;
 
     if (updateInfo.updateAvailable) {
         if (!updateInfo.downloadUrl) {
-            statusText.innerText = 'İNDİRME LİNKİ BULUNAMADI';
-            statusText.style.color = 'var(--red)';
-            patchNotes.innerText = 'GitHub release içinde app.zip dosyası bulunamadı. Lütfen son release dosyalarını kontrol edin.';
+            setStatus('error', 'İndirme Linki Bulunamadı', 'GitHub release içinde gerekli dosya bulunamadı.', 'HATA', true, 'none');
             return;
         }
 
-        actionBtn.classList.add('disabled');
-        actionBtn.innerText = 'GÜNCELLENİYOR...';
+        setStatus('loading', 'İndiriliyor', 'Güncelleme dosyaları indiriliyor, lütfen bekleyin.', 'GÜNCELLENİYOR...', true, 'loading');
         progressContainer.classList.remove('hidden');
 
         try {
             if (updateInfo.updateType === 'launcher') {
-                statusText.innerText = 'LAUNCHER GÜNCELLENİYOR...';
+                setStatus('loading', 'Launcher Güncelleniyor', 'Yeni launcher sürümü yükleniyor...', 'YÜKLENİYOR...', true, 'loading');
                 const result = await window.api.startLauncherUpdate(updateInfo.downloadUrl);
                 if (result && result.error) {
                     throw new Error(result.error);
@@ -131,58 +143,47 @@ actionBtn.addEventListener('click', async () => {
             }
 
             await window.api.startDownload(updateInfo.downloadUrl);
-            statusText.innerText = 'AYIKLANIYOR...';
+            setStatus('loading', 'Ayıklanıyor', 'Oyun dosyaları çıkartılıyor, az kaldı.', 'AYIKLANIYOR...', true, 'loading');
             await window.api.extractAndInstall(updateInfo.latestVersion);
 
-            statusText.innerText = 'GÜNCELLEME TAMAMLANDI';
+            setStatus('success', 'Güncelleme Tamamlandı', 'Her şey başarıyla güncellendi.', 'YENİDEN BAŞLATILIYOR', true, 'loading');
             progressContainer.classList.add('hidden');
-            setTimeout(() => {
-                location.reload();
-            }, 1000);
+            setTimeout(() => { location.reload(); }, 1000);
         } catch (err) {
-            statusText.innerText = 'GÜNCELLEME HATASI';
-            statusText.style.color = 'var(--red)';
-            actionBtn.innerText = 'TEKRAR DENE';
-            actionBtn.classList.remove('disabled');
+            setStatus('error', 'Güncelleme Hatası', err.message || String(err), 'TEKRAR DENE', false, 'loading');
             console.error(err);
         }
     } else {
-        statusText.innerText = 'BAŞLATILIYOR...';
+        setStatus('loading', 'Başlatılıyor', 'Vexa Client başlatılıyor, lütfen bekle.', 'BAŞLATILIYOR...', true, 'loading');
         const result = await window.api.launchGame();
         if (result && result.error) {
             if (result.needsDownload) {
-                statusText.innerText = 'DOSYALAR EKSİK';
-                statusText.style.color = 'var(--cyan)';
-                actionBtn.innerText = 'ŞİMDİ İNDİR';
-                actionBtn.classList.remove('disabled');
+                setStatus('error', 'Dosyalar Eksik', 'Oyun dosyaları bulunamadı, yeniden indirilmesi gerekiyor.', 'ŞİMDİ İNDİR', false, 'download');
                 updateInfo.updateAvailable = true;
                 updateInfo.updateType = 'client';
                 updateInfo.downloadUrl = updateInfo.clientDownloadUrl || 'https://github.com/vexa-client/vexa/releases/latest/download/app.zip';
             } else {
-                statusText.innerText = 'BAŞLATMA HATASI';
-                statusText.style.color = 'var(--red)';
-                patchNotes.innerHTML = `<div style="color:var(--red); font-weight:bold;">HATA: ${result.error}</div>`;
-                setTimeout(() => {
-                    location.reload();
-                }, 3000);
+                setStatus('error', 'Başlatma Hatası', result.error, 'YENİDEN DENENİYOR...', true, 'none');
+                setTimeout(() => { location.reload(); }, 3000);
             }
         }
     }
 });
 
+/* ────────── event listeners ────────── */
 window.api.onDownloadProgress((progress) => {
-    progressFill.style.width = `${progress}%`;
-    progressLabel.innerText = `${progress}%`;
+    progressFill.style.width = progress + '%';
+    progressLabel.innerText = progress + '%';
 });
 
 window.api.onInstallerStatus((data) => {
-    statusText.innerText = data.status.toUpperCase();
+    const st = document.getElementById('status-title');
+    if (st) st.innerText = data.status.toUpperCase();
     if (data.progress !== null) {
-        progressFill.style.width = `${data.progress}%`;
-        progressLabel.innerText = `${data.progress}%`;
+        progressFill.style.width = data.progress + '%';
+        progressLabel.innerText = data.progress + '%';
         progressContainer.classList.remove('hidden');
     }
-
     if (data.details && data.details.text) {
         progressDetails.innerText = data.details.text;
     }
@@ -190,5 +191,14 @@ window.api.onInstallerStatus((data) => {
 
 document.getElementById('close').addEventListener('click', () => window.api.close());
 document.getElementById('minimize').addEventListener('click', () => window.api.minimize());
+
+const helpCard = document.querySelector('.help-card');
+if (helpCard) {
+    helpCard.addEventListener('click', () => {
+        if (window.api.openExternal) {
+            window.api.openExternal('https://vexa-client.github.io/discord');
+        }
+    });
+}
 
 init();

@@ -9,5 +9,6 @@ contextBridge.exposeInMainWorld('api', {
     onDownloadProgress: (callback) => ipcRenderer.on('download-progress', (event, progress) => callback(progress)),
     onInstallerStatus: (callback) => ipcRenderer.on('installer-status', (event, data) => callback(data)),
     close: () => ipcRenderer.send('close-app'),
-    minimize: () => ipcRenderer.send('minimize-app')
+    minimize: () => ipcRenderer.send('minimize-app'),
+    openExternal: (url) => ipcRenderer.invoke('open-external', url)
 });

@@ -5,55 +5,86 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vexa Launcher</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Ambient glow + grid -->
+    <div class="ambient-bg">
+        <div class="glow glow-1"></div>
+        <div class="glow glow-2"></div>
+        <div class="grid"></div>
+    </div>
+
     <div class="shell">
-        <div class="title-bar">
+        <!-- LEFT SIDEBAR -->
+        <aside class="sidebar">
             <div class="brand">
-                <div class="brand-mark">V</div>
-                <div class="brand-copy">
-                    <strong>Vexa</strong>
-                    <span>Launcher</span>
+                <svg class="brand-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <span class="brand-name">VEXA</span>
+            </div>
+
+            <div class="section-label">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                <span>YAMA NOTLARI</span>
+            </div>
+
+            <div id="patch-notes" class="timeline">
+                <div class="timeline-loading">Yükleniyor...</div>
+            </div>
+
+            <div class="help-card">
+                <svg class="help-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>
+                <div class="help-body">
+                    <strong>YARDIM MI LAZIM?</strong>
+                    <span>Destek merkezini ziyaret et</span>
                 </div>
+                <svg class="help-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
             </div>
-            <div class="window-controls">
-                <button id="minimize" class="control-btn" aria-label="Küçült">−</button>
-                <button id="close" class="control-btn close" aria-label="Kapat">×</button>
+        </aside>
+
+        <!-- RIGHT MAIN -->
+        <main class="main">
+            <!-- Title bar drag region -->
+            <div class="drag-region"></div>
+
+            <!-- Window controls -->
+            <div class="win-controls">
+                <button id="minimize" class="win-btn" aria-label="Küçült">&#8722;</button>
+                <button class="win-btn" aria-label="Büyüt">&#9723;</button>
+                <button id="close" class="win-btn win-close" aria-label="Kapat">&#10005;</button>
             </div>
-        </div>
 
-        <div class="layout">
-            <aside class="notes-panel">
-                <div class="panel-label">Yama Notları</div>
-                <div id="patch-notes" class="patch-notes-content">Yama notları yükleniyor...</div>
-            </aside>
+            <div class="center-content">
+                <h1 class="hero"><span class="hero-green">VEXA</span> <span class="hero-white">CLIENT</span></h1>
+                <p class="tagline">YENİ NESİL PERFORMANS. SINIRSIZ OLANAKLAR.</p>
 
-            <main class="hero-panel">
-                <div class="release-pill">Latest Release</div>
-
-                <section class="status-panel">
-                    <p class="eyebrow">Vexa Client</p>
-                    <h1 id="status-text">GÜNCELLEMELER KONTROL EDİLİYOR...</h1>
-                    <p id="version-text">Sürüm: --</p>
-                </section>
-
-                <section class="action-panel">
-                    <div id="progress-container" class="progress-wrap hidden">
-                        <div class="progress-meta">
-                            <span>İndirme durumu</span>
-                            <strong id="progress-label">0%</strong>
-                        </div>
-                        <div class="progress-bar">
-                            <div id="progress-fill" class="progress-fill"></div>
-                        </div>
-                        <div id="progress-details" class="progress-details">Hazırlanıyor...</div>
+                <div class="status-card" id="status-card">
+                    <div class="status-icon" id="status-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
                     </div>
+                    <div class="status-text">
+                        <h3 id="status-title">Kontrol Ediliyor</h3>
+                        <p id="status-desc">Vexa sunucularına bağlanılıyor...</p>
+                    </div>
+                </div>
 
-                    <button id="action-btn" class="play-btn disabled">OYNA</button>
-                </section>
-            </main>
-        </div>
+                <div id="progress-container" class="progress-wrap hidden">
+                    <div class="progress-row">
+                        <span id="progress-details">Hazırlanıyor...</span>
+                        <strong id="progress-label">0%</strong>
+                    </div>
+                    <div class="progress-track">
+                        <div id="progress-fill" class="progress-bar-fill"></div>
+                    </div>
+                </div>
+
+                <button id="action-btn" class="action-btn disabled">
+                    <svg id="btn-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    <span id="btn-text">KONTROL EDİLİYOR</span>
+                </button>
+            </div>
+        </main>
     </div>
 
     <script src="renderer.js"></script>

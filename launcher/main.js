@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
 const axios = require('axios');
 const fs = require('fs-extra');
@@ -13,8 +13,8 @@ const InstallerManager = require('./installer');
 let mainWindow;
 let installer;
 const GITHUB_REPO = 'vexa-client/vexa';
-const VERSIONS_RAW_URL = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/versions.json`;
-const PATCH_NOTES_RAW_URL = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/launcher/patch-notes.md`;
+const VERSIONS_RAW_URL = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/versions.json?t=${Date.now()}`;
+const PATCH_NOTES_RAW_URL = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/launcher/patch-notes.md?t=${Date.now()}`;
 const FALLBACK_CLIENT_DOWNLOAD_URL = `https://github.com/${GITHUB_REPO}/releases/latest/download/app.zip`;
 const FALLBACK_RELEASE_URL = `https://github.com/${GITHUB_REPO}/releases/latest`;
 let APP_DATA_PATH;
@@ -134,7 +134,7 @@ function initializePaths() {
 function createWindow() {
     mainWindow = new BrowserWindow({
         width: 1000,
-        height: 650,
+        height: 620,
         frame: false,
         resizable: false,
         webPreferences: {
@@ -142,7 +142,7 @@ function createWindow() {
             nodeIntegration: false,
             contextIsolation: true
         },
-        backgroundColor: '#0d1117',
+        backgroundColor: '#050a0e',
         show: false
     });
 
@@ -286,5 +286,16 @@ ipcMain.handle('launch-game', async () => {
     }
 });
 
-ipcMain.on('close-app', () => app.quit());
-ipcMain.on('minimize-app', () => mainWindow.minimize());
+ipcMain.on('close-app', () => {
+    if (mainWindow) mainWindow.close();
+});
+
+ipcMain.on('minimize-app', () => {
+    if (mainWindow) mainWindow.minimize();
+});
+
+ipcMain.handle('open-external', async (event, url) => {
+    if (url) {
+        await shell.openExternal(url);
+    }
+});
