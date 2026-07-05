@@ -32,27 +32,11 @@ function createWindow(options) {
             // List of core Vexa scripts
             const vexaScripts = ['hx_polyfill.js', 'header.js', 'profiles.js', 'avatar.js', 'ui.js', 'client.js'];
             
-            // List of hxalltool scripts from manifest.json
-            const extUtilityPath = path.join(__dirname, '../hxalltool/js/content_utility');
-            const extScripts = [
-                'copyright.js', 'search_bar.js', 'auto_join.js', 'room_favorites.js', 'admin_kick_or_ban.js',
-                'toggle_chat.js', 'addon_settings.js', 'transparent_chat.js',
-                'chat_properties.js', 'emojis.js', 'translate_disclaimer.js'
-            ];
-
             let allScripts = [];
             vexaScripts.forEach(script => {
                 const sp = path.join(__dirname, '../inject', script);
                 if (fs.existsSync(sp)) allScripts.push(fs.readFileSync(sp, 'utf-8'));
             });
-
-            extScripts.forEach(script => {
-                const sp = path.join(extUtilityPath, script);
-                if (fs.existsSync(sp)) allScripts.push(fs.readFileSync(sp, 'utf-8'));
-            });
-
-            const contentJsPath = path.join(__dirname, '../hxalltool/js/content.js');
-            if (fs.existsSync(contentJsPath)) allScripts.push(fs.readFileSync(contentJsPath, 'utf-8'));
 
             const injectBaseUrl = 'file:///' + path.join(__dirname, '../inject').replace(/\\/g, '/');
             const payload = `window.ELECTRON_SCREEN_HZ = ${hz};\nwindow.VEXA_INJECT_BASE_URL = ${JSON.stringify(injectBaseUrl)};\n${allScripts.join('\n')}\n;void 0;`;

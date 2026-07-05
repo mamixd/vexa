@@ -11,9 +11,35 @@ let splashWindow;
 
 // --- Load Settings ---
 const settings = loadSettings();
+const crypto = require('crypto');
+
+// Generate a unique ID for this client if it doesn't exist to track active users
+if (!settings.clientId) {
+    settings.clientId = crypto.randomUUID();
+    saveSettings({ clientId: settings.clientId });
+}
+
+// --- Live Active Users Heartbeat ---
+const VERCEL_API_URL = process.env.VERCEL_API_URL || 'https://vexa-vercel-api.vercel.app';
+
+function sendHeartbeat() {
+    fetch(`${VERCEL_API_URL}/api/ping`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: settings.clientId })
+    }).catch(err => {
+        // Silently ignore ping errors so it doesn't spam the console if offline
+    });
+}
+
+// Send heartbeat immediately on startup, and then every 30 seconds
+sendHeartbeat();
+setInterval(sendHeartbeat, 30000);
+
+require('dotenv').config();
 
 // --- Discord RPC ---
-const clientId = '1472302829392629924';
+const clientId = process.env.DISCORD_CLIENT_ID;
 DiscordRPC.register(clientId);
 const rpc = new DiscordRPC.Client({ transport: 'ipc' });
 const appStartTime = Date.now();
@@ -242,8 +268,19 @@ if (!gotTheLock) {
         }
     });
 
-    app.whenReady().then(() => {
+    app.whenReady().then(async () => {
         const { session } = require('electron');
+
+        // Load hxalltool natively as an extension
+        try {
+            const extPath = path.join(__dirname, '../hxalltool');
+            if (fs.existsSync(extPath)) {
+                await session.defaultSession.loadExtension(extPath);
+                console.log("Loaded hxalltool extension natively.");
+            }
+        } catch (err) {
+            console.error('Failed to load hxalltool extension:', err);
+        }
 
         // Reklam Engelleyici
         const filter = {

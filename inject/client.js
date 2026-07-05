@@ -187,12 +187,34 @@
                 backdrop-filter: none !important;
                 border: 1px solid rgba(255, 255, 255, 0.1) !important;
                 box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
+                border-radius: 8px !important;
             }
-            body.vexa-ui-transparent .dialog .list, 
             body.vexa-ui-transparent .dialog .filters,
             body.vexa-ui-transparent .label-input,
             body.vexa-ui-transparent .section {
                 background-color: transparent !important;
+            }
+            body.vexa-ui-transparent .dialog .list {
+                background-color: rgba(0, 0, 0, 0.3) !important;
+                border: 1px solid rgba(255, 255, 255, 0.05) !important;
+                border-radius: 6px !important;
+                margin-top: 4px !important;
+            }
+            
+            /* Custom Scrollbar for list */
+            body.vexa-ui-transparent .dialog .list::-webkit-scrollbar {
+                width: 6px;
+            }
+            body.vexa-ui-transparent .dialog .list::-webkit-scrollbar-track {
+                background: rgba(0, 0, 0, 0.1);
+                border-radius: 4px;
+            }
+            body.vexa-ui-transparent .dialog .list::-webkit-scrollbar-thumb {
+                background: rgba(255, 255, 255, 0.15);
+                border-radius: 4px;
+            }
+            body.vexa-ui-transparent .dialog .list::-webkit-scrollbar-thumb:hover {
+                background: rgba(255, 255, 255, 0.25);
             }
             
             /* Button & Element Transparency */
@@ -206,6 +228,7 @@
             body.vexa-ui-transparent select {
                 background-color: rgba(255, 255, 255, 0.05) !important;
                 border: 1px solid rgba(255, 255, 255, 0.05) !important;
+                border-radius: 4px !important;
                 color: #fff !important;
             }
             
@@ -221,6 +244,7 @@
             body.vexa-ui-transparent .label-input input {
                 background-color: rgba(255, 255, 255, 0.03) !important;
                 border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                border-radius: 4px !important;
                 color: #fff !important;
             }
             
@@ -256,6 +280,11 @@
             .vexa-custom-btn {
                 white-space: nowrap !important;
             }
+            
+            /* Hidden Room Logic (Favorites & Search Fix) */
+            .vexa-search-hidden, .vexa-fav-hidden {
+                display: none !important;
+            }
 
             /* Room View (Lobby) Transparency */
             body.vexa-ui-transparent .room-view .container {
@@ -277,6 +306,7 @@
                 background-color: rgba(0, 0, 0, 0.25) !important;
                 border: 1px solid rgba(255, 255, 255, 0.05) !important;
             }
+            
             body.vexa-ui-transparent .room-view .player-list-item {
                 background-color: rgba(255, 255, 255, 0.02) !important;
                 border-bottom: 1px solid rgba(255, 255, 255, 0.03) !important;
@@ -431,8 +461,15 @@
                 color: #fff !important;
             }
         `;
+
+        const premiumRoomlistCSS = `
+/* Premium Room List CSS disabled — using original HaxBall layout */
+
+        `;
+
+
         const styleEl = document.createElement('style');
-        styleEl.innerHTML = hideNativeStatsCSS;
+        styleEl.innerHTML = hideNativeStatsCSS + premiumRoomlistCSS;
         document.head.appendChild(styleEl);
 
         // Iframe içine de enjekte et (Transparency ve Buton Enjeksiyonu)
@@ -445,7 +482,7 @@
                 if (!doc.getElementById('vexa-iframe-css')) {
                     const s = doc.createElement('style');
                     s.id = 'vexa-iframe-css';
-                    s.innerHTML = hideNativeStatsCSS;
+                    s.innerHTML = hideNativeStatsCSS + premiumRoomlistCSS;
                     doc.head.appendChild(s);
                 }
 
@@ -472,6 +509,12 @@
                 // Buton Enjeksiyonu (Oda listesi altındaki filtreler)
                 const filters = doc.querySelector('.filters');
                 if (filters) {
+                    // Oda listesi dialog'una özel sınıf ekle (CSS hedeflemesi için)
+                    const roomDialog = filters.closest('.dialog');
+                    if (roomDialog && !roomDialog.classList.contains('vexa-roomlist')) {
+                        roomDialog.classList.add('vexa-roomlist');
+                    }
+
                     // 1. Şeffaflık Butonu
                     if (!doc.getElementById('vexa-trans-btn')) {
                         const btn = doc.createElement('span');
@@ -505,6 +548,8 @@
                         }
                     }
                 }
+
+
             }
         }
         setInterval(injectIframeContent, 100);
@@ -562,8 +607,15 @@
             const gameActive = syncGameRenderMode(doc, forcedGameActive);
 
             if (currentBgPath) {
-                if (!doc.body.classList.contains('vexa-has-custom-bg')) {
-                    doc.body.classList.add('vexa-has-custom-bg');
+                // Sadece oyun aktif değilse arka plan sınıfını ekle (Cam efekti vb.)
+                if (!gameActive) {
+                    if (!doc.body.classList.contains('vexa-has-custom-bg')) {
+                        doc.body.classList.add('vexa-has-custom-bg');
+                    }
+                } else {
+                    if (doc.body.classList.contains('vexa-has-custom-bg')) {
+                        doc.body.classList.remove('vexa-has-custom-bg');
+                    }
                 }
                 
                 let container = doc.getElementById('vexa-custom-bg-container');
@@ -582,6 +634,9 @@
                     });
                     doc.body.appendChild(container);
                 }
+
+                // Oyun aktifse arka planı tamamen gizle (Ekran kartı yorulmasın)
+                container.style.display = gameActive ? 'none' : 'block';
 
                 if (container.dataset.bgPath !== currentBgPath) {
                     container.innerHTML = '';

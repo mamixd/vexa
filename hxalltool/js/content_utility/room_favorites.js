@@ -130,7 +130,7 @@ function highlightFavoriteRooms() {
         var rawName = nameCell.innerText.replace('⭐ ', '').trim();
         
         if (window.favoriteRooms.has(rawName)) {
-            if (row.style.display === 'none') row.style.display = '';
+            row.classList.remove('vexa-fav-hidden');
             if (row.style.backgroundColor !== 'rgb(30, 36, 34)') row.style.backgroundColor = '#1e2422'; 
             if (nameCell.style.color !== 'rgb(255, 215, 0)') nameCell.style.color = '#ffd700'; 
             if (nameCell.style.fontWeight !== 'bold') nameCell.style.fontWeight = 'bold';
@@ -140,9 +140,9 @@ function highlightFavoriteRooms() {
             }
         } else {
             if (window.showOnlyFavorites) {
-                if (row.style.display !== 'none') row.style.display = 'none';
+                row.classList.add('vexa-fav-hidden');
             } else {
-                if (row.style.display === 'none') row.style.display = '';
+                row.classList.remove('vexa-fav-hidden');
                 if (row.style.backgroundColor !== '') row.style.backgroundColor = '';
                 if (row.style.fontWeight !== '') row.style.fontWeight = '';
                 if (nameCell.style.color !== '') nameCell.style.color = '';

@@ -2,13 +2,36 @@
 function createSearch(){
 	var gameframe = document.getElementsByClassName("gameframe")[0];
 	var dialog = gameframe.contentDocument.getElementsByClassName("dialog")[0];
-	var refreshButton = el.contentWindow.document.querySelector('button[data-hook="refresh"]');
+	var refreshButton = gameframe.contentWindow.document.querySelector('button[data-hook="refresh"]');
 
+	// Wait for Haxball to populate the room table, then apply search.
+	var roomListContainer = dialog.querySelector(".list");
+	if (roomListContainer) {
+		var listObserver = new MutationObserver(function(mutations) {
+			let added = false;
+			for (let mut of mutations) {
+				if (mut.addedNodes.length > 0) {
+					added = true;
+					break;
+				}
+			}
+			if (added) {
+				clearTimeout(window.vexaSearchTimeout);
+				window.vexaSearchTimeout = setTimeout(() => {
+					searchForRoom();
+					updateAvailableCountries();
+				}, 50);
+			}
+		});
+		listObserver.observe(roomListContainer, {childList: true, subtree: true});
+	}
+
+	// Fallback observer just in case
 	var joinButtonObserver = new MutationObserver(function(mutations) {
 			mutations.forEach(function(mutation) {
 				if (!refreshButton.disabled) {
-					searchForRoom();
-					updateAvailableCountries();
+					setTimeout(searchForRoom, 200);
+					setTimeout(updateAvailableCountries, 200);
 					}
 			});
 		});
@@ -40,13 +63,17 @@ function createSearch(){
 	var button = document.createElement("BUTTON");
 	button.innerHTML = "Select Country";
 	button.id = "searchRoomByCountry"
-	button.className = "dropbtn";
-	button.className =  "dropdown";
+	button.className = "dropbtn dropdown";
 	button.style.width = "25%";
 	
 	chrome.storage.local.get({'haxRoomSearchTerm': '', 'haxRoomCountrySearchTerm': 'All'}, function(result) {
 		input.value = result.haxRoomSearchTerm;
 		button.value = result.haxRoomCountrySearchTerm;
+		if (result.haxRoomCountrySearchTerm !== 'All') {
+			setButtonText(button, result.haxRoomCountrySearchTerm);
+		} else {
+			setButtonText(button, "All");
+		}
 		refreshButton.click();
 	});
 
@@ -58,7 +85,7 @@ function createSearch(){
 
 	var newDivWrapper = document.createElement('div');
 
-	insertPos = dialog.querySelector('h1').nextElementSibling;
+	var insertPos = dialog.querySelector('h1').nextElementSibling;
 	insertPos.parentNode.insertBefore(newDivWrapper, insertPos.nextElementSibling);
 	insertPos.parentNode.insertBefore(searchExample, insertPos.nextElementSibling);
 
@@ -82,50 +109,63 @@ function searchForRoom() {
 	var searchRoom = input.value.toLowerCase();
 	chrome.storage.local.set({'haxRoomSearchTerm': input.value}, function (obj) { });
 
-    var roomTable = dialog.querySelectorAll("[data-hook='list']")[0]
+    var roomTable = dialog.querySelectorAll("[data-hook='list']")[0];
+    if(!roomTable) return;
     var totalNumberOfPlayers = 0;
 	var totalNumberOfRooms = 0;
 
-    for(room of roomTable.rows) {
-        var roomName = room.querySelectorAll("[data-hook='name']")[0].innerText;
-        var roomNumPlayers = room.querySelectorAll("[data-hook='players']")[0].innerText.split('/')[0];
-		var roomMaxPlayers = room.querySelectorAll("[data-hook='players']")[0].innerText.split('/')[1];
-		var countryCode = room.querySelectorAll("[data-hook='flag']")[0].className.replace('flagico f-','');
-		var countryCode = countryCode === '' ? 'eu' : countryCode;
-        var roomName = roomName.toLowerCase();
+    for(let room of roomTable.rows) {
+		var nameEl = room.querySelector("[data-hook='name']");
+		var playersEl = room.querySelector("[data-hook='players']");
+		var flagEl = room.querySelector("[data-hook='flag']");
+		if(!nameEl || !playersEl || !flagEl) continue;
+		
+        var roomName = nameEl.innerText.toLowerCase();
+        var playersSplit = playersEl.innerText.split('/');
+        var roomNumPlayers = playersSplit[0];
+		var roomMaxPlayers = playersSplit[1];
+		var countryCode = flagEl.className.replace('flagico f-','');
+		countryCode = countryCode === '' ? 'eu' : countryCode;
 		var rexp = /([^\/]+)?\/?(\d+)?/.exec(searchRoom)
 		
 		var playerTest = (typeof(rexp[2]) === 'undefined' || rexp[2] == roomMaxPlayers);
 		var searchTerms = rexp[1] ? rexp[1].split('+').filter(x => x != '') : [];
-		function myIncl(roomName, terms) {
-			return terms.split(' ').every(x => roomName.includes(x));
+		function myIncl(rName, terms) {
+			return terms.split(' ').every(x => rName.includes(x));
 		}
 
 		if ((searchTerms.some(x => myIncl(roomName, x) || myIncl(roomName.replace(/\s/g,''), x)) || !searchTerms.length) && playerTest && (requestedCountryCode === countryCode || requestedCountryCode === 'All')) {
-			room.hidden = false;
+			room.style.display = '';
 			totalNumberOfPlayers += parseInt(roomNumPlayers);
 			totalNumberOfRooms++;
         }
     	else { 
-			room.hidden = true; 
+			room.style.display = 'none';
 		}
     }
     var roomsStats = dialog.querySelectorAll("[data-hook='count']")[0];
-    roomsStats.innerText = totalNumberOfPlayers + " players in "+totalNumberOfRooms+" filtered rooms";
-    dialog.querySelector("[data-hook='listscroll']").scrollTo(0,0);
+    if(roomsStats) {
+        roomsStats.innerText = totalNumberOfPlayers + " players in "+totalNumberOfRooms+" filtered rooms";
+    }
+    var listScroll = dialog.querySelector("[data-hook='listscroll']");
+    if(listScroll) listScroll.scrollTo(0,0);
 }
-
 
 function updateAvailableCountries(){
 	var gameframe = document.getElementsByClassName("gameframe")[0];
 	var dialog = gameframe.contentDocument.getElementsByClassName("dialog")[0];
 	var flags = dialog.querySelectorAll("[data-hook='flag']");
 	var uniqueFlags = new Set();
-	for (i = 0; i < flags.length; i++) {
+	for (let i = 0; i < flags.length; i++) {
 		uniqueFlags.add(flags[i].getAttribute("class").replace('flagico f-',''));
 	}
-	countryCodes = Array.from(uniqueFlags).sort();
+	var countryCodes = Array.from(uniqueFlags).sort();
 	var button = gameframe.contentWindow.document.getElementById("searchRoomByCountry");
+	
+	// Remove old dropdown
+	var oldDropDown = button.querySelector("#dropdown-content");
+	if(oldDropDown) { oldDropDown.remove(); }
+	
 	var dropDownDiv = document.createElement("div");
 	dropDownDiv.id = "dropdown-content";
 
@@ -160,14 +200,27 @@ function updateAvailableCountries(){
 	button.appendChild(dropDownDiv);
 }
 
+function setButtonText(btn, text) {
+	let found = false;
+	for (let i = 0; i < btn.childNodes.length; i++) {
+		if (btn.childNodes[i].nodeType === 3) {
+			btn.childNodes[i].nodeValue = text;
+			found = true;
+			break;
+		}
+	}
+	if (!found) {
+		btn.insertBefore(document.createTextNode(text), btn.firstChild);
+	}
+}
+
 function selectedAnchorElement() {
 	var countryCode = this.text;
-	// window.localStorage.setItem('haxRoomCountrySearchTerm', countryCode);
 	chrome.storage.local.set({'haxRoomCountrySearchTerm': countryCode}, function (obj) { 
 		var gameframe = document.getElementsByClassName("gameframe")[0];
-		gameframe.contentWindow.document.getElementById("searchRoomByCountry").value = countryCode;
+		var btn = gameframe.contentWindow.document.getElementById("searchRoomByCountry");
+		btn.value = countryCode;
+		setButtonText(btn, countryCode);
 		searchForRoom();
 	});
 }
-
-
