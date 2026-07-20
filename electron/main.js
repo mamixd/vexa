@@ -275,12 +275,17 @@ if (!gotTheLock) {
     app.whenReady().then(async () => {
         const { session } = require('electron');
 
-        // Load hxalltool natively as an extension
+        // Load hxalltool natively as an extension. Electron cannot load unpacked
+        // extensions from inside app.asar, so packaged builds use app.asar.unpacked.
         try {
-            const extPath = path.join(__dirname, '../hxalltool');
+            const extPath = app.isPackaged
+                ? path.join(process.resourcesPath, 'app.asar.unpacked', 'hxalltool')
+                : path.join(__dirname, '../hxalltool');
             if (fs.existsSync(extPath)) {
                 await session.defaultSession.loadExtension(extPath);
                 console.log("Loaded hxalltool extension natively.");
+            } else {
+                console.warn('hxalltool extension path not found:', extPath);
             }
         } catch (err) {
             console.error('Failed to load hxalltool extension:', err);
