@@ -40,7 +40,9 @@ require('dotenv').config();
 
 // --- Discord RPC ---
 const clientId = process.env.DISCORD_CLIENT_ID;
-DiscordRPC.register(clientId);
+if (clientId) {
+    DiscordRPC.register(clientId);
+}
 const rpc = new DiscordRPC.Client({ transport: 'ipc' });
 const appStartTime = Date.now();
 let rpcEnabled = settings.rpcEnabled;
@@ -78,9 +80,11 @@ rpc.on('ready', () => {
 if (rpcEnabled) {
     // Discord'un Launcher bağlantısını tam olarak kopardığından emin olmak için 1.5 saniye bekleyip bağlanıyoruz
     setTimeout(() => {
-        rpc.login({ clientId }).catch(err => {
-            console.warn('Could not connect to Discord RPC:', err.message);
-        });
+        if (clientId) {
+            rpc.login({ clientId }).catch(err => {
+                console.warn('Could not connect to Discord RPC:', err.message);
+            });
+        }
     }, 1500);
 }
 
@@ -124,7 +128,7 @@ ipcMain.on('toggle-discord-rpc', (event, state) => {
         rpc.clearActivity().catch(() => {});
     } else if (rpcEnabled && rpc) {
         if (!rpc.transport.socket) { // If not logged in yet
-             rpc.login({ clientId }).catch(() => {});
+             if (clientId) { rpc.login({ clientId }).catch(() => {}); }
         }
         setActivity(); 
     }

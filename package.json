@@ -1,6 +1,6 @@
 {
   "name": "vexa-haxball-client",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Advanced Modular HaxBall Electron Client",
   "author": "Vexa",
   "homepage": "https://vexa.gg",
@@ -45,6 +45,7 @@
     },
     "files": [
       "launcher/**/*",
+      ".env",
       "node_modules/**/*",
       "package.json",
       "build/**/*"

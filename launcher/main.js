@@ -102,7 +102,9 @@ const clientId = process.env.DISCORD_CLIENT_ID;
 const rpc = new DiscordRPC.Client({ transport: 'ipc' });
 const appStartTime = Date.now();
 
-DiscordRPC.register(clientId);
+if (clientId) {
+    DiscordRPC.register(clientId);
+}
 
 rpc.on('ready', () => {
     rpc.setActivity({
@@ -119,9 +121,11 @@ rpc.on('ready', () => {
     }).catch(console.error);
 });
 
-rpc.login({ clientId }).catch(err => {
-    console.warn('Could not connect to Discord RPC from launcher:', err.message);
-});
+if (clientId) {
+    rpc.login({ clientId }).catch(err => {
+        console.warn('Could not connect to Discord RPC from launcher:', err.message);
+    });
+}
 
 function initializePaths() {
     const exeDir = path.dirname(process.execPath);
@@ -268,22 +272,39 @@ ipcMain.handle('launch-game', async () => {
     await new Promise(resolve => setTimeout(resolve, 500));
 
     if (fs.existsSync(clientExe)) {
-        spawn(`"${clientExe}"`, [], { detached: true, stdio: 'ignore', shell: true });
-        app.quit();
+        try {
+            const child = spawn(clientExe, [], {
+                detached: true,
+                stdio: 'ignore',
+                cwd: path.dirname(clientExe),
+                windowsHide: false
+            });
+            child.unref();
+            app.quit();
+            return { success: true };
+        } catch (error) {
+            return { error: `Client baslatilamadi: ${error.message || error}` };
+        }
     } else if (isDev) {
         console.log('Dev mode: Launching local client...');
         const electronPath = process.execPath;
         const clientMainPath = path.join(localDevPath, 'electron', 'main.js');
 
-        spawn(`"${electronPath}"`, [`"${clientMainPath}"`], {
-            detached: true,
-            stdio: 'ignore',
-            cwd: localDevPath,
-            shell: true
-        });
-        app.quit();
+        try {
+            const child = spawn(electronPath, [clientMainPath], {
+                detached: true,
+                stdio: 'ignore',
+                cwd: localDevPath,
+                windowsHide: false
+            });
+            child.unref();
+            app.quit();
+            return { success: true };
+        } catch (error) {
+            return { error: `Dev client baslatilamadi: ${error.message || error}` };
+        }
     } else {
-        return { error: 'Oyun dosyaları bulunamadı!', needsDownload: true };
+        return { error: 'Oyun dosyalari bulunamadi!', needsDownload: true };
     }
 });
 

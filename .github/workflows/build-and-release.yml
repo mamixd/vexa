@@ -51,23 +51,6 @@ jobs:
             git push origin "refs/tags/$env:RELEASE_TAG"
           }
 
-      - name: Clean Old Releases and Tags
-        shell: pwsh
-        run: |
-          gh release list --limit 1000 --json tagName --jq '.[].tagName' |
-            Where-Object { $_ -and $_ -ne $env:RELEASE_TAG } |
-            ForEach-Object {
-              Write-Host "Deleting old release $_"
-              gh release delete $_ --yes --cleanup-tag
-            }
-
-          gh api "repos/$env:GITHUB_REPOSITORY/git/matching-refs/tags/" --jq '.[].ref' |
-            ForEach-Object { $_ -replace '^refs/tags/', '' } |
-            Where-Object { $_ -and $_ -ne $env:RELEASE_TAG } |
-            ForEach-Object {
-              Write-Host "Deleting old tag $_"
-              gh api -X DELETE "repos/$env:GITHUB_REPOSITORY/git/refs/tags/$_"
-            }
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -83,6 +66,16 @@ jobs:
         run: |
           Remove-Item -Recurse -Force dist, app.zip -ErrorAction SilentlyContinue
 
+      - name: Create Runtime Env
+        shell: pwsh
+        env:
+          DISCORD_CLIENT_ID: ${{ secrets.DISCORD_CLIENT_ID }}
+        run: |
+          if (-not [string]::IsNullOrWhiteSpace($env:DISCORD_CLIENT_ID)) {
+            "DISCORD_CLIENT_ID=$env:DISCORD_CLIENT_ID" | Set-Content -Path .env -Encoding ascii
+          } else {
+            Write-Warning "DISCORD_CLIENT_ID secret is not set; Discord RPC will be disabled in this build."
+          }
       - name: Build Launcher and Client
         run: npm run build:full
 
