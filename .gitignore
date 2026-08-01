@@ -18,3 +18,22 @@ bot-dashboard/
 bot-dashboard.zip
 package-lock.json
 .env
+
+# Gereksiz dosyalar
+temp_extract/
+temp_extract2/
+yedek_launcher/
+__og_client_ref/
+vercel-backend/
+vexa-client.github.io/
+vexa-client.github.io.zip
+launcher.zip
+vexalauncher.html
+recovered_renderer.js
+replayed_renderer.js
+renderer_reconstructed.js
+renderer_recovery.txt
+sample.jsonl
+fix.js
+split.js
+best_view.txt

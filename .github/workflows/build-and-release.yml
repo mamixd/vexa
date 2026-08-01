@@ -64,7 +64,7 @@ jobs:
       - name: Clean Build Output
         shell: pwsh
         run: |
-          Remove-Item -Recurse -Force dist, app.zip -ErrorAction SilentlyContinue
+          Remove-Item -Recurse -Force dist -ErrorAction SilentlyContinue
 
       - name: Create Runtime Env
         shell: pwsh
@@ -76,8 +76,8 @@ jobs:
           } else {
             Write-Warning "DISCORD_CLIENT_ID secret is not set; Discord RPC will be disabled in this build."
           }
-      - name: Build Launcher and Client
-        run: npm run build:full
+      - name: Build Launcher Setup
+        run: npm run build
 
       - name: Upload Artifacts to Release
         uses: softprops/action-gh-release@v2
@@ -92,10 +92,9 @@ jobs:
             ### Kurulum
             1. `vexa-launcher-setup-*.exe` dosyasini indirin.
             2. Kurulumu calistirin.
-            3. Launcher acildiktan sonra oyun dosyalari otomatik kurulur.
+            3. Launcher ve oyun tek setup ile kurulur.
 
             ### Not
             Windows "Bilinmeyen Yayinci" uyarisi verebilir. Bu normaldir.
           files: |
             dist/*.exe
-            app.zip

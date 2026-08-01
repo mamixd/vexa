@@ -893,19 +893,14 @@ async function checkUpdates() {
     try {
         currentUpdateInfo = await window.api.checkUpdate();
         
-        if (!currentUpdateInfo.isInstalled) {
-            setStatusUI('Kuruluma Hazır', 'Her şey hazır! Vexa Client\'ın en güncel sürümü indirilmeye hazır.', 'İNDİR', ICON_DOWNLOAD);
-        } else if (currentUpdateInfo.updateAvailable) {
-            if (currentUpdateInfo.updateType === 'launcher') {
-                setStatusUI('Launcher Güncellemesi', 'Yeni launcher sürümü indirilmeye hazır.', 'GÜNCELLE', ICON_DOWNLOAD);
-            } else {
-                setStatusUI('Oyun Güncellemesi', 'Her şey hazır! Vexa Client\'ın en güncel sürümü indirilmeye hazır.', 'İNDİR', ICON_DOWNLOAD);
-            }
+        if (currentUpdateInfo.updateAvailable && currentUpdateInfo.updateType === 'launcher') {
+            setStatusUI('Launcher Güncellemesi', 'Yeni launcher sürümü mevcut! Güncellemek için tıklayın.', 'GÜNCELLE', ICON_DOWNLOAD);
         } else {
             setStatusUI('Maceraya Hazır', 'Her şey hazır! Vexa Client en güncel sürümde.', 'OYNA', ICON_PLAY);
         }
     } catch(err) {
-        setStatusUI('Başlatma Hatası', err.message || String(err), 'HATA', ICON_PLAY);
+        // Hata olsa bile oyun oynansın
+        setStatusUI('Maceraya Hazır', 'Bağlantı kontrolü yapılamadı ama oyun hazır.', 'OYNA', ICON_PLAY);
     }
 }
 checkUpdates();
@@ -934,10 +929,16 @@ playBtn?.addEventListener('click', () => {
     launching = true;
     playBtn.classList.add('launching');
     
-    const isActionable = playLabel.textContent.includes('İNDİR') || playLabel.textContent.includes('GÜNCELLE');
+    const isUpdate = playLabel.textContent.includes('GÜNCELLE');
     
-    if (isActionable && window.api && window.api.startDownload) {
-        window.api.startDownload();
+    if (isUpdate && currentUpdateInfo && currentUpdateInfo.launcherDownloadUrl && window.api && window.api.openExternal) {
+        // Launcher güncellemesi: tarayıcıda indirme linkini aç
+        window.api.openExternal(currentUpdateInfo.launcherDownloadUrl);
+        showToast('Güncelleme indirme sayfası açıldı!');
+        setTimeout(() => {
+            playBtn.classList.remove('launching');
+            launching = false;
+        }, 2000);
     } else if (window.api && window.api.launchGame) {
         playLabel.innerHTML = 'BAŞLATILIYOR...';
         playBar.style.width = '100%';
@@ -950,7 +951,6 @@ playBtn?.addEventListener('click', () => {
             launching = false;
         }, 3000);
     } else {
-        // Fallback animation if window.api is missing
         playLabel.innerHTML = 'BAŞLATILIYOR...';
         let pct = 0;
         const iv = setInterval(() => {
