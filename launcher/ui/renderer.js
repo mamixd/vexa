@@ -104,6 +104,12 @@ document.querySelectorAll('.auth-tab').forEach(tab => {
 
 async function apiCall(endpoint, method = 'GET', body = null) {
     const opts = { method, headers: {} };
+    
+    const token = localStorage.getItem('vexa_token');
+    if (token) {
+        opts.headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     if (body) {
         opts.headers['Content-Type'] = 'application/json';
         opts.body = JSON.stringify(body);
@@ -114,9 +120,10 @@ async function apiCall(endpoint, method = 'GET', body = null) {
 
 // Instant synchronous auto-login from localStorage
 (function initAutoLogin() {
+    const token = localStorage.getItem('vexa_token');
     const savedId = localStorage.getItem('vexa_user_id');
     const savedName = localStorage.getItem('vexa_username');
-    if (savedId) {
+    if (token && savedId) {
         currentUser = {
             id: savedId,
             username: savedName || 'Oyuncu',
@@ -132,14 +139,17 @@ async function apiCall(endpoint, method = 'GET', body = null) {
         if (sStatus) sStatus.textContent = 'Çevrimiçi';
 
         // Fetch fresh profile in background
-        apiCall(`/user/profile?userId=${savedId}`).then(data => {
-            if (data && data.success && data.profile) {
-                currentUser = data.profile;
+        apiCall('/auth/me').then(data => {
+            if (data && !data.error) {
+                currentUser = { ...currentUser, ...data };
                 if (currentUser.username) {
                     localStorage.setItem('vexa_username', currentUser.username);
                     if (sName) sName.textContent = currentUser.username;
                     updateOwnAvatar();
                 }
+            } else {
+                // Invalid token
+                document.getElementById('logoutBtn')?.click();
             }
         }).catch(() => {});
 
@@ -163,6 +173,8 @@ document.getElementById('guestBtn').addEventListener('click', () => {
 
 document.getElementById('logoutBtn')?.addEventListener('click', () => {
     localStorage.removeItem('vexa_user_id');
+    localStorage.removeItem('vexa_username');
+    localStorage.removeItem('vexa_token');
     currentUser = null;
     document.getElementById('sidebarProfileName').textContent = 'Misafir';
     document.getElementById('sidebarProfileStatus').textContent = 'Çevrimdışı';
@@ -189,6 +201,7 @@ document.getElementById('loginSubmit').addEventListener('click', async function(
         } else {
             errorEl.classList.remove('show');
             currentUser = data.user;
+            localStorage.setItem('vexa_token', data.token);
             localStorage.setItem('vexa_user_id', currentUser.id);
             localStorage.setItem('vexa_username', currentUser.username);
             // Sync profile data from backend
@@ -234,6 +247,7 @@ document.getElementById('regSubmit').addEventListener('click', async function() 
         } else {
             errorEl.classList.remove('show');
             currentUser = { id: data.userId, username: data.username, email: email, dot: 'online', activity: 'Idle' };
+            localStorage.setItem('vexa_token', data.token);
             localStorage.setItem('vexa_user_id', currentUser.id);
             localStorage.setItem('vexa_username', currentUser.username);
             updateGuestLocks();
@@ -281,8 +295,19 @@ async function loadFriends() {
             buildFriendsColumn();
             const activeTab = document.querySelector('.fp-tab.active');
             if (!activeTab || activeTab.dataset.tab !== 'pending') renderFpList(activeTab ? activeTab.dataset.tab : 'online');
+        } else {
+            friendsList = [];
+            buildFriendsColumn();
+            renderFpList('online');
         }
-    } catch (e) { console.error('Failed to load friends', e); }
+    } catch (e) {
+        console.error('Failed to load friends', e);
+        if (friendsList.length === 0) {
+            friendsList = [];
+            buildFriendsColumn();
+            renderFpList('online');
+        }
+    }
 }
 
 const arrowSvg = `<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z" stroke="currentColor" fill="none" stroke-width="2"/></svg>`;

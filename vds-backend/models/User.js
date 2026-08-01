@@ -9,6 +9,10 @@ const userSchema = new mongoose.Schema({
         minlength: 3,
         maxlength: 20
     },
+    email: {
+        type: String,
+        default: ''
+    },
     password: {
         type: String,
         required: true
@@ -16,6 +20,18 @@ const userSchema = new mongoose.Schema({
     avatar: {
         type: String,
         default: '' // Cloudinary URL
+    },
+    banner: {
+        type: String,
+        default: ''
+    },
+    bio: {
+        type: String,
+        default: ''
+    },
+    playTime: {
+        type: Number,
+        default: 0
     },
     friends: [{
         type: mongoose.Schema.Types.ObjectId,

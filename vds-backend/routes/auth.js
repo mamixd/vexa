@@ -7,7 +7,7 @@ const User = require('../models/User');
 // Kayıt Ol
 router.post('/register', async (req, res) => {
     try {
-        const { username, password } = req.body;
+        const { username, email, password } = req.body;
 
         if (!username || !password) {
             return res.status(400).json({ error: 'Kullanıcı adı ve şifre zorunludur.' });
@@ -21,6 +21,7 @@ router.post('/register', async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = new User({
             username,
+            email: email || '',
             password: hashedPassword
         });
 
@@ -30,6 +31,8 @@ router.post('/register', async (req, res) => {
         
         res.status(201).json({
             token,
+            userId: user._id,
+            username: user.username,
             user: { id: user._id, username: user.username, avatar: user.avatar }
         });
     } catch (error) {
