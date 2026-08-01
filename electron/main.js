@@ -21,7 +21,7 @@ if (!settings.clientId) {
 }
 
 // --- Live Active Users Heartbeat ---
-const VERCEL_API_URL = process.env.VERCEL_API_URL || 'http://193.164.4.245:5000';
+const VERCEL_API_URL = process.env.VERCEL_API_URL || 'http://api.vexaclient.com';
 
 function sendHeartbeat() {
     const axios = require('axios');
