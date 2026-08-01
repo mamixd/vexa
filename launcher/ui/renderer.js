@@ -1,4 +1,4 @@
-const API_URL = 'https://www.vexaclient.com/api';
+const API_URL = 'https://api.vexaclient.com';
 let currentUser = null;
 let friendsList = [];
 let pendingRequests = [];

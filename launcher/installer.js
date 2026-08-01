@@ -136,10 +136,10 @@ class InstallerManager {
 
         const totalLength = parseInt(response.headers['content-length'], 10) || 0;
         const acceptRanges = String(response.headers['accept-ranges'] || '').toLowerCase().includes('bytes');
-        const isGitHub = url.includes('github.com') || url.includes('githubusercontent.com');
+        const isGitHub = url.includes('github.com') || url.includes('githubusercontent.com') || url.includes('vexaclient.com');
         const canUseParallel = (acceptRanges || isGitHub) && totalLength >= PARALLEL_DOWNLOAD_MIN_SIZE;
 
-        console.log(`[Installer] Response headers: size=${totalLength}, ranges=${acceptRanges}, github=${isGitHub}, parallel=${canUseParallel}`);
+        console.log(`[Installer] Response headers: size=${totalLength}, ranges=${acceptRanges}, cdn/github=${isGitHub}, parallel=${canUseParallel}`);
 
         if (canUseParallel) {
             response.data.destroy();
