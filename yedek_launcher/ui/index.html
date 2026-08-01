@@ -325,57 +325,48 @@
           <h3>Profil Düzenleme & Halka Açık Kartın</h3>
           <p style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;">Diğer oyuncuların ve arkadaşlarının göreceği afiş, profil resmi ve biyografi bilgilerini buradan ayarlayabilirsin.</p>
 
-          <div style="display:flex;justify-content:center;align-items:flex-start;margin-top:24px;width:100%;">
-            <div style="width:360px;background:#232428;border-radius:12px;overflow:hidden;box-shadow:0 12px 32px rgba(0,0,0,0.6);position:relative;">
-              
-              <!-- Banner Section -->
-              <div id="previewBanner" style="height:140px;background:#5865f2;background-size:cover;background-position:center;position:relative;">
-                <!-- Banner Overlay Action Buttons -->
-                <div style="position:absolute;top:10px;right:10px;display:flex;gap:6px;">
-                  <button type="button" onclick="document.getElementById('bannerFileInput').click()" style="background:rgba(0,0,0,0.65);color:#fff;border:none;border-radius:4px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;backdrop-filter:blur(4px);transition:0.2s;" onmouseover="this.style.background='rgba(88,101,242,0.9)'" onmouseout="this.style.background='rgba(0,0,0,0.65)'">Afiş Değiştir</button>
-                  <button type="button" id="removeBannerBtn" style="background:rgba(0,0,0,0.65);color:#ff6b6b;border:none;border-radius:4px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;backdrop-filter:blur(4px);transition:0.2s;" onmouseover="this.style.background='rgba(242,63,67,0.9)';this.style.color='#fff'" onmouseout="this.style.background='rgba(0,0,0,0.65)';this.style.color='#ff6b6b'">Kaldır</button>
-                </div>
-                <input type="file" id="bannerFileInput" accept="image/*" style="display:none;">
+          <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+            <!-- Left: Form -->
+            <div style="flex:1;min-width:300px;display:flex;flex-direction:column;gap:16px;">
+              <div class="settings-card" style="padding:18px;">
+                <label style="font-size:12px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:8px;">HAKKIMDA (BİO)</label>
+                <textarea id="editBioTextarea" rows="3" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px;font-family:inherit;font-size:13px;resize:none;" placeholder="Kendinizden bahsedin..."></textarea>
               </div>
 
-              <!-- Avatar & Content -->
-              <div style="padding:0 16px 16px 16px;position:relative;">
-                
-                <!-- Avatar Section -->
-                <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:-48px;">
-                  <div style="position:relative;width:94px;height:94px;border-radius:50%;background:#232428;display:flex;align-items:center;justify-content:center;">
-                    <div id="previewAvatar" style="width:82px;height:82px;border-radius:50%;background:#2a2a2a;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;color:#fff;overflow:hidden;background-size:cover;background-position:center;">M</div>
-                    <!-- Status dot -->
-                    <div style="position:absolute;bottom:4px;right:4px;width:22px;height:22px;border-radius:50%;background:#232428;display:flex;align-items:center;justify-content:center;">
-                      <div style="width:14px;height:14px;border-radius:50%;background:#23a559;"></div>
-                    </div>
-                  </div>
-                  
-                  <!-- Avatar Action Buttons -->
-                  <div style="display:flex;gap:6px;margin-bottom:6px;">
-                    <button type="button" onclick="document.getElementById('avatarFileInput').click()" style="background:#5865f2;color:#fff;border:none;border-radius:4px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;transition:0.15s;" onmouseover="this.style.background='#4752c4'" onmouseout="this.style.background='#5865f2'">Avatar Değiştir</button>
-                    <button type="button" id="removeAvatarBtn" style="background:transparent;color:#f23f43;border:none;border-radius:4px;padding:6px 8px;font-size:12px;font-weight:600;cursor:pointer;transition:0.15s;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Kaldır</button>
-                  </div>
+              <div class="settings-card" style="padding:18px;">
+                <label style="font-size:12px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:8px;">PROFİL RESMİ (AVATAR)</label>
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <button type="button" onclick="document.getElementById('avatarFileInput').click()" style="padding:8px 14px;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:8px;cursor:pointer;font-weight:600;font-size:12px;">Görsel Seç</button>
+                  <button type="button" id="removeAvatarBtn" style="padding:8px 14px;background:transparent;border:1px solid var(--border);color:#ff6b6b;border-radius:8px;cursor:pointer;font-weight:600;font-size:12px;">Kaldır</button>
                   <input type="file" id="avatarFileInput" accept="image/*" style="display:none;">
                 </div>
+              </div>
 
-                <!-- Card Inner Body Panel -->
-                <div style="margin-top:14px;background:#111214;border-radius:8px;padding:14px;">
-                  <div id="previewName" style="font-size:20px;font-weight:800;color:#f2f3f5;">Mami</div>
-                  <div id="previewStatus" style="font-size:12px;color:#b5bac1;margin-top:2px;">Çevrimiçi</div>
-                  
-                  <div style="height:1px;background:#2b2d31;margin:12px 0;"></div>
-                  
-                  <div style="font-size:11px;font-weight:800;color:#b5bac1;text-transform:uppercase;margin-bottom:8px;">HAKKIMDA (BİO)</div>
-                  
-                  <!-- Bio Textarea (directly embedded in card) -->
-                  <textarea id="editBioTextarea" rows="3" style="width:100%;background:#1e1f22;border:1px solid #2b2d31;border-radius:6px;color:#dbdee1;padding:10px;font-family:inherit;font-size:13.5px;resize:none;outline:none;line-height:1.4;" placeholder="Biyografinizi buraya yazın..."></textarea>
-                  <div id="previewBio" style="display:none;"></div>
+              <div class="settings-card" style="padding:18px;">
+                <label style="font-size:12px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:8px;">AFİŞ (KANVAS / BANNER)</label>
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <button type="button" onclick="document.getElementById('bannerFileInput').click()" style="padding:8px 14px;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:8px;cursor:pointer;font-weight:600;font-size:12px;">Görsel Seç</button>
+                  <button type="button" id="removeBannerBtn" style="padding:8px 14px;background:transparent;border:1px solid var(--border);color:#ff6b6b;border-radius:8px;cursor:pointer;font-weight:600;font-size:12px;">Kaldır</button>
+                  <input type="file" id="bannerFileInput" accept="image/*" style="display:none;">
                 </div>
+              </div>
 
-                <!-- Save Button inside Card -->
-                <button id="saveProfileBtn" style="margin-top:14px;width:100%;padding:12px;background:#23a559;color:#fff;border:none;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;transition:0.2s;box-shadow:0 4px 12px rgba(35,165,89,0.3);" onmouseover="this.style.background='#1f924e'" onmouseout="this.style.background='#23a559'">Değişiklikleri Kaydet</button>
+              <button id="saveProfileBtn" style="padding:12px;background:var(--accent);color:#08110D;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;transition:0.2s;">Değişiklikleri Kaydet</button>
+            </div>
 
+            <!-- Right: Live Preview -->
+            <div style="width:320px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:16px;overflow:hidden;position:relative;">
+              <div style="font-size:11px;font-weight:700;color:var(--text-secondary);padding:10px 14px;border-bottom:1px solid var(--border);letter-spacing:0.5px;">CANLI ÖNİZLEME</div>
+              <div id="previewBanner" style="height:100px;background:linear-gradient(135deg, #2c3e50, #3498db);background-size:cover;background-position:center;"></div>
+              <div style="padding:0 16px 16px 16px;position:relative;">
+                <div id="previewAvatar" style="width:70px;height:70px;border-radius:50%;background:#2a2a2a;border:5px solid var(--bg-secondary);margin-top:-35px;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;color:var(--text-secondary);overflow:hidden;background-size:cover;background-position:center;">M</div>
+                <div style="margin-top:8px;">
+                  <div id="previewName" style="font-size:18px;font-weight:700;">Mami</div>
+                  <div id="previewStatus" style="font-size:12px;color:var(--accent);">Çevrimiçi</div>
+                </div>
+                <div style="height:1px;background:var(--border);margin:14px 0;"></div>
+                <div style="font-size:10px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">HAKKIMDA</div>
+                <div id="previewBio" style="font-size:12.5px;line-height:1.4;color:var(--text);">Kendinizden bahsedin...</div>
               </div>
             </div>
           </div>
@@ -469,50 +460,6 @@
   <div class="chat-input-area">
     <input type="text" id="chatInput" placeholder="Mesaj yaz...">
     <button id="chatSendBtn"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z" stroke="currentColor" fill="none" stroke-width="2"/></svg></button>
-  </div>
-</div>
-
-<!-- ================= CROPPER MODAL ================= -->
-<div id="cropperOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
-  <div class="settings-card" style="width:420px; padding:24px; position:relative; display:flex; flex-direction:column; gap:16px;">
-    <h3 style="margin:0; font-size:16px; font-weight:600;" id="cropperTitle">Görseli Düzenle</h3>
-    
-    <div id="cropperCanvasContainer" style="width:100%; position:relative; overflow:hidden; background:#000; border-radius:8px; cursor:grab;">
-      <canvas id="cropperCanvas" style="display:block; width:100%;"></canvas>
-      <!-- SVG Circular Mask for Avatar Mode -->
-      <svg id="cropperCircleMask" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; display:none;">
-        <defs>
-          <mask id="circleCutout">
-            <rect width="100%" height="100%" fill="white"/>
-            <circle id="cropperMaskCircle" fill="black"/>
-          </mask>
-        </defs>
-        <rect width="100%" height="100%" fill="rgba(0,0,0,0.6)" mask="url(#circleCutout)"/>
-        <circle id="cropperMaskBorder" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2" stroke-dasharray="6,4"/>
-      </svg>
-      <!-- Rectangle Mask for Banner Mode -->
-      <svg id="cropperRectMask" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; display:none;">
-        <defs>
-          <mask id="rectCutout">
-            <rect width="100%" height="100%" fill="white"/>
-            <rect id="cropperMaskRect" fill="black" rx="8"/>
-          </mask>
-        </defs>
-        <rect width="100%" height="100%" fill="rgba(0,0,0,0.6)" mask="url(#rectCutout)"/>
-        <rect id="cropperMaskRectBorder" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2" stroke-dasharray="6,4" rx="8"/>
-      </svg>
-    </div>
-    
-    <div style="display:flex; align-items:center; gap:12px;">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-      <input type="range" id="cropperZoom" min="0.5" max="3" step="0.01" value="1" style="flex:1; accent-color: var(--accent);">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
-    </div>
-    
-    <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:8px;">
-      <button id="cropperCancelBtn" style="padding:8px 16px; background:transparent; border:none; color:var(--text-secondary); cursor:pointer; font-weight:600; border-radius:6px;">İptal</button>
-      <button id="cropperApplyBtn" style="padding:8px 16px; background:var(--accent); border:none; color:#000; cursor:pointer; font-weight:700; border-radius:6px;">Uygula</button>
-    </div>
   </div>
 </div>
 

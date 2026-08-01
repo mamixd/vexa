@@ -7,23 +7,36 @@ function createSearch(){
 	// Wait for Haxball to populate the room table, then apply search.
 	var roomListContainer = dialog.querySelector(".list");
 	if (roomListContainer) {
+		var styleNode = gameframe.contentWindow.document.createElement('style');
+		styleNode.innerHTML = "tr[data-vexa-hidden='true'] { display: none !important; }";
+		gameframe.contentWindow.document.head.appendChild(styleNode);
+		
 		var listObserver = new MutationObserver(function(mutations) {
-			let added = false;
+			let shouldUpdate = false;
 			for (let mut of mutations) {
-				if (mut.addedNodes.length > 0) {
-					added = true;
+				if (mut.type === 'childList' || mut.type === 'characterData') {
+					shouldUpdate = true;
 					break;
 				}
+				if (mut.type === 'attributes') {
+				    if (mut.attributeName !== 'data-vexa-hidden') {
+				        shouldUpdate = true;
+				        break;
+				    } else if (!mut.target.hasAttribute('data-vexa-hidden')) {
+				        shouldUpdate = true;
+				        break;
+				    }
+				}
 			}
-			if (added) {
+			if (shouldUpdate) {
 				clearTimeout(window.vexaSearchTimeout);
 				window.vexaSearchTimeout = setTimeout(() => {
 					searchForRoom();
 					updateAvailableCountries();
-				}, 50);
+				}, 10);
 			}
 		});
-		listObserver.observe(roomListContainer, {childList: true, subtree: true});
+		listObserver.observe(roomListContainer, {childList: true, subtree: true, characterData: true, attributes: true});
 	}
 
 	// Fallback observer just in case
@@ -46,15 +59,15 @@ function createSearch(){
 	
 	input.oninput = function(e) {
 		if(e.keyCode === 27) { input.value = ''; }
-		searchForRoom();
+		searchForRoom(true);
 	};
 	input.onkeyup = function(e) {
 		if(e.keyCode === 27) { input.value = ''; }
-		searchForRoom();
+		searchForRoom(true);
 	};
 	input.onchange = function(e) {
 		if(e.keyCode === 27) { input.value = ''; }
-		searchForRoom();
+		searchForRoom(true);
 	};
 	
 	var searchExample = document.createElement('p');
@@ -94,7 +107,7 @@ function createSearch(){
 }
 
 // search bar by Raamyy and xenon
-function searchForRoom() {
+function searchForRoom(forceScroll = false) {
 	var gameframe = document.getElementsByClassName("gameframe")[0];
 	var dialog = gameframe.contentDocument.getElementsByClassName("dialog")[0];
 	var input = gameframe.contentWindow.document.getElementById('searchRoom');
@@ -115,49 +128,61 @@ function searchForRoom() {
 	var totalNumberOfRooms = 0;
 
     for(let room of roomTable.rows) {
-		var nameEl = room.querySelector("[data-hook='name']");
-		var playersEl = room.querySelector("[data-hook='players']");
-		var flagEl = room.querySelector("[data-hook='flag']");
+		var nameEl = room.querySelector("[data-hook='name']") || room.cells[0];
+		var playersEl = room.querySelector("[data-hook='players']") || room.cells[1];
+		var flagEl = room.querySelector("[data-hook='flag']") || room.querySelector(".flagico");
+		
 		if(!nameEl || !playersEl || !flagEl) continue;
 		
         var roomName = nameEl.innerText.toLowerCase();
-        var playersSplit = playersEl.innerText.split('/');
-        var roomNumPlayers = playersSplit[0];
-		var roomMaxPlayers = playersSplit[1];
-		var countryCode = flagEl.className.replace('flagico f-','');
-		countryCode = countryCode === '' ? 'eu' : countryCode;
-		var rexp = /([^\/]+)?\/?(\d+)?/.exec(searchRoom)
+        var playersText = playersEl.innerText.trim();
+        var playersSplit = playersText.split('/');
+        var roomNumPlayers = playersSplit[0] ? parseInt(playersSplit[0].trim()) : 0;
+		var roomMaxPlayers = playersSplit[1] ? parseInt(playersSplit[1].trim()) : 0;
 		
-		var playerTest = (typeof(rexp[2]) === 'undefined' || rexp[2] == roomMaxPlayers);
+		var countryCode = 'eu';
+		if (flagEl.className) {
+		    var match = flagEl.className.match(/f-([a-z]{2})/i);
+		    if (match) countryCode = match[1].toLowerCase();
+		}
+		
+		var rexp = /([^\/]+)?\/?(\d+)?/.exec(searchRoom) || ["", "", undefined];
+		
+		var playerTest = (typeof(rexp[2]) === 'undefined' || rexp[2] === '' || parseInt(rexp[2]) === roomMaxPlayers);
 		var searchTerms = rexp[1] ? rexp[1].split('+').filter(x => x != '') : [];
 		function myIncl(rName, terms) {
 			return terms.split(' ').every(x => rName.includes(x));
 		}
 
 		if ((searchTerms.some(x => myIncl(roomName, x) || myIncl(roomName.replace(/\s/g,''), x)) || !searchTerms.length) && playerTest && (requestedCountryCode === countryCode || requestedCountryCode === 'All')) {
-			room.style.display = '';
-			totalNumberOfPlayers += parseInt(roomNumPlayers);
+			room.removeAttribute('data-vexa-hidden');
+			totalNumberOfPlayers += roomNumPlayers;
 			totalNumberOfRooms++;
         }
     	else { 
-			room.style.display = 'none';
+			room.dataset.vexaHidden = 'true';
 		}
     }
     var roomsStats = dialog.querySelectorAll("[data-hook='count']")[0];
     if(roomsStats) {
         roomsStats.innerText = totalNumberOfPlayers + " players in "+totalNumberOfRooms+" filtered rooms";
     }
-    var listScroll = dialog.querySelector("[data-hook='listscroll']");
-    if(listScroll) listScroll.scrollTo(0,0);
+    
+    if (forceScroll === true) {
+        var listScroll = dialog.querySelector("[data-hook='listscroll']");
+        if(listScroll) listScroll.scrollTo(0,0);
+    }
 }
 
 function updateAvailableCountries(){
 	var gameframe = document.getElementsByClassName("gameframe")[0];
 	var dialog = gameframe.contentDocument.getElementsByClassName("dialog")[0];
-	var flags = dialog.querySelectorAll("[data-hook='flag']");
+	var flags = dialog.querySelectorAll("[data-hook='flag'], .flagico");
 	var uniqueFlags = new Set();
 	for (let i = 0; i < flags.length; i++) {
-		uniqueFlags.add(flags[i].getAttribute("class").replace('flagico f-',''));
+		let flagClass = flags[i].getAttribute("class") || "";
+		let match = flagClass.match(/f-([a-z]{2})/i);
+		if (match) uniqueFlags.add(match[1].toLowerCase());
 	}
 	var countryCodes = Array.from(uniqueFlags).sort();
 	var button = gameframe.contentWindow.document.getElementById("searchRoomByCountry");
@@ -221,6 +246,6 @@ function selectedAnchorElement() {
 		var btn = gameframe.contentWindow.document.getElementById("searchRoomByCountry");
 		btn.value = countryCode;
 		setButtonText(btn, countryCode);
-		searchForRoom();
+		searchForRoom(true);
 	});
 }

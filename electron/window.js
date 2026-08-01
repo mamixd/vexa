@@ -14,7 +14,8 @@ function createWindow(options) {
             preload: options.preload,
             contextIsolation: true,
             nodeIntegration: false,
-            webSecurity: false
+            webSecurity: false,
+            backgroundThrottling: false
         }
     });
     win.setMenuBarVisibility(false);

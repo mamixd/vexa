@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const { createWindow } = require('./window');
 const DiscordRPC = require('discord-rpc');
 const { loadSettings, saveSettings } = require('./settings');
@@ -23,10 +24,9 @@ if (!settings.clientId) {
 const VERCEL_API_URL = process.env.VERCEL_API_URL || 'https://vexa-vercel-api.vercel.app';
 
 function sendHeartbeat() {
-    fetch(`${VERCEL_API_URL}/api/ping`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: settings.clientId })
+    const axios = require('axios');
+    axios.post(`${VERCEL_API_URL}/api/ping`, { userId: settings.clientId }, {
+        headers: { 'Content-Type': 'application/json' }
     }).catch(err => {
         // Silently ignore ping errors so it doesn't spam the console if offline
     });
@@ -134,6 +134,29 @@ ipcMain.on('toggle-discord-rpc', (event, state) => {
     }
 });
 
+function openReplayViewer(replayFilePath = null) {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.loadURL('https://www.haxball.com/replay?v=3');
+        mainWindow.show();
+        mainWindow.focus();
+
+        if (replayFilePath) {
+            mainWindow.webContents.once('did-finish-load', () => {
+                setTimeout(() => {
+                    try {
+                        const fileData = fs.readFileSync(replayFilePath);
+                        mainWindow.webContents.send('load-replay', fileData, path.basename(replayFilePath));
+                    } catch (err) {}
+                }, 1000);
+            });
+        }
+    }
+}
+
+ipcMain.on('open-replay-viewer', (event, replayFilePath = null) => {
+    openReplayViewer(replayFilePath);
+});
+
 ipcMain.on('window-control', (event, action) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     if (!win || win.isDestroyed()) return;
@@ -148,6 +171,12 @@ ipcMain.on('window-control', (event, action) => {
     }
 });
 
+// --- GPU Acceleration (Force for AMD/Older Drivers) ---
+app.commandLine.appendSwitch('ignore-gpu-blocklist');
+app.commandLine.appendSwitch('enable-gpu-rasterization');
+app.commandLine.appendSwitch('enable-zero-copy');
+app.commandLine.appendSwitch('enable-accelerated-video-decode');
+
 // --- FPS Unlock (Early Switches) ---
 if (settings.fpsEnabled) {
     app.commandLine.appendSwitch('disable-frame-rate-limit');
@@ -155,9 +184,6 @@ if (settings.fpsEnabled) {
     app.commandLine.appendSwitch('disable-background-timer-throttling');
 }
 if (settings.pingBoosterEnabled) {
-    app.commandLine.appendSwitch('ignore-gpu-blocklist');
-    app.commandLine.appendSwitch('enable-gpu-rasterization');
-    app.commandLine.appendSwitch('enable-zero-copy');
     app.commandLine.appendSwitch('enable-webgl-draft-extensions');
     app.commandLine.appendSwitch('disable-renderer-backgrounding');
     app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
@@ -185,8 +211,6 @@ function showLauncher() {
     launcherWindow.loadFile(path.join(__dirname, 'launcher.html'));
 }
 
-const fs = require('fs');
-
 function startGame(replayFilePath = null) {
     if (launcherWindow && !launcherWindow.isDestroyed()) {
         launcherWindow.hide();
@@ -196,7 +220,7 @@ function startGame(replayFilePath = null) {
         width: 420,
         height: 300,
         frame: false,
-        transparent: true,
+        backgroundColor: '#111318',
         alwaysOnTop: true,
         skipTaskbar: true,
         resizable: false,
@@ -243,7 +267,7 @@ function startGame(replayFilePath = null) {
 function handleArgs(argv) {
     const replayFile = argv.find(arg => arg.toLowerCase().endsWith('.hbr2'));
     if (replayFile) {
-        startGame(replayFile);
+        openReplayViewer(replayFile);
         return true;
     }
     return false;

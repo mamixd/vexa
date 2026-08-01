@@ -1,24 +1,27 @@
-### 28 HAZ, 2026
-**Vexa Client v1.2.0 (Büyük Güncelleme)**
-- **Yeni Launcher Arayüzü:** Eski duyuru ekranı kaldırıldı, yerine giriş ekranı (takma ad belirleme ve profil yönetimi) eklendi.
-- **Kişisel Avatar Sistemi:** Bilgisayarından kendi avatarını seçip yükleme, kırpma ve kaydetme özelliği eklendi. (Avatarın tüm pencerelerde oval ve uyumlu görünmesi sağlandı).
-- **Gelişmiş Discord RPC:** Discord entegrasyonu tamamen Türkçeleştirildi. Odadayken oda ismini, menüdeyken ve oyundayken gerçek zamanlı durumunu temiz ve profesyonel bir arayüzle gösterir.
-- **Şeffaf Chat Tasarımı:** Şeffaf arayüz ve özel arka plan modlarındaki gereksiz karanlık şeritler (bottom-section) kaldırılarak chat ekranı çok daha zarif ve şık hale getirildi.
-- **Daha İyi Varsayılan Ayarlar:** Yeni kullanıcılar için arayüz kalabalığı yaratmaması adına Canlı Ağ İzleyicisi (NetGraph) ve Ping Booster varsayılan olarak kapalı hale getirildi.
+# ⚠️ Launcher hala test aşamasındadır!
 
-### 27 HAZ, 2026
-**Vexa Client v1.1.4**
-- Yeni nesil modern kullanıcı arayüzü eklendi.
-- Kurulum ekranı ve indirme ilerleme animasyonları iyileştirildi.
-- Sistem optimizasyonları yapıldı.
+> Bu sürüm aktif olarak geliştirilmektedir. Hatalar ve eksiklikler olabilir. Geri bildirimleriniz bizim için çok değerli!
 
-### 16 MAY, 2026
-**Vexa Client v1.1.0**
-- İndirme ekranına detaylı bilgiler (hız, boyut) eklendi.
-- Kurulumda eski Vexa istemci süreçleri otomatik olarak sonlandırılıyor.
-- "Bilinmeyen Yayıncı" uyarılarında düzeltmeler.
+---
 
-### 12 NİS, 2026
-**Vexa Client v1.0.0**
-- Vexa Client ilk sürüm yayınlandı.
-- Geleceğe hoş geldin.
+# 🚀 Vexa v1.3.0 — Güncelleme Notları
+
+## 🎬 Replay Sistemi
+- **Dahili Replay İzleyici:** Artık üst menüde bulunan **"🎬 Replays"** butonuna tıklayarak direkt oyun penceresinde replay izleyebilirsiniz.
+- **Çift Tıklama Desteği:** `.hbr2` dosyalarına çift tıkladığınızda Vexa otomatik olarak açılıp replay'i oynatır.
+- Replay sayfası Vexa temasına uygun olarak reklamlardan arındırılmıştır.
+
+## 📦 Tek Setup Mimarisi
+- Launcher ve Client artık **tek bir kurulum dosyasında** birleştirildi.
+- `app.zip` indirme sistemi tamamen kaldırıldı — daha hızlı ve güvenilir başlatma.
+- "Oyna" butonuna basıldığında Launcher arka planda çalışmaya devam eder, görev çubuğundan tekrar erişilebilir.
+
+## ⚡ Performans İyileştirmeleri
+- Hareketli arka planlar (Video/GIF) geçici olarak devre dışı bırakıldı — oyun içi performans artışı.
+- GPU hızlandırma flag'leri eklendi (`ignore-gpu-blocklist`, `enable-gpu-rasterization`).
+- Ağır CSS blur efektleri kaldırıldı.
+
+## 🔧 Diğer Düzeltmeler
+- Launcher pencere boyutu düzeltildi (1400x820).
+- Header buton tasarımları sadeleştirildi ve tutarlı hale getirildi.
+- Ayarlar menüsünde arka plan yükleme sadece statik resimlerle sınırlandırıldı (PNG, JPG, WEBP).

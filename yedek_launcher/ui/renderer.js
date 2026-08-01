@@ -1,4 +1,4 @@
-const API_URL = 'https://www.vexaclient.com/api';
+const API_URL = 'https://vexa-vercel-api.vercel.app/api';
 let currentUser = null;
 let friendsList = [];
 let pendingRequests = [];
@@ -294,11 +294,9 @@ function buildFriendsColumn() {
     const offline = friendsList.filter(f => f.dot === 'offline');
 
     function row(f) {
-        const avatarContent = f.avatar ? `<div class="fdot ${f.dot}"></div>` : `${f.name[0].toUpperCase()}<div class="fdot ${f.dot}"></div>`;
-        const avatarStyle = f.avatar ? `style="background-image:url('${f.avatar}');background-size:cover;background-position:center;"` : '';
         return `
         <div class="friend-item ${f.dot==='offline'?'offline':''}" data-id="${f.id}">
-          <div class="friend-avatar" ${avatarStyle}>${avatarContent}</div>
+          <div class="friend-avatar">${f.name[0].toUpperCase()}<div class="fdot ${f.dot}"></div></div>
           <div class="friend-info">
             <div class="friend-name">${f.name}</div>
             <div class="friend-activity">${f.activity}</div>
@@ -353,11 +351,9 @@ function buildFpRow(f, mode) {
           <div class="fp-btn" data-action="invite" data-id="${f.id}">Davet Et</div>`;
     }
     const dotClass = f.dot || 'offline';
-    const avatarContent = f.avatar ? `<div class="fdot ${dotClass}"></div>` : `${f.name[0].toUpperCase()}<div class="fdot ${dotClass}"></div>`;
-    const avatarStyle = f.avatar ? `style="background-image:url('${f.avatar}');background-size:cover;background-position:center;"` : '';
     return `
       <div class="fp-row" data-id="${f.id}">
-        <div class="friend-avatar" ${avatarStyle}>${avatarContent}</div>
+        <div class="friend-avatar">${f.name[0].toUpperCase()}<div class="fdot ${dotClass}"></div></div>
         <div class="fp-row-info">
           <div class="fp-row-name">${f.name}</div>
           <div class="fp-row-sub">${f.activity || ''}</div>
@@ -492,7 +488,7 @@ function openProfilePanel(friendId) {
 
     const bioEl = document.getElementById('ppBio');
     if (bioEl) {
-        bioEl.textContent = f.bio || '';
+        bioEl.textContent = f.bio || 'Vexa oyuncusu. Favori oyunum Haxball!';
     }
 
     document.getElementById('ppStatus').textContent = f.activity || 'Idle';
@@ -756,7 +752,7 @@ setInterval(() => {
             renderFpList('pending');
         }
     }
-}, 5000);
+}, 10000);
 
 setInterval(() => {
     if (currentChatFriendId) loadChatHistory();
@@ -1073,164 +1069,33 @@ window.testNotification = function() {
 let tempAvatarData = null;
 let tempBannerData = null;
 
-/* =====================================================
-   CROPPER LOGIC
-===================================================== */
-let cropperImg = null;
-let cropperMode = 'avatar';
-let cropX = 0, cropY = 0, cropZoom = 1;
-let _isDragging = false, _startX, _startY;
-
-const cropperOverlay = document.getElementById('cropperOverlay');
-const cropperCanvas = document.getElementById('cropperCanvas');
-const cropperZoomSlider = document.getElementById('cropperZoom');
-const ctxCrop = cropperCanvas?.getContext('2d');
-const AVATAR_SIZE = 370;
-const BANNER_W = 370;
-const BANNER_H = 140;
-
-function openCropper(file, mode) {
-    cropperMode = mode;
+function processImageFile(file, maxWidth, maxHeight, callback) {
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = function(e) {
         const img = new Image();
-        img.onload = () => {
-            cropperImg = img;
-            cropX = 0; cropY = 0;
-
-            if (mode === 'avatar') {
-                cropperCanvas.width = AVATAR_SIZE;
-                cropperCanvas.height = AVATAR_SIZE;
-                // Fit: cover the square
-                cropZoom = Math.max(AVATAR_SIZE / img.width, AVATAR_SIZE / img.height);
-            } else {
-                cropperCanvas.width = BANNER_W;
-                cropperCanvas.height = BANNER_H;
-                // Fit: cover the rectangle
-                cropZoom = Math.max(BANNER_W / img.width, BANNER_H / img.height);
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            let w = img.width;
+            let h = img.height;
+            if (w > maxWidth) {
+                h = Math.round((h * maxWidth) / w);
+                w = maxWidth;
             }
-
-            const minZoom = cropZoom; // Minimum zoom is exact cover
-            const maxZoom = cropZoom * 5;
-            if (cropperZoomSlider) {
-                cropperZoomSlider.min = minZoom.toFixed(3);
-                cropperZoomSlider.max = maxZoom.toFixed(3);
-                cropperZoomSlider.value = cropZoom.toFixed(3);
+            if (h > maxHeight) {
+                w = Math.round((w * maxHeight) / h);
+                h = maxHeight;
             }
-
-            // Show/hide SVG masks
-            const circleMask = document.getElementById('cropperCircleMask');
-            const rectMask = document.getElementById('cropperRectMask');
-            if (mode === 'avatar') {
-                if (circleMask) { circleMask.style.display = 'block'; }
-                if (rectMask) { rectMask.style.display = 'none'; }
-                // Position circle mask in center
-                const r = AVATAR_SIZE * 0.45;
-                const mcx = AVATAR_SIZE / 2;
-                const mcy = AVATAR_SIZE / 2;
-                document.getElementById('cropperMaskCircle')?.setAttribute('cx', mcx);
-                document.getElementById('cropperMaskCircle')?.setAttribute('cy', mcy);
-                document.getElementById('cropperMaskCircle')?.setAttribute('r', r);
-                document.getElementById('cropperMaskBorder')?.setAttribute('cx', mcx);
-                document.getElementById('cropperMaskBorder')?.setAttribute('cy', mcy);
-                document.getElementById('cropperMaskBorder')?.setAttribute('r', r);
-            } else {
-                if (circleMask) { circleMask.style.display = 'none'; }
-                if (rectMask) { rectMask.style.display = 'block'; }
-                // Position rect mask with padding
-                const pad = 10;
-                const rw = BANNER_W - pad * 2;
-                const rh = BANNER_H - pad * 2;
-                ['cropperMaskRect', 'cropperMaskRectBorder'].forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) { el.setAttribute('x', pad); el.setAttribute('y', pad); el.setAttribute('width', rw); el.setAttribute('height', rh); }
-                });
-            }
-
-            document.getElementById('cropperTitle').textContent = mode === 'avatar' ? 'Profil Resmini Düzenle' : 'Afişi Düzenle';
-            cropperOverlay.style.display = 'flex';
-            drawCropper();
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            callback(dataUrl);
         };
         img.src = e.target.result;
     };
     reader.readAsDataURL(file);
 }
-
-function drawCropper() {
-    if (!cropperImg || !ctxCrop) return;
-    
-    // Clamp zoom to minimum
-    const minZoom = Math.max(cropperCanvas.width / cropperImg.width, cropperCanvas.height / cropperImg.height);
-    if (cropZoom < minZoom) cropZoom = minZoom;
-    
-    const w = cropperImg.width * cropZoom;
-    const h = cropperImg.height * cropZoom;
-    
-    // Clamp X and Y to prevent showing background
-    const limitX = Math.max(0, (w - cropperCanvas.width) / 2);
-    const limitY = Math.max(0, (h - cropperCanvas.height) / 2);
-    
-    if (cropX > limitX) cropX = limitX;
-    if (cropX < -limitX) cropX = -limitX;
-    if (cropY > limitY) cropY = limitY;
-    if (cropY < -limitY) cropY = -limitY;
-    
-    ctxCrop.clearRect(0, 0, cropperCanvas.width, cropperCanvas.height);
-    const cx = (cropperCanvas.width - w) / 2 + cropX;
-    const cy = (cropperCanvas.height - h) / 2 + cropY;
-    ctxCrop.drawImage(cropperImg, cx, cy, w, h);
-}
-
-if (cropperCanvas) {
-    cropperCanvas.parentElement.addEventListener('mousedown', (e) => {
-        _isDragging = true;
-        _startX = e.clientX - cropX;
-        _startY = e.clientY - cropY;
-        cropperCanvas.parentElement.style.cursor = 'grabbing';
-    });
-    window.addEventListener('mousemove', (e) => {
-        if (!_isDragging) return;
-        cropX = e.clientX - _startX;
-        cropY = e.clientY - _startY;
-        drawCropper();
-    });
-    window.addEventListener('mouseup', () => {
-        _isDragging = false;
-        if (cropperCanvas) cropperCanvas.parentElement.style.cursor = 'grab';
-    });
-    cropperZoomSlider?.addEventListener('input', (e) => {
-        cropZoom = parseFloat(e.target.value);
-        drawCropper();
-    });
-}
-
-document.getElementById('cropperCancelBtn')?.addEventListener('click', () => {
-    cropperOverlay.style.display = 'none'; cropperImg = null;
-    document.getElementById('avatarFileInput').value = '';
-    document.getElementById('bannerFileInput').value = '';
-});
-
-document.getElementById('cropperApplyBtn')?.addEventListener('click', () => {
-    if (!cropperImg) return;
-    const finalCanvas = document.createElement('canvas');
-    if (cropperMode === 'avatar') { finalCanvas.width = 250; finalCanvas.height = 250; }
-    else { finalCanvas.width = 800; finalCanvas.height = 300; }
-    const fCtx = finalCanvas.getContext('2d');
-    const scaleX = finalCanvas.width / cropperCanvas.width;
-    const scaleY = finalCanvas.height / cropperCanvas.height;
-    const w = cropperImg.width * cropZoom * scaleX;
-    const h = cropperImg.height * cropZoom * scaleY;
-    const cx = (finalCanvas.width - w) / 2 + (cropX * scaleX);
-    const cy = (finalCanvas.height - h) / 2 + (cropY * scaleY);
-    fCtx.drawImage(cropperImg, cx, cy, w, h);
-    const dataUrl = finalCanvas.toDataURL('image/jpeg', 0.85);
-    if (cropperMode === 'avatar') { tempAvatarData = dataUrl; showToast('Profil resmi seçildi (Kaydetmeyi unutmayın).'); }
-    else { tempBannerData = dataUrl; showToast('Afiş resmi seçildi (Kaydetmeyi unutmayın).'); }
-    updateProfileEditorUI();
-    cropperOverlay.style.display = 'none'; cropperImg = null;
-    document.getElementById('avatarFileInput').value = '';
-    document.getElementById('bannerFileInput').value = '';
-});
 
 function updateProfileEditorUI() {
     if (isGuest()) return;
@@ -1242,9 +1107,9 @@ function updateProfileEditorUI() {
     const pAvatar = document.getElementById('previewAvatar');
     const pBanner = document.getElementById('previewBanner');
 
-    const currentBio = (currentUser && currentUser.bio) || '';
-    const currentAvatar = (currentUser && currentUser.avatar) || '';
-    const currentBanner = (currentUser && currentUser.banner) || '';
+    const currentBio = (currentUser && currentUser.bio) || localStorage.getItem('vexa_bio') || 'Vexa oyuncusu. Favori oyunum Haxball!';
+    const currentAvatar = (currentUser && currentUser.avatar) || localStorage.getItem('vexa_avatar') || '';
+    const currentBanner = (currentUser && currentUser.banner) || localStorage.getItem('vexa_banner') || '';
 
     if (bioTextarea) bioTextarea.value = currentBio;
     if (pName) pName.textContent = currentUser ? currentUser.username : 'Oyuncu';
@@ -1282,12 +1147,24 @@ document.getElementById('editBioTextarea')?.addEventListener('input', (e) => {
 
 document.getElementById('avatarFileInput')?.addEventListener('change', (e) => {
     const file = e.target.files[0];
-    if (file) openCropper(file, 'avatar');
+    if (file) {
+        processImageFile(file, 250, 250, (dataUrl) => {
+            tempAvatarData = dataUrl;
+            updateProfileEditorUI();
+            showToast('Profil resmi seçildi (Kaydetmeyi unutmayın).');
+        });
+    }
 });
 
 document.getElementById('bannerFileInput')?.addEventListener('change', (e) => {
     const file = e.target.files[0];
-    if (file) openCropper(file, 'banner');
+    if (file) {
+        processImageFile(file, 800, 300, (dataUrl) => {
+            tempBannerData = dataUrl;
+            updateProfileEditorUI();
+            showToast('Afiş resmi seçildi (Kaydetmeyi unutmayın).');
+        });
+    }
 });
 
 document.getElementById('removeAvatarBtn')?.addEventListener('click', () => {

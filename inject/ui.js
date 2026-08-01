@@ -99,7 +99,13 @@
             if (!doc) return;
             if (doc.querySelector('button[data-hook="favRoom"]') || doc.querySelector('button[data-hook="vexaFavRoom"]')) return;
 
-            const anchor = doc.querySelector('button[data-hook="autoJoin"]') || doc.querySelector('button[data-hook="create"]');
+            let anchor = doc.querySelector('button[data-hook="autoJoin"]');
+            if (!anchor) {
+                const createBtn = doc.querySelector('button[data-hook="create"]');
+                if (createBtn && createBtn.closest('.dialog') && createBtn.closest('.dialog').querySelector('table.header')) {
+                    anchor = createBtn;
+                }
+            }
             if (!anchor?.parentNode) return;
 
             const favButton = createButton(doc, 'vexaFavRoom', 'icon-star-empty', 'Favorite', () => {

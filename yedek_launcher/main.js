@@ -1,10 +1,3 @@
-const hasClientFlag = process.argv.includes('--client-mode');
-const hasReplayFile = process.argv.some(arg => arg.toLowerCase().endsWith('.hbr2'));
-
-if (hasClientFlag || hasReplayFile) {
-    require('../electron/main.js');
-    return;
-}
 const { app, BrowserWindow, ipcMain, shell, Notification } = require('electron');
 const path = require('path');
 const axios = require('axios');
@@ -27,6 +20,25 @@ const FALLBACK_RELEASE_URL = `https://github.com/${GITHUB_REPO}/releases/latest`
 let APP_DATA_PATH;
 let VERSION_FILE;
 
+const configPath = path.join(app.getPath('userData'), 'vexa_config.json');
+let config = { startup: true, hwaccel: true, language: 'Türkçe' };
+try {
+    if (fs.existsSync(configPath)) {
+        config = { ...config, ...fs.readJsonSync(configPath) };
+    } else {
+        fs.writeJsonSync(configPath, config);
+    }
+} catch(e) {}
+
+if (!config.hwaccel) {
+    app.disableHardwareAcceleration();
+}
+
+app.setLoginItemSettings({
+    openAtLogin: config.startup,
+    path: app.getPath('exe')
+});
+
 function normalizeVersion(version) {
     return String(version || '0.0.0').trim().replace(/^v/i, '');
 }
@@ -36,7 +48,22 @@ function isSameVersion(left, right) {
 }
 
 async function readLocalInstallState() {
-    return { isInstalled: true, localVersion: app.getVersion() };
+    const clientPath = path.join(APP_DATA_PATH, 'game');
+    const clientExe = path.join(clientPath, 'vexa-client.exe');
+    const isInstalled = fs.existsSync(clientExe);
+    let localVersion = 'Yüklü Değil';
+
+    if (isInstalled && fs.existsSync(VERSION_FILE)) {
+        try {
+            const versionData = await fs.readJson(VERSION_FILE);
+            localVersion = normalizeVersion(versionData.version || '0.0.0');
+        } catch (error) {
+            console.warn('[Launcher] Local version file unreadable:', error.message);
+            localVersion = '0.0.0';
+        }
+    }
+
+    return { isInstalled, localVersion };
 }
 
 async function getPatchNotes(fallbackText) {
@@ -156,6 +183,12 @@ app.whenReady().then(() => {
     createWindow();
 });
 
+ipcMain.on('show-notification', (event, { title, body }) => {
+    if (Notification.isSupported()) {
+        new Notification({ title, body }).show();
+    }
+});
+
 ipcMain.handle('check-update', async () => {
     const installState = await readLocalInstallState();
 
@@ -250,6 +283,10 @@ ipcMain.handle('extract-and-install', async (event, version) => {
 });
 
 ipcMain.handle('launch-game', async () => {
+    const clientExe = path.join(APP_DATA_PATH, 'game', 'vexa-client.exe');
+    const localDevPath = path.join(__dirname, '..');
+    const isDev = !app.isPackaged;
+
     if (rpc) {
         try {
             await rpc.clearActivity();
@@ -259,24 +296,52 @@ ipcMain.handle('launch-game', async () => {
 
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    try {
-        const child = spawn(process.execPath, ['--client-mode'], {
-            detached: true,
-            stdio: 'ignore',
-            cwd: path.dirname(process.execPath),
-            windowsHide: false
-        });
-        child.unref();
-        if (mainWindow) mainWindow.minimize();
-        if (Notification.isSupported()) {
-            new Notification({
-                title: 'Vexa Başlatılıyor',
-                body: 'Oyun açılıyor, Launcher arka planda çalışmaya devam edecek.'
-            }).show();
+    if (fs.existsSync(clientExe)) {
+        try {
+            const child = spawn(clientExe, [], {
+                detached: true,
+                stdio: 'ignore',
+                cwd: path.dirname(clientExe),
+                windowsHide: false
+            });
+            child.unref();
+            if (mainWindow) mainWindow.minimize();
+            if (Notification.isSupported()) {
+                new Notification({
+                    title: 'Vexa Başlatılıyor',
+                    body: 'Oyun açılıyor, Vexa arka planda çalışmaya devam edecek.'
+                }).show();
+            }
+            return { success: true };
+        } catch (error) {
+            return { error: `Client baslatilamadi: ${error.message || error}` };
         }
-        return { success: true };
-    } catch (error) {
-        return { error: `Client baslatilamadi: ${error.message || error}` };
+    } else if (isDev) {
+        console.log('Dev mode: Launching local client...');
+        const electronPath = process.execPath;
+        const clientMainPath = path.join(localDevPath, 'electron', 'main.js');
+
+        try {
+            const child = spawn(electronPath, [clientMainPath], {
+                detached: true,
+                stdio: 'ignore',
+                cwd: localDevPath,
+                windowsHide: false
+            });
+            child.unref();
+            if (mainWindow) mainWindow.minimize();
+            if (Notification.isSupported()) {
+                new Notification({
+                    title: 'Vexa Başlatılıyor (Dev)',
+                    body: 'Oyun açılıyor, Vexa arka planda çalışmaya devam edecek.'
+                }).show();
+            }
+            return { success: true };
+        } catch (error) {
+            return { error: `Dev client baslatilamadi: ${error.message || error}` };
+        }
+    } else {
+        return { error: 'Oyun dosyalari bulunamadi!', needsDownload: true };
     }
 });
 
@@ -291,5 +356,23 @@ ipcMain.on('minimize-app', () => {
 ipcMain.handle('open-external', async (event, url) => {
     if (url) {
         await shell.openExternal(url);
+        return true;
     }
+    return false;
+});
+
+ipcMain.handle('get-config', () => {
+    return config;
+});
+
+ipcMain.handle('set-config', (event, newConfig) => {
+    config = { ...config, ...newConfig };
+    try {
+        fs.writeJsonSync(configPath, config);
+        app.setLoginItemSettings({
+            openAtLogin: config.startup,
+            path: app.getPath('exe')
+        });
+    } catch (e) {}
+    return config;
 });

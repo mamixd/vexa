@@ -10,8 +10,5 @@ contextBridge.exposeInMainWorld('api', {
     onInstallerStatus: (callback) => ipcRenderer.on('installer-status', (event, data) => callback(data)),
     close: () => ipcRenderer.send('close-app'),
     minimize: () => ipcRenderer.send('minimize-app'),
-    openExternal: (url) => ipcRenderer.invoke('open-external', url),
-    getConfig: () => ipcRenderer.invoke('get-config'),
-    setConfig: (newConfig) => ipcRenderer.invoke('set-config', newConfig),
-    showNotification: (title, body) => ipcRenderer.send('show-notification', { title, body })
+    openExternal: (url) => ipcRenderer.invoke('open-external', url)
 });

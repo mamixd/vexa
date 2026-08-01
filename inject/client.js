@@ -47,8 +47,8 @@
         const monitorHz = window.ELECTRON_SCREEN_HZ || 60;
         const configuredFpsCap = parseInt(localStorage.getItem('hax_fps_cap') || '', 10);
         const unlockedFpsCap = Number.isFinite(configuredFpsCap)
-            ? Math.min(Math.max(configuredFpsCap, monitorHz), 360)
-            : Math.min(Math.max(monitorHz, 240), 360);
+            ? Math.max(configuredFpsCap, monitorHz)
+            : 99999; // Sinirsiz FPS
         
         // --- WebRTC PeerConnection Hook ---
         targetWindow._activePCs = targetWindow._activePCs || new Set();
@@ -75,22 +75,12 @@
 
         // 1. Orijinal HaxBall FPS/Ping Saklayıcı + Vexa Arka Plan Logo + Transparency Control
         const hideNativeStatsCSS = `
-            .game-view .stats-view { 
-                opacity: 0 !important; 
-                pointer-events: none !important; 
-            }
-            body::before {
-                content: "";
-                position: fixed;
-                top: -50%; left: -50%; width: 200%; height: 200%;
-                background-image: url('file:///c:/Vexa/inject/background.png');
-                background-repeat: no-repeat;
-                background-position: center;
-                background-size: 2000px;
-                opacity: 0.6;
-                z-index: -1;
-                pointer-events: none;
-                transform: rotate(-25deg);
+            body {
+                background-color: #111 !important;
+                background-image: url('file:///c:/Vexa/inject/background.png') !important;
+                background-repeat: no-repeat !important;
+                background-position: center !important;
+                background-size: cover !important;
             }
 
             body.vexa-game-active {
@@ -130,9 +120,7 @@
             body.vexa-has-custom-bg .dialog,
             body.vexa-has-custom-bg .chatbox-view-contents,
             body.vexa-has-custom-bg .game-state-view {
-                background: rgba(15, 15, 18, 0.55) !important;
-                backdrop-filter: blur(12px) saturate(160%) !important;
-                -webkit-backdrop-filter: blur(12px) saturate(160%) !important;
+                background: rgba(15, 15, 18, 0.85) !important;
                 border: 1px solid rgba(255, 255, 255, 0.08) !important;
                 box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37) !important;
             }
@@ -422,13 +410,17 @@
             }
 
             body.vexa-has-custom-bg:not(.vexa-ui-transparent) .choose-nickname-view .dialog,
-            body.vexa-has-custom-bg:not(.vexa-ui-transparent) .room-view .container,
             body.vexa-has-custom-bg:not(.vexa-ui-transparent) .dialog,
             body.vexa-has-custom-bg:not(.vexa-ui-transparent) .chatbox-view-contents,
             body.vexa-has-custom-bg:not(.vexa-ui-transparent) .game-state-view {
-                background: rgba(10, 12, 18, 0.58) !important;
-                backdrop-filter: blur(14px) saturate(145%) !important;
-                -webkit-backdrop-filter: blur(14px) saturate(145%) !important;
+                background: rgba(10, 12, 18, 0.85) !important;
+                border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                box-shadow: 0 14px 42px rgba(0, 0, 0, 0.38) !important;
+                border-radius: 8px !important;
+            }
+
+            body.vexa-has-custom-bg:not(.vexa-ui-transparent) .room-view .container {
+                background: rgba(15, 15, 18, 0.85) !important;
                 border: 1px solid rgba(255, 255, 255, 0.1) !important;
                 box-shadow: 0 14px 42px rgba(0, 0, 0, 0.38) !important;
                 border-radius: 8px !important;
@@ -549,8 +541,37 @@
                     }
                 }
 
-
-            }
+                // Oda İçi Şeffaflık Butonu (Rec Yanı)
+                const headerBtns = doc.querySelector('.header-btns');
+                if (headerBtns) {
+                    if (!doc.getElementById('vexa-room-trans-btn')) {
+                        const btn = doc.createElement('button');
+                        btn.id = 'vexa-room-trans-btn';
+                        // icon-eye-off veya icon-eye class'ı HaxBall ikonlarında olmayabilir, o yüzden metin ve sade bir ikon koyalım
+                        btn.innerHTML = `<i class="icon-eye"></i>Transp`;
+                        
+                        // Rec butonunun soluna ekle
+                        const recBtn = doc.querySelector('[data-hook="rec-btn"]');
+                        if (recBtn) {
+                            headerBtns.insertBefore(btn, recBtn);
+                        } else {
+                            headerBtns.appendChild(btn);
+                        }
+                        
+                        btn.addEventListener('click', () => {
+                            const isCurrentlyTrans = doc.body.classList.contains('vexa-ui-transparent');
+                            const active = doc.body.classList.toggle('vexa-ui-transparent');
+                            localStorage.setItem('vexa-ui-transparent', active);
+                            
+                            // Ayrıca filtrelerdeki butonu da güncelle
+                            const transBtn = doc.getElementById('vexa-trans-btn');
+                            if (transBtn) {
+                                const icon = transBtn.querySelector('i');
+                                if (icon) icon.className = active ? 'icon-ok' : 'icon-cancel';
+                            }
+                        });
+                    }
+                }            }
         }
         setInterval(injectIframeContent, 100);
 
@@ -558,19 +579,24 @@
         const frameTime = 1000 / targetFps;
 
         const originalRAF = targetWindow.requestAnimationFrame.bind(targetWindow);
+        const originalCAF = targetWindow.cancelAnimationFrame.bind(targetWindow);
 
-        // 1. Oyunu Kandırma (Engine Hack)
-        targetWindow.requestAnimationFrame = function(callback) {
-            return setTimeout(() => callback(performance.now()), frameTime);
-        };
-        targetWindow.cancelAnimationFrame = function(id) {
-            clearTimeout(id);
-        };
-
-        if(isFpsUnlocked) {
-            console.log("[Vexa HaxBall Client] FPS Unlocker AKTİF (" + targetFps + " FPS cap)");
+        // 1. FPS Modu
+        if (isFpsUnlocked) {
+            console.log("[Vexa HaxBall Client] FPS Unlocker AKTIF (Native rAF + Electron Flags - 1000+ FPS, sifir lag)");
+            // HaxBall OG Client gibi, JS ile rAF'i bozmuyoruz. 
+            // Electron'daki --disable-frame-rate-limit ve --disable-gpu-vsync flag'leri
+            // native rAF'i zaten limitsiz calistiracaktir.
+            // Bu sayede event loop hicbir sekilde bozulmaz, lag/takilma olmaz!
         } else {
-            console.log("[Vexa HaxBall Client] FPS Unlocker KAPALI (" + monitorHz + " Hz)");
+            // FPS KAPALI ise monitör Hz'ine kilitle
+            targetWindow.requestAnimationFrame = function(callback) {
+                return setTimeout(() => callback(performance.now()), frameTime);
+            };
+            targetWindow.cancelAnimationFrame = function(id) {
+                clearTimeout(id);
+            };
+            console.log("[Vexa HaxBall Client] FPS Limiter AKTIF (" + monitorHz + " Hz)");
         }
 
         // --- Custom Background Engine ---
@@ -1093,7 +1119,7 @@
                 zIndex: '999999',
                 boxShadow: '0 4px 12px rgba(0,0,0,0.8)',
                 pointerEvents: 'none',
-                display: fpsShow ? 'flex' : 'none',
+                display: 'none', /* fpsShow ? 'flex' : 'none' (Gecici Iptal) */
                 alignItems: 'center',
                 gap: '8px',
                 letterSpacing: '1px',
@@ -1227,6 +1253,7 @@
         originalRAF(measureFPS);
 
         // 5. HaxBall Native FPS Spoof (MutationObserver)
+        /* GECICI OLARAK IPTAL EDILDI (Kullanici istegi)
         const findNativeFps = setInterval(() => {
             const nativeFpsText = targetWindow.document.querySelector('[data-hook="fps"]');
             if (nativeFpsText) {
@@ -1244,6 +1271,7 @@
                 observer.observe(nativeFpsText, { childList: true, characterData: true, subtree: true });
             }
         }, 500);
+        */
 
         // 6. NetGraph & WebRTC Stats Update Interval (500ms)
         setInterval(async () => {
@@ -1254,7 +1282,7 @@
                 }
             } catch(e) {}
             
-            const showNetGraph = localStorage.getItem('hax_net_graph') !== 'false';
+            const showNetGraph = false; // localStorage.getItem('hax_net_graph') !== 'false'; // GECICI IPTAL
             if (showNetGraph) {
                 updateNetGraph(lastKnownFps);
             } else {
@@ -1349,18 +1377,7 @@
                 return '';
             }
 
-            function isInGame() {
-                try {
-                    const doc = getIframeDoc();
-                    if (!doc) return false;
-                    const canvas = doc.querySelector('canvas');
-                    const gameView = doc.querySelector('.game-view');
-                    if (!canvas || !gameView) return false;
-                    const style = doc.defaultView.getComputedStyle(gameView);
-                    return style.display !== 'none' && style.visibility !== 'hidden';
-                } catch(e) {}
-                return false;
-            }
+
 
             function isInRoom() {
                 try {
@@ -1388,16 +1405,45 @@
                 return false;
             }
 
+            let cachedRoomName = '';
+
             function getRoomName() {
                 try {
                     const doc = getIframeDoc();
-                    if (!doc) return null;
-                    const roomName = doc.querySelector('.room-view .room-name');
-                    if (roomName && roomName.textContent.trim()) return roomName.textContent.trim();
-                    const barTitle = doc.querySelector('.bar-container .room-name');
-                    if (barTitle && barTitle.textContent.trim()) return barTitle.textContent.trim();
+                    if (!doc) return cachedRoomName;
+                    
+                    const roomNameEl = doc.querySelector('[data-hook="room-name"]') || doc.querySelector('.room-name');
+                    if (roomNameEl && roomNameEl.textContent.trim()) {
+                        cachedRoomName = roomNameEl.textContent.trim();
+                        return cachedRoomName;
+                    }
                 } catch(e) {}
-                return null;
+                return cachedRoomName;
+            }
+
+            function isInGame() {
+                try {
+                    const doc = getIframeDoc();
+                    if (!doc) return false;
+                    
+                    const gameView = doc.querySelector('.game-view');
+                    if (!gameView) return false;
+
+                    // Haxball'da game-view hem lobiyi hem de maci kapsar.
+                    // Eger room-view (lobi) gorunur durumdaysa, macta degiliz (lobideyiz).
+                    const roomView = doc.querySelector('.room-view');
+                    if (roomView) {
+                        const style = doc.defaultView.getComputedStyle(roomView);
+                        if (style.display !== 'none' && style.visibility !== 'hidden') {
+                            return false; 
+                        }
+                    }
+                    
+                    // Oda arayuzu gizliyse ve game-view varsa, mactayiz demektir.
+                    const gameStyle = doc.defaultView.getComputedStyle(gameView);
+                    return gameStyle.display !== 'none';
+                } catch(e) {}
+                return false;
             }
 
             function updateDiscordRPC() {
@@ -1408,19 +1454,24 @@
                     const roomName = getRoomName();
 
                     if (isInGame()) {
+                        details = roomName ? roomName : 'Bilinmeyen Oda';
                         state = 'Maçta';
-                        if (roomName) details = roomName;
                     } else if (isInRoom()) {
-                        state = 'Odada';
-                        if (roomName) details = roomName;
+                        details = roomName ? roomName : 'Bilinmeyen Oda';
+                        state = 'Odada Bekliyor';
                     } else if (isChoosingNickname()) {
-                        state = 'İsim Seçiyor';
+                        details = 'İsim Seçiyor';
+                        state = 'Ana Menü';
+                        cachedRoomName = ''; 
                     } else {
-                        state = 'Ana Menüde';
+                        details = 'Oda Listesinde';
+                        state = 'Ana Menü';
+                        cachedRoomName = ''; 
                     }
 
-                    if (state !== lastRpcState) {
+                    if (state !== lastRpcState || details !== lastRpcDetails) {
                         lastRpcState = state;
+                        lastRpcDetails = details;
                         window.haxballAPI.updateRPC(state, details, nick);
                     }
                 } catch(e) {}

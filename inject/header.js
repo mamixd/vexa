@@ -6,6 +6,38 @@
     let isPingBoosterEnabled = localStorage.getItem('hax_ping_booster') === 'true';
     let isNetGraphEnabled = localStorage.getItem('hax_net_graph') !== 'false';
 
+    // Replay Page Logic
+    if (window.location.pathname.includes('/replay')) {
+        const style = document.createElement('style');
+        style.innerHTML = `
+            body { background-color: #111318 !important; color: #fff !important; overflow: hidden !important; }
+            .header, .rightbar { display: none !important; }
+            .container { width: 100vw !important; height: 100vh !important; margin: 0 !important; padding: 0 !important; max-width: none !important; }
+            .flexRow.flexGrow { height: 100vh !important; }
+            iframe.gameframe { border: none !important; width: 100vw !important; height: 100vh !important; box-shadow: none !important; }
+        `;
+        document.head.appendChild(style);
+
+        if (window.haxballAPI && window.haxballAPI.onLoadReplay) {
+            window.haxballAPI.onLoadReplay((fileData, fileName) => {
+                const checkIframe = setInterval(() => {
+                    const iframe = document.getElementById('gameframe');
+                    if (iframe && iframe.contentDocument && iframe.contentDocument.querySelector('input[type="file"]')) {
+                        clearInterval(checkIframe);
+                        try {
+                            const file = new File([fileData], fileName, { type: 'application/octet-stream' });
+                            const dataTransfer = new DataTransfer();
+                            dataTransfer.items.add(file);
+                            const fileInput = iframe.contentDocument.querySelector('input[type="file"]');
+                            fileInput.files = dataTransfer.files;
+                            fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+                        } catch(e) {}
+                    }
+                }, 500);
+            });
+        }
+    }
+
     // Ayarları başlangıçta merkezi config'den yükle (Eğer varsa)
     if (window.launcherAPI) {
         window.launcherAPI.getSettings().then(settings => {
@@ -125,15 +157,27 @@
         rightWrapper.id = "vexa-hdr-right";
         rightWrapper.style.cssText = "display:flex; align-items:center; gap:8px; flex-shrink:0; min-width:300px; justify-content:flex-end; -webkit-app-region:no-drag;";
 
+        const replayBtn = document.createElement('button');
+        replayBtn.innerHTML = '🎬 <span style="margin-left:3px;">Replays</span>';
+        replayBtn.id = "vexa-replay-btn";
+        replayBtn.style.cssText = "background:#1a1c20 !important; color:#8b949e !important; border:1px solid #2d3035 !important; border-radius:6px; padding:8px 13px; font-size:12px; font-weight:700; cursor:pointer; transition:color 0.15s, background 0.15s; white-space:nowrap; margin-right:4px; display:flex; align-items:center;";
+        replayBtn.onmouseover = () => { replayBtn.style.color = '#c9d1d9'; replayBtn.style.background = '#22252b'; replayBtn.style.borderColor = '#3d4149'; };
+        replayBtn.onmouseout = () => { replayBtn.style.color = '#8b949e'; replayBtn.style.background = '#1a1c20'; replayBtn.style.borderColor = '#2d3035'; };
+        replayBtn.onclick = () => {
+            if (window.electronAPI && window.electronAPI.openReplayViewer) {
+                window.electronAPI.openReplayViewer();
+            }
+        };
+
         const settingsBtn = document.createElement('button');
         settingsBtn.innerText = '⚙ Ayarlar';
         settingsBtn.id = "vexa-settings-btn";
-        settingsBtn.innerText = '⚙ Ayarlar';
         settingsBtn.style.cssText = "background:#1a1c20 !important; color:#8b949e !important; border:1px solid #2d3035 !important; border-radius:6px; padding:8px 13px; font-size:12px; font-weight:700; cursor:pointer; transition:color 0.15s, background 0.15s; white-space:nowrap;";
         settingsBtn.onmouseover = () => { settingsBtn.style.color = '#c9d1d9'; settingsBtn.style.background = '#22252b'; settingsBtn.style.borderColor = '#3d4149'; settingsBtn.style.transform = 'translateY(0)'; };
         settingsBtn.onmouseout = () => { settingsBtn.style.color = '#8b949e'; settingsBtn.style.background = '#1a1c20'; settingsBtn.style.borderColor = '#2d3035'; settingsBtn.style.transform = 'translateY(0)'; };
         settingsBtn.onclick = openSettingsModal;
 
+        rightWrapper.appendChild(replayBtn);
         rightWrapper.appendChild(settingsBtn);
 
         // Pencere kontrolleri kaldırıldı - Windows'un kendi native kontrolleri kullanılıyor
@@ -365,12 +409,12 @@
                         <div id="hax-bg-tab-status" style="color:#666; font-size:11px; font-style:italic;">Pasif (Varsayılan)</div>
                     </div>
                     <div style="display:flex; gap:8px; align-items:center;">
-                        <input type="file" id="hax-bg-tab-file-input" accept="image/*,video/*,.gif" style="display:none;">
+                        <input type="file" id="hax-bg-tab-file-input" accept="image/png,image/jpeg,image/webp" style="display:none;">
                         <button id="hax-bg-tab-upload-btn" style="background:#10b981; color:#fff; border:none; padding:7px 14px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; transition:0.2s;" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">+ Yükle</button>
                         <button id="hax-bg-tab-reset-btn" style="background:#ef4444; color:#fff; border:none; padding:7px 14px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; transition:0.2s; display:none;" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">Sıfırla</button>
                     </div>
                 </div>
-                <div style="color:#555; font-size:10px; margin-bottom:10px;">Resim, GIF veya video (.mp4, .webm) yükleyin. Son 5 arka plan saklanır.</div>
+                <div style="color:#555; font-size:10px; margin-bottom:10px;">Sadece statik resim (.png, .jpg, .webp) yükleyebilirsiniz (Hareketli arkaplanlar geçici olarak devre dışı).</div>
                 <div style="color:#eee; font-size:13px; font-weight:bold; margin-bottom:8px;">Hazır Arka Planlar</div>
                 <div id="hax-bg-system-grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; min-height:74px; margin-bottom:14px;"></div>
                 <div style="color:#eee; font-size:13px; font-weight:bold; margin-bottom:8px;">Yüklenenler</div>
@@ -603,14 +647,7 @@
         const bgHistoryGrid = document.getElementById('hax-bg-history-grid');
         const bgTabStatus = document.getElementById('hax-bg-tab-status');
         const injectBaseUrl = (window.VEXA_INJECT_BASE_URL || 'file:///c:/Vexa/inject').replace(/\/$/, '');
-        const systemBackgrounds = [
-            {
-                id: 'nissan-silvia-rain',
-                name: 'Nissan Silvia Rain',
-                path: injectBaseUrl + '/backgrounds/nissan-silvia-s13-gloomy-rain.mp4',
-                type: 'video'
-            }
-        ];
+        const systemBackgrounds = [];
 
         function getBgHistory() {
             try {
@@ -851,6 +888,14 @@
         bgTabFileInput.onchange = async (e) => {
             const file = e.target.files[0];
             if (!file) return;
+
+            if (file.type.startsWith('video/') || file.name.match(/\.(mp4|webm|mkv|mov|avi|gif)$/i) || file.type === 'image/gif') {
+                bgTabStatus.innerText = 'Hata: Hareketli arkaplanlar geçici olarak devre dışı!';
+                bgTabStatus.style.color = '#ef4444';
+                bgTabFileInput.value = '';
+                return;
+            }
+
             bgTabStatus.innerText = 'Yükleniyor...';
             bgTabStatus.style.color = '#eab308';
 

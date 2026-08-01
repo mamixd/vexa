@@ -1,0 +1,1982 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>VEXA LAUNCHER</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#090909;
+    --bg-secondary:#111111;
+    --card:#151515;
+    --border:#242424;
+    --text:#F4F4F4;
+    --text-secondary:#8A8A8A;
+    --accent:#3FE3A1;
+    --radius:14px;
+    --ease:180ms ease;
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+
+  html,body{
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    font-weight:400;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  ::-webkit-scrollbar{width:6px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px;}
+  ::-webkit-scrollbar-thumb:hover{background:#333;}
+
+  a,button{font-family:inherit;}
+
+  /* ===================== APP SHELL ===================== */
+  .app{
+    position:relative;
+    width:100%;
+    height:100vh;
+    min-width:1024px;
+    min-height:620px;
+    display:flex;
+    background:
+      radial-gradient(circle at 15% 10%, rgba(255,255,255,0.02), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(63,227,161,0.025), transparent 45%),
+      var(--bg);
+    overflow:hidden;
+  }
+
+  .particle{
+    position:absolute;
+    width:3px;
+    height:3px;
+    border-radius:50%;
+    background:rgba(244,244,244,0.18);
+    pointer-events:none;
+    animation:drift 18s ease-in-out infinite;
+    z-index:0;
+  }
+  .particle:nth-child(2){top:20%;left:30%;animation-duration:22s;background:rgba(63,227,161,0.15);}
+  .particle:nth-child(3){top:65%;left:55%;animation-duration:26s;}
+  .particle:nth-child(4){top:40%;left:80%;animation-duration:20s;}
+  .particle:nth-child(5){top:80%;left:15%;animation-duration:24s;background:rgba(63,227,161,0.12);}
+  .particle:nth-child(6){top:10%;left:65%;animation-duration:19s;}
+
+  @keyframes drift{
+    0%,100%{transform:translate(0,0);opacity:0.5;}
+    50%{transform:translate(12px,-18px);opacity:1;}
+  }
+
+  /* ===================== SIDEBAR ===================== */
+  .sidebar{
+    position:relative;
+    z-index:20;
+    width:76px;
+    height:100%;
+    background:var(--bg-secondary);
+    border-right:1px solid var(--border);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:20px 0;
+  }
+
+  .logo{
+    width:38px;
+    height:38px;
+    border-radius:10px;
+    background:var(--card);
+    border:1px solid var(--border);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-bottom:28px;
+    font-weight:800;
+    font-size:15px;
+    color:var(--accent);
+    letter-spacing:0.5px;
+    cursor:pointer;
+    transition:transform var(--ease);
+  }
+  .logo:hover{transform:scale(1.05);}
+
+  .nav{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    width:100%;
+    align-items:center;
+  }
+
+  .nav-item{
+    position:relative;
+    width:52px;
+    height:44px;
+    border-radius:11px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    color:var(--text-secondary);
+    transition:background var(--ease), color var(--ease);
+  }
+
+  .nav-item svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.6;transition:transform var(--ease);}
+
+  .nav-item:hover{background:rgba(255,255,255,0.03);color:var(--text);}
+  .nav-item:hover svg{transform:scale(1.02);}
+
+  .nav-item.active{color:var(--text);background:rgba(255,255,255,0.03);}
+  .nav-item.active::before{
+    content:'';
+    position:absolute;
+    left:-14px;
+    top:50%;
+    transform:translateY(-50%);
+    width:3px;
+    height:20px;
+    border-radius:4px;
+    background:var(--accent);
+  }
+  .nav-item.active svg{stroke:var(--accent);}
+
+  .nav-item .nav-badge{
+    position:absolute;
+    top:2px; right:6px;
+    width:7px;height:7px;
+    border-radius:50%;
+    background:var(--accent);
+    border:2px solid var(--bg-secondary);
+  }
+
+  .nav-tooltip{
+    position:absolute;
+    left:64px;
+    top:50%;
+    transform:translateY(-50%) translateX(-4px);
+    background:#1a1a1a;
+    border:1px solid var(--border);
+    padding:6px 10px;
+    border-radius:8px;
+    font-size:11px;
+    font-weight:500;
+    white-space:nowrap;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity var(--ease), transform var(--ease);
+    z-index:30;
+    box-shadow:0 6px 16px rgba(0,0,0,0.35);
+  }
+  .nav-item:hover .nav-tooltip{opacity:1;transform:translateY(-50%) translateX(0);}
+
+  .sidebar-spacer{flex:1;}
+
+  .sidebar-bottom{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:14px;
+    width:100%;
+    position:relative;
+  }
+
+  .notif-btn{
+    position:relative;
+    width:38px;
+    height:38px;
+    border-radius:10px;
+    background:var(--card);
+    border:1px solid var(--border);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    color:var(--text-secondary);
+    transition:border-color var(--ease), color var(--ease);
+  }
+  .notif-btn:hover{color:var(--text);border-color:#333;}
+  .notif-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.6;}
+  .notif-dot{
+    position:absolute;
+    top:-2px; right:-2px;
+    width:8px;height:8px;
+    border-radius:50%;
+    background:var(--accent);
+    border:2px solid var(--bg-secondary);
+    transition:opacity var(--ease);
+  }
+  .notif-dot.hidden{opacity:0;}
+
+  .profile-avatar{
+    position:relative;
+    width:38px;
+    height:38px;
+    border-radius:11px;
+    background:linear-gradient(160deg,#2a2a2a,#161616);
+    border:1px solid var(--border);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:13px;
+    font-weight:600;
+    color:var(--text-secondary);
+    cursor:pointer;
+    transition:border-color var(--ease);
+  }
+  .profile-avatar:hover{border-color:#3a3a3a;}
+  .status-dot{
+    position:absolute;
+    bottom:-2px; right:-2px;
+    width:9px;height:9px;
+    border-radius:50%;
+    background:var(--accent);
+    border:2px solid var(--bg-secondary);
+  }
+
+  /* Notification dropdown */
+  .notif-dropdown{
+    position:absolute;
+    left:64px;
+    bottom:52px;
+    width:280px;
+    background:var(--bg-secondary);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    box-shadow:0 16px 40px rgba(0,0,0,0.5);
+    z-index:40;
+    opacity:0;
+    transform:translateY(6px) scale(0.98);
+    pointer-events:none;
+    transition:opacity var(--ease), transform var(--ease);
+    overflow:hidden;
+  }
+  .notif-dropdown.show{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;}
+  .notif-dd-header{
+    padding:12px 14px;
+    border-bottom:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .notif-dd-header span{font-size:12px;font-weight:600;}
+  .notif-dd-header .clear-all{font-size:10.5px;color:var(--text-secondary);cursor:pointer;transition:color var(--ease);}
+  .notif-dd-header .clear-all:hover{color:var(--text);}
+  .notif-dd-list{max-height:260px;overflow-y:auto;}
+  .notif-dd-item{
+    padding:11px 14px;
+    border-bottom:1px solid var(--border);
+    display:flex;
+    gap:10px;
+    cursor:pointer;
+    transition:background var(--ease);
+  }
+  .notif-dd-item:last-child{border-bottom:none;}
+  .notif-dd-item:hover{background:rgba(255,255,255,0.03);}
+  .notif-dd-item .ic{
+    width:26px;height:26px;border-radius:8px;flex-shrink:0;
+    background:var(--card);border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--accent);
+  }
+  .notif-dd-item .ic svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;}
+  .notif-dd-item .txt{flex:1;min-width:0;}
+  .notif-dd-item .txt .t1{font-size:11.5px;font-weight:600;margin-bottom:2px;}
+  .notif-dd-item .txt .t2{font-size:10.5px;color:var(--text-secondary);}
+  .notif-dd-empty{padding:26px 14px;text-align:center;font-size:11.5px;color:var(--text-secondary);}
+
+  /* ===================== MAIN CONTENT ===================== */
+  .main{
+    position:relative;
+    z-index:2;
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    padding:22px 26px;
+    height:100%;
+    overflow:hidden;
+  }
+
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:10px;
+  }
+
+  .topbar-left{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:12px;
+    color:var(--text-secondary);
+  }
+  .topbar-left .sep{color:#333;}
+  .topbar-left .current{color:var(--text);font-weight:500;}
+
+  .search{
+    width:220px;
+    height:34px;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:10px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:0 12px;
+    transition:border-color var(--ease);
+  }
+  .search:focus-within{border-color:#3a3a3a;}
+  .search svg{width:13px;height:13px;stroke:var(--text-secondary);fill:none;stroke-width:1.8;flex-shrink:0;}
+  .search input{
+    background:none;border:none;outline:none;color:var(--text);
+    font-size:12.5px;width:100%;font-family:inherit;
+  }
+  .search input::placeholder{color:var(--text-secondary);}
+
+  .page{
+    flex:1;
+    overflow:hidden;
+    display:none;
+  }
+  .page.active{display:flex;flex-direction:column;animation:fadeIn 220ms ease;position:relative;}
+
+  @keyframes fadeIn{
+    from{opacity:0;transform:translateY(4px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+
+  .content-row{
+    flex:1;
+    display:flex;
+    gap:20px;
+    overflow:hidden;
+  }
+
+  /* ---------- CENTER COLUMN (HOME) ---------- */
+  .center-col{
+    flex:1.35;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+    overflow:hidden;
+    min-width:0;
+  }
+
+  .hero{
+    text-align:center;
+    padding:22px 10px 6px;
+  }
+
+  .hero-eyebrow{
+    font-size:10.5px;
+    letter-spacing:3px;
+    color:var(--text-secondary);
+    text-transform:uppercase;
+    margin-bottom:10px;
+    font-weight:600;
+  }
+
+  .hero h1{
+    font-size:38px;
+    font-weight:800;
+    letter-spacing:1px;
+    line-height:1;
+    margin-bottom:10px;
+  }
+  .hero h1 span{color:var(--accent);}
+
+  .hero p{
+    font-size:13px;
+    color:var(--text-secondary);
+    font-weight:400;
+    margin-bottom:20px;
+  }
+
+  .status-card{
+    max-width:420px;
+    margin:0 auto 18px;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:13px 18px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    text-align:left;
+    box-shadow:0 8px 24px rgba(0,0,0,0.25);
+    transition:transform var(--ease), border-color var(--ease);
+  }
+  .status-card:hover{border-color:#2c2c2c;}
+
+  .status-icon{
+    width:30px;height:30px;
+    border-radius:9px;
+    background:rgba(63,227,161,0.1);
+    border:1px solid rgba(63,227,161,0.25);
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .status-icon svg{width:14px;height:14px;stroke:var(--accent);fill:none;stroke-width:2.2;}
+
+  .status-text{flex:1;}
+  .status-text .title{font-size:13px;font-weight:600;margin-bottom:2px;}
+  .status-text .sub{font-size:11px;color:var(--text-secondary);}
+  .status-version{
+    font-size:10.5px;
+    color:var(--text-secondary);
+    background:var(--bg-secondary);
+    border:1px solid var(--border);
+    padding:4px 9px;
+    border-radius:7px;
+    white-space:nowrap;
+  }
+
+  .play-btn{
+    position:relative;
+    display:inline-flex;
+    align-items:center;
+    gap:9px;
+    justify-content:center;
+    margin:0 auto;
+    padding:14px 46px;
+    background:var(--accent);
+    color:#08110D;
+    font-weight:700;
+    font-size:14px;
+    letter-spacing:0.3px;
+    border:none;
+    border-radius:999px;
+    cursor:pointer;
+    transition:transform var(--ease), box-shadow var(--ease), filter var(--ease), background var(--ease), width var(--ease);
+    box-shadow:0 8px 22px rgba(63,227,161,0.18);
+    overflow:hidden;
+  }
+  .play-btn:hover{transform:scale(1.02);filter:brightness(1.05);}
+  .play-btn:active{transform:scale(0.99);}
+  .play-btn svg{width:14px;height:14px;fill:#08110D;}
+  .play-btn .bar{
+    position:absolute;left:0;top:0;bottom:0;
+    background:rgba(0,0,0,0.18);
+    width:0%;
+    transition:width 120ms linear;
+  }
+  .play-btn.launching{cursor:default;filter:none;transform:none;}
+  .play-btn .label{position:relative;z-index:1;display:flex;align-items:center;gap:9px;}
+
+  .hero-bottom{display:flex;flex-direction:column;align-items:center;gap:14px;margin-top:2px;}
+
+  /* ---------- NEWS PANEL ---------- */
+  .news-section{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    background:var(--bg-secondary);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:16px;
+  }
+
+  .news-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:12px;
+  }
+  .news-header h3{font-size:13px;font-weight:600;}
+  .news-header .view-all{font-size:11px;color:var(--text-secondary);cursor:pointer;transition:color var(--ease);}
+  .news-header .view-all:hover{color:var(--text);}
+
+  .news-list{
+    flex:1;
+    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    padding-right:4px;
+  }
+
+  .news-card{
+    display:flex;
+    gap:12px;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:11px;
+    padding:10px;
+    cursor:pointer;
+    transition:border-color var(--ease), transform var(--ease);
+  }
+  .news-card:hover{border-color:#2e2e2e;transform:scale(1.01);}
+
+  .news-thumb{
+    width:64px;height:52px;
+    border-radius:8px;
+    flex-shrink:0;
+    background:linear-gradient(150deg,#202020,#141414);
+    border:1px solid var(--border);
+  }
+
+  .news-body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:3px;}
+  .news-title{font-size:12.5px;font-weight:600;}
+  .news-desc{font-size:11px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .news-meta{display:flex;align-items:center;gap:8px;margin-top:2px;}
+  .news-date{font-size:10px;color:#5f5f5f;}
+  .news-read{font-size:10px;font-weight:600;color:var(--accent);}
+
+  /* ---------- RIGHT FRIENDS PANEL (persistent) ---------- */
+  .friends-col{
+    width:270px;
+    flex-shrink:0;
+    background:var(--bg-secondary);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+
+  .friends-col-wrap{
+    position:relative;
+    width:270px;
+    flex-shrink:0;
+  }
+  .friends-col-wrap .guest-lock{border-radius:var(--radius);padding:24px;}
+
+  .friends-header{
+    padding:16px 16px 10px;
+    border-bottom:1px solid var(--border);
+  }
+  .friends-header h3{font-size:13px;font-weight:600;margin-bottom:2px;}
+  .friends-header .sub{font-size:10.5px;color:var(--text-secondary);}
+
+  .friends-list{
+    flex:1;
+    overflow-y:auto;
+    padding:10px 10px 14px;
+  }
+
+  .friend-group{margin-bottom:6px;}
+  .friend-group-label{
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:1px;
+    color:var(--text-secondary);
+    padding:8px 8px 6px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .friend-group-label .count{color:#555;font-weight:500;}
+  .dot-online{width:6px;height:6px;border-radius:50%;background:var(--accent);}
+  .dot-away{width:6px;height:6px;border-radius:50%;background:#8A8A8A;}
+  .dot-offline{width:6px;height:6px;border-radius:50%;background:#3a3a3a;}
+
+  .friend-item{
+    position:relative;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:8px;
+    border-radius:10px;
+    cursor:pointer;
+    transition:background var(--ease);
+  }
+  .friend-item:hover{background:rgba(255,255,255,0.035);}
+  .friend-item.hidden-by-search{display:none;}
+
+  .friend-avatar{
+    position:relative;
+    width:34px;height:34px;
+    border-radius:9px;
+    background:linear-gradient(160deg,#232323,#151515);
+    border:1px solid var(--border);
+    flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    font-size:11px;font-weight:700;color:var(--text-secondary);
+  }
+  .friend-avatar .fdot{
+    position:absolute;bottom:-2px;right:-2px;
+    width:8px;height:8px;border-radius:50%;
+    border:2px solid var(--bg-secondary);
+  }
+  .fdot.online{background:var(--accent);}
+  .fdot.away{background:#8A8A8A;}
+  .fdot.offline{background:#333;}
+
+  .friend-info{flex:1;min-width:0;}
+  .friend-name{font-size:12px;font-weight:600;}
+  .friend-activity{font-size:10.5px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .friend-item.offline .friend-name,
+  .friend-item.offline .friend-avatar{opacity:0.45;}
+
+  .friend-actions{
+    display:flex;
+    gap:4px;
+    opacity:0;
+    transform:translateX(4px);
+    transition:opacity var(--ease), transform var(--ease);
+  }
+  .friend-item:hover .friend-actions{opacity:1;transform:translateX(0);}
+
+  .fa-btn{
+    width:24px;height:24px;
+    border-radius:7px;
+    background:var(--card);
+    border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    transition:border-color var(--ease), color var(--ease);
+    color:var(--text-secondary);
+  }
+  .fa-btn:hover{color:var(--text);border-color:#3a3a3a;}
+  .fa-btn svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2;}
+
+  /* ===================== FRIENDS PAGE (full) ===================== */
+  .friends-page-wrap{flex:1;display:flex;gap:20px;overflow:hidden;}
+  .friends-main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius);}
+  .fp-tabs{display:flex;gap:4px;padding:14px 16px;border-bottom:1px solid var(--border);}
+  .fp-tab{
+    padding:8px 14px;border-radius:9px;font-size:12px;font-weight:600;color:var(--text-secondary);
+    cursor:pointer;transition:background var(--ease), color var(--ease);
+  }
+  .fp-tab:hover{color:var(--text);}
+  .fp-tab.active{background:var(--card);color:var(--text);border:1px solid var(--border);}
+  .fp-add{
+    margin-left:auto;
+    display:flex;align-items:center;gap:6px;
+    background:var(--accent);color:#08110D;font-weight:700;font-size:11.5px;
+    padding:8px 14px;border-radius:9px;cursor:pointer;transition:transform var(--ease),filter var(--ease);border:none;
+  }
+  .fp-add:hover{transform:scale(1.02);filter:brightness(1.05);}
+  .fp-add svg{width:12px;height:12px;stroke:#08110D;fill:none;stroke-width:2.4;}
+  .fp-list{flex:1;overflow-y:auto;padding:8px 16px 16px;}
+  .fp-row{
+    display:flex;align-items:center;gap:12px;padding:10px 8px;border-radius:11px;
+    transition:background var(--ease);
+  }
+  .fp-row:hover{background:rgba(255,255,255,0.03);}
+  .fp-row .friend-avatar{width:40px;height:40px;border-radius:11px;font-size:13px;}
+  .fp-row-info{flex:1;min-width:0;}
+  .fp-row-name{font-size:13px;font-weight:600;}
+  .fp-row-sub{font-size:11px;color:var(--text-secondary);}
+  .fp-row-actions{display:flex;gap:6px;}
+  .fp-btn{
+    padding:7px 12px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;
+    background:var(--card);border:1px solid var(--border);color:var(--text);
+    transition:border-color var(--ease), transform var(--ease);
+    display:flex;align-items:center;gap:5px;
+  }
+  .fp-btn:hover{border-color:#3a3a3a;transform:scale(1.02);}
+  .fp-btn.accept{background:var(--accent);color:#08110D;border:none;}
+  .fp-btn svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2;}
+
+  .fp-empty{padding:60px 20px;text-align:center;color:var(--text-secondary);font-size:12.5px;}
+
+  /* ===================== STORE PAGE ===================== */
+  .store-page{flex:1;overflow-y:auto;padding-right:4px;}
+  .store-hero{
+    background:linear-gradient(150deg,#161616,#0d0d0d);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:26px;
+    margin-bottom:20px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .store-hero-text .eyebrow{font-size:10px;letter-spacing:2px;color:var(--accent);font-weight:700;margin-bottom:8px;}
+  .store-hero-text h2{font-size:22px;font-weight:800;margin-bottom:6px;}
+  .store-hero-text p{font-size:12.5px;color:var(--text-secondary);max-width:380px;}
+  .store-cta{
+    background:var(--accent);color:#08110D;font-weight:700;font-size:12.5px;
+    padding:11px 22px;border-radius:999px;border:none;cursor:pointer;
+    transition:transform var(--ease), filter var(--ease);
+  }
+  .store-cta:hover{transform:scale(1.02);filter:brightness(1.05);}
+
+  .store-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  .store-card{
+    background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+    padding:14px;transition:border-color var(--ease), transform var(--ease);cursor:default;
+  }
+  .store-card:hover{border-color:#2c2c2c;transform:scale(1.01);}
+  .store-thumb{height:90px;border-radius:10px;background:linear-gradient(150deg,#202020,#131313);border:1px solid var(--border);margin-bottom:12px;}
+  .store-card h4{font-size:13px;font-weight:600;margin-bottom:4px;}
+  .store-card p{font-size:11px;color:var(--text-secondary);margin-bottom:12px;line-height:1.4;}
+  .store-row{display:flex;align-items:center;justify-content:space-between;}
+  .store-price{font-size:11.5px;color:var(--text-secondary);font-weight:600;}
+  .store-price.free{color:var(--accent);}
+  .get-btn{
+    padding:7px 16px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;
+    background:var(--bg-secondary);border:1px solid var(--border);color:var(--text);
+    transition:all var(--ease);
+  }
+  .get-btn:hover{border-color:#3a3a3a;transform:scale(1.03);}
+  .get-btn.owned{background:rgba(63,227,161,0.08);border:1px solid rgba(63,227,161,0.3);color:var(--accent);cursor:default;}
+  .get-btn.owned:hover{transform:none;}
+
+  /* ===================== LIBRARY PAGE ===================== */
+  .library-page{flex:1;overflow-y:auto;padding-right:4px;}
+  .lib-search-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .lib-search-row h3{font-size:14px;font-weight:700;}
+  .lib-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+  .lib-card{
+    background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+    overflow:hidden;transition:border-color var(--ease), transform var(--ease);cursor:pointer;
+  }
+  .lib-card:hover{border-color:#2c2c2c;transform:scale(1.015);}
+  .lib-thumb{height:80px;background:linear-gradient(150deg,#202020,#131313);border-bottom:1px solid var(--border);position:relative;}
+  .lib-thumb .installed-tag{
+    position:absolute;top:8px;right:8px;font-size:9px;font-weight:700;letter-spacing:0.4px;
+    background:rgba(63,227,161,0.12);border:1px solid rgba(63,227,161,0.3);color:var(--accent);
+    padding:3px 7px;border-radius:6px;
+  }
+  .lib-body{padding:12px;}
+  .lib-body h4{font-size:12.5px;font-weight:600;margin-bottom:8px;}
+  .lib-play{
+    width:100%;padding:8px;border-radius:8px;font-size:11.5px;font-weight:700;
+    background:var(--bg-secondary);border:1px solid var(--border);color:var(--text);cursor:pointer;
+    transition:all var(--ease);display:flex;align-items:center;justify-content:center;gap:6px;
+  }
+  .lib-play:hover{border-color:var(--accent);color:var(--accent);}
+  .lib-play svg{width:10px;height:10px;fill:currentColor;}
+
+  /* ===================== SETTINGS PAGE ===================== */
+  .settings-page{flex:1;overflow-y:auto;padding-right:4px;max-width:640px;}
+  .settings-section{margin-bottom:22px;}
+  .settings-section h3{font-size:12px;font-weight:700;letter-spacing:0.5px;color:var(--text-secondary);text-transform:uppercase;margin-bottom:10px;}
+  .settings-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  .settings-row{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 16px;border-bottom:1px solid var(--border);
+  }
+  .settings-row:last-child{border-bottom:none;}
+  .settings-row-text .t1{font-size:12.5px;font-weight:600;margin-bottom:2px;}
+  .settings-row-text .t2{font-size:11px;color:var(--text-secondary);}
+
+  .toggle{
+    width:40px;height:22px;border-radius:999px;background:#232323;border:1px solid var(--border);
+    position:relative;cursor:pointer;transition:background var(--ease);flex-shrink:0;
+  }
+  .toggle .knob{
+    position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;
+    background:var(--text-secondary);transition:transform var(--ease), background var(--ease);
+  }
+  .toggle.on{background:rgba(63,227,161,0.18);border-color:rgba(63,227,161,0.4);}
+  .toggle.on .knob{transform:translateX(18px);background:var(--accent);}
+
+  .settings-select{
+    background:var(--bg-secondary);border:1px solid var(--border);color:var(--text);
+    font-size:11.5px;font-weight:600;padding:7px 10px;border-radius:8px;font-family:inherit;cursor:pointer;
+  }
+
+  /* ===================== PROFILE PANEL (own) ===================== */
+  .profile-page{flex:1;overflow-y:auto;display:flex;gap:20px;padding-right:4px;}
+  .profile-card-main{
+    width:280px;flex-shrink:0;background:var(--bg-secondary);border:1px solid var(--border);
+    border-radius:var(--radius);padding:26px 20px;text-align:center;
+  }
+  .own-avatar{
+    width:84px;height:84px;border-radius:20px;margin:0 auto 14px;
+    background:linear-gradient(160deg,#2a2a2a,#151515);border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:var(--text-secondary);
+    position:relative;
+  }
+  .own-avatar .odot{
+    position:absolute;bottom:3px;right:3px;width:15px;height:15px;border-radius:50%;
+    background:var(--accent);border:3px solid var(--bg-secondary);
+    animation:pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{box-shadow:0 0 0 0 rgba(63,227,161,0.25);}
+    50%{box-shadow:0 0 0 5px rgba(63,227,161,0);}
+  }
+  .own-name{font-size:16px;font-weight:700;margin-bottom:2px;}
+  .own-tag{font-size:11.5px;color:var(--text-secondary);margin-bottom:14px;}
+  .xp-row{display:flex;justify-content:space-between;font-size:10.5px;color:var(--text-secondary);margin-bottom:6px;}
+  .xp-bar{height:6px;border-radius:99px;background:#232323;overflow:hidden;margin-bottom:18px;}
+  .xp-fill{height:100%;width:64%;background:var(--accent);border-radius:99px;}
+
+  .own-stats-block{flex:1;display:flex;flex-direction:column;gap:16px;}
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+  .stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center;}
+  .stat-card .num{font-size:22px;font-weight:800;margin-bottom:4px;}
+  .stat-card .lbl{font-size:10.5px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.4px;}
+
+  .fav-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .fav-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+  .fav-card .lbl{font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;}
+  .fav-card .val{font-size:14px;font-weight:700;}
+
+  /* ===================== FRIEND PROFILE SLIDE PANEL ===================== */
+  .overlay{
+    position:absolute;
+    inset:0;
+    background:rgba(0,0,0,0.45);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 220ms ease;
+    z-index:50;
+  }
+  .overlay.show{opacity:1;pointer-events:auto;}
+
+  .profile-panel{
+    position:absolute;
+    top:0; right:0;
+    width:340px;
+    height:100%;
+    background:var(--bg-secondary);
+    border-left:1px solid var(--border);
+    z-index:60;
+    transform:translateX(100%);
+    transition:transform 260ms cubic-bezier(.4,0,.2,1);
+    display:flex;
+    flex-direction:column;
+    box-shadow:-20px 0 40px rgba(0,0,0,0.35);
+  }
+  .profile-panel.show{transform:translateX(0);}
+
+  .pp-header{
+    padding:18px 20px;
+    border-bottom:1px solid var(--border);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .pp-header span{font-size:12px;font-weight:600;color:var(--text-secondary);letter-spacing:0.5px;}
+  .pp-close{
+    width:26px;height:26px;
+    border-radius:7px;
+    background:var(--card);
+    border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;color:var(--text-secondary);
+    transition:color var(--ease), border-color var(--ease);
+  }
+  .pp-close:hover{color:var(--text);border-color:#3a3a3a;}
+  .pp-close svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;}
+
+  .pp-body{padding:26px 22px;overflow-y:auto;flex:1;}
+
+  .pp-avatar-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:18px;}
+  .pp-avatar{
+    position:relative;
+    width:80px;height:80px;
+    border-radius:20px;
+    background:linear-gradient(160deg,#2a2a2a,#151515);
+    border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;
+    font-size:26px;font-weight:700;color:var(--text-secondary);
+    margin-bottom:12px;
+  }
+  .pp-avatar .pdot{
+    position:absolute;bottom:2px;right:2px;
+    width:16px;height:16px;border-radius:50%;
+    background:var(--accent);
+    border:3px solid var(--bg-secondary);
+  }
+  .pp-name{font-size:17px;font-weight:700;margin-bottom:4px;}
+  .pp-status{font-size:12px;color:var(--accent);font-weight:500;margin-bottom:10px;}
+
+  .pp-badges{display:flex;gap:6px;margin-bottom:4px;}
+  .pp-badge{
+    font-size:9.5px;
+    font-weight:700;
+    letter-spacing:0.4px;
+    padding:4px 9px;
+    border-radius:6px;
+    background:var(--card);
+    border:1px solid var(--border);
+    color:var(--text-secondary);
+  }
+
+  .pp-divider{height:1px;background:var(--border);margin:20px 0;}
+
+  .pp-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .pp-info-item{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:11px;
+    padding:12px;
+  }
+  .pp-info-label{font-size:10px;color:var(--text-secondary);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px;}
+  .pp-info-value{font-size:14px;font-weight:700;}
+
+  .pp-actions{display:flex;flex-direction:column;gap:8px;margin-top:22px;}
+  .pp-btn{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    padding:11px;
+    border-radius:11px;
+    font-size:12.5px;
+    font-weight:600;
+    cursor:pointer;
+    border:1px solid var(--border);
+    background:var(--card);
+    color:var(--text);
+    transition:transform var(--ease), border-color var(--ease), background var(--ease);
+  }
+  .pp-btn:hover{transform:scale(1.015);border-color:#333;}
+  .pp-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;}
+  .pp-btn.primary{
+    background:var(--accent);
+    color:#08110D;
+    border:none;
+  }
+  .pp-btn.primary svg{stroke:none;fill:#08110D;}
+  .pp-btn.primary:hover{filter:brightness(1.05);}
+
+  /* ===================== AUTH SCREEN ===================== */
+  .auth-screen{
+    position:absolute;
+    inset:0;
+    z-index:500;
+    background:var(--bg);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    opacity:1;
+    transition:opacity 260ms ease;
+  }
+  .auth-screen.hide{opacity:0;pointer-events:none;}
+
+  .auth-card{
+    width:340px;
+    background:var(--bg-secondary);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:30px 28px;
+    box-shadow:0 20px 50px rgba(0,0,0,0.4);
+  }
+  .auth-logo{
+    width:42px;height:42px;border-radius:11px;
+    background:var(--card);border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:16px;color:var(--accent);
+    margin:0 auto 16px;
+  }
+  .auth-title{font-size:17px;font-weight:700;text-align:center;margin-bottom:4px;}
+  .auth-sub{font-size:12px;color:var(--text-secondary);text-align:center;margin-bottom:22px;}
+
+  .auth-tabs{
+    display:flex;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:3px;
+    margin-bottom:20px;
+  }
+  .auth-tab{
+    flex:1;text-align:center;padding:8px;border-radius:8px;
+    font-size:12px;font-weight:600;color:var(--text-secondary);cursor:pointer;
+    transition:background var(--ease), color var(--ease);
+  }
+  .auth-tab.active{background:var(--bg-secondary);color:var(--text);border:1px solid var(--border);}
+
+  .auth-form{display:none;flex-direction:column;gap:12px;}
+  .auth-form.active{display:flex;}
+
+  .auth-field label{font-size:11px;color:var(--text-secondary);margin-bottom:6px;display:block;font-weight:600;}
+  .auth-field input{
+    width:100%;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:10px 12px;
+    color:var(--text);
+    font-size:12.5px;
+    font-family:inherit;
+    outline:none;
+    transition:border-color var(--ease);
+  }
+  .auth-field input:focus{border-color:#3a3a3a;}
+  .auth-field input::placeholder{color:#5a5a5a;}
+
+  .auth-submit{
+    margin-top:6px;
+    padding:12px;
+    border-radius:10px;
+    border:none;
+    background:var(--accent);
+    color:#08110D;
+    font-weight:700;
+    font-size:13px;
+    cursor:pointer;
+    transition:transform var(--ease), filter var(--ease);
+  }
+  .auth-submit:hover{transform:scale(1.01);filter:brightness(1.05);}
+
+  .auth-error{font-size:11px;color:#e07a7a;display:none;}
+  .auth-error.show{display:block;}
+
+  .auth-guest{
+    margin-top:18px;
+    text-align:center;
+    font-size:11.5px;
+    font-weight:600;
+    color:var(--text-secondary);
+    cursor:pointer;
+    transition:color var(--ease);
+  }
+  .auth-guest:hover{color:var(--accent);}
+
+  /* ===================== GUEST LOCK OVERLAY ===================== */
+  .guest-lock{
+    position:absolute;
+    inset:0;
+    z-index:5;
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+    text-align:center;
+    background:var(--bg);
+    padding:40px;
+  }
+  .guest-lock.show{display:flex;}
+  .guest-lock-icon{
+    width:52px;height:52px;border-radius:14px;
+    background:var(--card);border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--accent);
+    margin-bottom:4px;
+  }
+  .guest-lock-icon svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.6;}
+  .guest-lock h3{font-size:15.5px;font-weight:700;}
+  .guest-lock p{font-size:12px;color:var(--text-secondary);max-width:280px;line-height:1.55;}
+  .guest-lock-btn{
+    margin-top:6px;
+    padding:10px 24px;
+    border-radius:10px;
+    border:none;
+    background:var(--accent);
+    color:#08110D;
+    font-weight:700;
+    font-size:12.5px;
+    cursor:pointer;
+    transition:transform var(--ease), filter var(--ease);
+  }
+  .guest-lock-btn:hover{transform:scale(1.02);filter:brightness(1.05);}
+
+  /* ===================== TOASTS ===================== */
+  .toast-stack{
+    position:absolute;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%);
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    z-index:100;
+    align-items:center;
+  }
+  .toast{
+    background:#1a1a1a;
+    border:1px solid var(--border);
+    border-radius:11px;
+    padding:10px 16px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:12px;
+    font-weight:500;
+    box-shadow:0 12px 30px rgba(0,0,0,0.4);
+    opacity:0;
+    transform:translateY(8px);
+    transition:opacity 200ms ease, transform 200ms ease;
+  }
+  .toast.show{opacity:1;transform:translateY(0);}
+  .toast .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ============ AUTH SCREEN (shown when no account is signed in) ============ -->
+  <div class="auth-screen hide" id="authScreen">
+    <div class="auth-card">
+      <div class="auth-logo">V</div>
+      <div class="auth-title" id="authTitle">Welcome back</div>
+      <div class="auth-sub" id="authSub">Sign in to continue to Vexa LAUNCHER</div>
+
+      <div class="auth-tabs">
+        <div class="auth-tab active" data-auth-tab="login">Log in</div>
+        <div class="auth-tab" data-auth-tab="register">Create account</div>
+      </div>
+
+      <div class="auth-form active" id="loginForm">
+        <div class="auth-field">
+          <label>Username or email</label>
+          <input type="text" id="loginUser" placeholder="mami">
+        </div>
+        <div class="auth-field">
+          <label>Password</label>
+          <input type="password" id="loginPass" placeholder="••••••••">
+        </div>
+        <div class="auth-error" id="loginError">Kullanıcı adı veya şifre hatalı.</div>
+        <button class="auth-submit" id="loginSubmit">Sign in</button>
+      </div>
+
+      <div class="auth-form" id="registerForm">
+        <div class="auth-field">
+          <label>Username</label>
+          <input type="text" id="regUser" placeholder="Choose a username">
+        </div>
+        <div class="auth-field">
+          <label>Email</label>
+          <input type="email" id="regEmail" placeholder="you@example.com">
+        </div>
+        <div class="auth-field">
+          <label>Password</label>
+          <input type="password" id="regPass" placeholder="Create a password">
+        </div>
+        <div class="auth-error" id="regError">Lütfen tüm alanları doldurun.</div>
+        <button class="auth-submit" id="regSubmit">Create account</button>
+      </div>
+
+      <div class="auth-guest" id="guestBtn">Kayıt olmadan devam et</div>
+    </div>
+  </div>
+
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+
+  <!-- ============ SIDEBAR ============ -->
+  <div class="sidebar">
+    <div class="logo" title="Vexa">V</div>
+
+    <div class="nav">
+      <div class="nav-item active" data-page="home">
+        <svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/></svg>
+        <div class="nav-tooltip">Home</div>
+      </div>
+      <div class="nav-item" data-page="friends">
+        <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c0-3.3 2.5-5.5 5.5-5.5s5.5 2.2 5.5 5.5"/><circle cx="17" cy="8.5" r="2.4"/><path d="M15.5 13.5c2.3.2 4 2.1 4 4.6"/></svg>
+        <div class="nav-badge"></div>
+        <div class="nav-tooltip">Friends</div>
+      </div>
+      <div class="nav-item" data-page="settings">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2-1.5-2-3.4-2.4.7a7.7 7.7 0 0 0-1.7-1L15 3h-4l-.3 2.8a7.7 7.7 0 0 0-1.7 1l-2.4-.7-2 3.4L6.6 11a7.6 7.6 0 0 0 0 2l-2 1.5 2 3.4 2.4-.7a7.7 7.7 0 0 0 1.7 1L10.7 21h4l.3-2.8a7.7 7.7 0 0 0 1.7-1l2.4.7 2-3.4Z"/></svg>
+        <div class="nav-tooltip">Settings</div>
+      </div>
+    </div>
+
+    <div class="sidebar-spacer"></div>
+
+    <div class="sidebar-bottom">
+      <div class="notif-btn" id="notifBtn">
+        <svg viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 13 6 9Z"/><path d="M10 18.5a2 2 0 0 0 4 0"/></svg>
+        <div class="notif-dot" id="notifDot"></div>
+      </div>
+
+      <div class="notif-dropdown" id="notifDropdown">
+        <div class="notif-dd-header">
+          <span>Notifications</span>
+          <span class="clear-all" id="clearAll">Clear all</span>
+        </div>
+        <div class="notif-dd-list" id="notifList">
+          <div class="notif-dd-item" data-toast="Kerem'in oda daveti kabul edildi">
+            <div class="ic"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+            <div class="txt"><div class="t1">Kerem seni odaya davet etti</div><div class="t2">Turkish Cup #4 &middot; 2 dk önce</div></div>
+          </div>
+          <div class="notif-dd-item" data-toast="Güncelleme kontrolü tamamlandı">
+            <div class="ic"><svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></div>
+            <div class="txt"><div class="t1">LAUNCHER güncel</div><div class="t2">v2.4.1 &middot; 1 saat önce</div></div>
+          </div>
+          <div class="notif-dd-item" data-toast="Aslı arkadaşlık isteği gönderdi">
+            <div class="ic"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+            <div class="txt"><div class="t1">Yeni arkadaşlık isteği</div><div class="t2">Aslı &middot; 3 saat önce</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-avatar" id="ownProfileBtn">MC<div class="status-dot"></div></div>
+    </div>
+  </div>
+
+  <!-- ============ MAIN ============ -->
+  <div class="main">
+
+    <div class="topbar">
+      <div class="topbar-left">
+        <span>Vexa</span><span class="sep">/</span><span class="current" id="crumbCurrent">Home</span>
+      </div>
+      <div class="search">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" id="searchInput" placeholder="Search friends...">
+      </div>
+    </div>
+
+    <!-- ================= HOME PAGE ================= -->
+    <div class="page active" id="page-home">
+      <div class="content-row">
+        <div class="center-col">
+          <div class="hero">
+            <div class="hero-eyebrow">HAXBALL PERFORMANCE LAUNCHER</div>
+            <h1>VEXA <span>LAUNCHER</span></h1>
+            <p>Next generation performance.</p>
+
+            <div class="status-card">
+              <div class="status-icon">
+                <svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+              </div>
+              <div class="status-text">
+                <div class="title">Everything is ready</div>
+                <div class="sub">Update check completed &middot; No action needed</div>
+              </div>
+              <div class="status-version">v2.4.1</div>
+            </div>
+
+            <div class="hero-bottom">
+              <button class="play-btn" id="playBtn">
+                <div class="bar" id="playBar"></div>
+                <span class="label" id="playLabel">
+                  <svg viewBox="0 0 24 24"><path d="M6 4l14 8-14 8V4z"/></svg>
+                  PLAY
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <div class="news-section">
+            <div class="news-header">
+              <h3>Latest news</h3>
+              <span class="view-all">View all</span>
+            </div>
+            <div class="news-list">
+
+              <div class="news-card">
+                <div class="news-thumb"></div>
+                <div class="news-body">
+                  <div class="news-title">LAUNCHER 2.4 — Ping overlay rebuilt</div>
+                  <div class="news-desc">Redesigned network overlay with per-room ping history and jitter graph.</div>
+                  <div class="news-meta"><span class="news-date">Jul 18</span><span class="news-read">Read more</span></div>
+                </div>
+              </div>
+
+              <div class="news-card">
+                <div class="news-thumb"></div>
+                <div class="news-body">
+                  <div class="news-title">Room Browser filters</div>
+                  <div class="news-desc">Favorite rooms, autojoin rules, and password-protected room detection.</div>
+                  <div class="news-meta"><span class="news-date">Jul 12</span><span class="news-read">Read more</span></div>
+                </div>
+              </div>
+
+              <div class="news-card">
+                <div class="news-thumb"></div>
+                <div class="news-body">
+                  <div class="news-title">Party system in early access</div>
+                  <div class="news-desc">Group up with friends and join lobbies together from the LAUNCHER.</div>
+                  <div class="news-meta"><span class="news-date">Jul 6</span><span class="news-read">Read more</span></div>
+                </div>
+              </div>
+
+              <div class="news-card">
+                <div class="news-thumb"></div>
+                <div class="news-body">
+                  <div class="news-title">Stability improvements</div>
+                  <div class="news-desc">Fixed a rare crash on window resize and reduced idle memory footprint.</div>
+                  <div class="news-meta"><span class="news-date">Jun 29</span><span class="news-read">Read more</span></div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- FRIENDS PANEL (persistent, reused via JS clone logic kept simple: real markup here) -->
+        <div class="friends-col-wrap">
+          <div class="friends-col" id="friendsColHome"></div>
+          <div class="guest-lock" id="friendsColHomeLock">
+            <div class="guest-lock-icon">
+              <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <h3>Arkadaşlarını görmek için kayıt ol</h3>
+            <p>Kim online, kim ne oynuyor görebilmek için bir Vexa hesabı gerekir.</p>
+            <button class="guest-lock-btn" id="friendsColHomeLockBtn">Kayıt Ol</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= FRIENDS PAGE ================= -->
+    <div class="page" id="page-friends">
+      <div class="friends-page-wrap">
+        <div class="friends-main">
+          <div class="fp-tabs">
+            <div class="fp-tab active" data-tab="online">Online</div>
+            <div class="fp-tab" data-tab="all">All</div>
+            <div class="fp-tab" data-tab="pending">Pending <span style="color:var(--accent);">(2)</span></div>
+            <div class="fp-tab" data-tab="blocked">Blocked</div>
+            <button class="fp-add" id="addFriendBtn">
+              <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+              Add friend
+            </button>
+          </div>
+          <div class="fp-list" id="fpList"><!-- filled by JS --></div>
+        </div>
+        <div class="friends-col" id="friendsColFriendsPage"></div>
+      </div>
+
+      <div class="guest-lock" id="friendsLock">
+        <div class="guest-lock-icon">
+          <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <h3>Arkadaşlarını görmek için kayıt ol</h3>
+        <p>Arkadaş eklemek, mesajlaşmak ve arkadaşlarının durumunu görebilmek için bir Vexa hesabı gerekir.</p>
+        <button class="guest-lock-btn" id="friendsLockBtn">Kayıt Ol</button>
+      </div>
+    </div>
+
+    <!-- ================= SETTINGS PAGE ================= -->
+    <div class="page" id="page-settings">
+      <div class="settings-page">
+        <div class="settings-section">
+          <h3>General</h3>
+          <div class="settings-card">
+            <div class="settings-row">
+              <div class="settings-row-text"><div class="t1">Launch on system startup</div><div class="t2">Open Vexa LAUNCHER when Windows starts</div></div>
+              <div class="toggle on" data-setting="startup"><div class="knob"></div></div>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-text"><div class="t1">Hardware acceleration</div><div class="t2">Use GPU rendering for the LAUNCHER UI</div></div>
+              <div class="toggle on" data-setting="hwaccel"><div class="knob"></div></div>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-text"><div class="t1">Language</div><div class="t2">LAUNCHER interface language</div></div>
+              <select class="settings-select">
+                <option>Türkçe</option>
+                <option>English</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Notifications</h3>
+          <div class="settings-card">
+            <div class="settings-row">
+              <div class="settings-row-text"><div class="t1">Friend requests</div><div class="t2">Get notified about new friend requests</div></div>
+              <div class="toggle on" data-setting="notif-friend"><div class="knob"></div></div>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-text"><div class="t1">Room invites</div><div class="t2">Get notified when invited to a room</div></div>
+              <div class="toggle on" data-setting="notif-invite"><div class="knob"></div></div>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-text"><div class="t1">News &amp; updates</div><div class="t2">LAUNCHER news and patch notifications</div></div>
+              <div class="toggle" data-setting="notif-news"><div class="knob"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Privacy</h3>
+          <div class="settings-card">
+            <div class="settings-row">
+              <div class="settings-row-text"><div class="t1">Show online status</div><div class="t2">Let friends see when you're online</div></div>
+              <div class="toggle on" data-setting="show-status"><div class="knob"></div></div>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-text"><div class="t1">Show current activity</div><div class="t2">Display the room you're currently in</div></div>
+              <div class="toggle on" data-setting="show-activity"><div class="knob"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= OWN PROFILE PAGE ================= -->
+    <div class="page" id="page-profile">
+      <div class="profile-page">
+        <div class="profile-card-main">
+          <div class="own-avatar">MC<div class="odot"></div></div>
+          <div class="own-name">Mami</div>
+          <div class="own-tag">@mami</div>
+          <div class="pp-badges" style="justify-content:center;">
+            <div class="pp-badge">DEVELOPER</div>
+            <div class="pp-badge">EARLY ADOPTER</div>
+          </div>
+        </div>
+
+        <div class="own-stats-block">
+          <div class="settings-card">
+            <div class="settings-row">
+              <div class="settings-row-text"><div class="t1">Username</div><div class="t2">Your unique Vexa handle</div></div>
+              <div class="settings-row-text" style="text-align:right;"><div class="t1">mami</div></div>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-text"><div class="t1">Email</div><div class="t2">Used for login and recovery</div></div>
+              <div class="settings-row-text" style="text-align:right;"><div class="t1">mami@vexaLAUNCHER.com</div></div>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-text"><div class="t1">Member since</div><div class="t2">When your account was created</div></div>
+              <div class="settings-row-text" style="text-align:right;"><div class="t1">March 2024</div></div>
+            </div>
+          </div>
+          <div class="fav-grid">
+            <div class="fav-card"><div class="lbl">Favorite team</div><div class="val">Trabzon United</div></div>
+            <div class="fav-card"><div class="lbl">Favorite stadium</div><div class="val">Karadeniz Arena</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="guest-lock" id="profileLock">
+        <div class="guest-lock-icon">
+          <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <h3>Kayıtsız Kullanıcı</h3>
+        <p>Bir profil sayfan, kullanıcı adın ve rozetlerin olsun istiyorsan kayıt olman gerekir.</p>
+        <button class="guest-lock-btn" id="profileLockBtn">Kayıt Ol</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============ FRIEND PROFILE SLIDE PANEL ============ -->
+  <div class="overlay" id="overlay"></div>
+  <div class="profile-panel" id="profilePanel">
+    <div class="pp-header">
+      <span>PROFILE</span>
+      <div class="pp-close" id="ppClose">
+        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </div>
+    </div>
+    <div class="pp-body">
+      <div class="pp-avatar-wrap">
+        <div class="pp-avatar" id="ppAvatarLetter">K<div class="pdot" id="ppDot"></div></div>
+        <div class="pp-name" id="ppName">Kerem</div>
+        <div class="pp-status" id="ppStatus">Playing Haxball</div>
+        <div class="pp-badges">
+          <div class="pp-badge">LEVEL 24</div>
+          <div class="pp-badge">VERIFIED</div>
+        </div>
+      </div>
+
+      <div class="pp-divider"></div>
+
+      <div class="pp-info-grid" style="grid-template-columns:1fr 1fr 1fr;">
+        <div class="pp-info-item">
+          <div class="pp-info-label">Ping</div>
+          <div class="pp-info-value" id="ppPing">34 ms</div>
+        </div>
+        <div class="pp-info-item">
+          <div class="pp-info-label">Play time</div>
+          <div class="pp-info-value" id="ppTime">212h</div>
+        </div>
+        <div class="pp-info-item">
+          <div class="pp-info-label">Status</div>
+          <div class="pp-info-value" style="font-size:12.5px;color:var(--accent);" id="ppStatusVal">Online</div>
+        </div>
+      </div>
+
+      <div class="pp-actions">
+        <div class="pp-btn primary" id="ppMsgBtn">
+          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/></svg>
+          Send message
+        </div>
+        <div class="pp-btn" id="ppViewBtn">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
+          View full profile
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-stack" id="toastStack"></div>
+
+</div>
+
+<script>
+/* =====================================================
+   DATA
+===================================================== */
+const FRIENDS = [
+  {id:'kerem', name:'Kerem', dot:'online', activity:'Playing Haxball', room:'Turkish Cup #4', ping:'34 ms', time:'212h'},
+  {id:'asli',  name:'Aslı',  dot:'online', activity:'In Lobby',        room:'Freestyle Practice', ping:'41 ms', time:'88h'},
+  {id:'baran', name:'Baran', dot:'online', activity:'Playing Haxball', room:'3v3 Ranked Arena', ping:'27 ms', time:'340h'},
+  {id:'deniz', name:'Deniz', dot:'away',   activity:'Idle',            room:'—', ping:'—', time:'152h'},
+  {id:'yusuf', name:'Yusuf', dot:'offline',activity:'Offline',         room:'—', ping:'—', time:'64h'},
+  {id:'elif',  name:'Elif',  dot:'offline',activity:'Offline',         room:'—', ping:'—', time:'19h'},
+  {id:'emir',  name:'Emir',  dot:'offline',activity:'Offline',         room:'—', ping:'—', time:'7h'},
+];
+const PENDING = [
+  {id:'p1', name:'Cansu', sub:'Sent a friend request &middot; 3h ago'},
+  {id:'p2', name:'Barış', sub:'Sent a friend request &middot; 1d ago'},
+];
+const BLOCKED = [
+  {id:'b1', name:'unknown_user42', sub:'Blocked &middot; toxic behavior'},
+];
+
+const arrowSvg = `<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/></svg>`;
+const joinSvg  = `<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`;
+
+/* =====================================================
+   BUILD PERSISTENT FRIENDS COLUMN (used on Home + Friends page)
+===================================================== */
+function buildFriendsColumn(){
+  const online = FRIENDS.filter(f=>f.dot==='online');
+  const away = FRIENDS.filter(f=>f.dot==='away');
+  const offline = FRIENDS.filter(f=>f.dot==='offline');
+
+  function row(f){
+    return `
+    <div class="friend-item ${f.dot==='offline'?'offline':''}" data-id="${f.id}">
+      <div class="friend-avatar">${f.name[0]}<div class="fdot ${f.dot}"></div></div>
+      <div class="friend-info">
+        <div class="friend-name">${f.name}</div>
+        <div class="friend-activity">${f.activity}</div>
+      </div>
+      <div class="friend-actions">
+        <div class="fa-btn" data-action="message" data-id="${f.id}">${arrowSvg}</div>
+        <div class="fa-btn" data-action="join" data-id="${f.id}">${joinSvg}</div>
+      </div>
+    </div>`;
+  }
+
+  return `
+    <div class="friends-header">
+      <h3>Friends</h3>
+      <div class="sub">${online.length} online &middot; ${FRIENDS.length} total</div>
+    </div>
+    <div class="friends-list">
+      <div class="friend-group">
+        <div class="friend-group-label"><span class="dot-online"></span>ONLINE <span class="count">${online.length}</span></div>
+        ${online.map(row).join('')}
+      </div>
+      <div class="friend-group">
+        <div class="friend-group-label"><span class="dot-away"></span>AWAY <span class="count">${away.length}</span></div>
+        ${away.map(row).join('')}
+      </div>
+      <div class="friend-group">
+        <div class="friend-group-label"><span class="dot-offline"></span>OFFLINE <span class="count">${offline.length}</span></div>
+        ${offline.map(row).join('')}
+      </div>
+    </div>
+  `;
+}
+
+document.getElementById('friendsColHome').innerHTML = buildFriendsColumn();
+document.getElementById('friendsColFriendsPage').innerHTML = buildFriendsColumn();
+
+/* =====================================================
+   FRIENDS FULL PAGE LIST (tabs)
+===================================================== */
+function buildFpRow(f, mode){
+  let actions = '';
+  if(mode === 'pending'){
+    actions = `
+      <div class="fp-btn accept" data-action="accept" data-id="${f.id}"><svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>Accept</div>
+      <div class="fp-btn" data-action="decline" data-id="${f.id}"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>Decline</div>`;
+  } else if(mode === 'blocked'){
+    actions = `<div class="fp-btn" data-action="unblock" data-id="${f.id}">Unblock</div>`;
+  } else {
+    actions = `
+      <div class="fp-btn" data-action="message" data-id="${f.id}">${arrowSvg}Message</div>
+      <div class="fp-btn" data-action="invite" data-id="${f.id}">Invite</div>`;
+  }
+  const dotClass = f.dot || 'offline';
+  return `
+    <div class="fp-row">
+      <div class="friend-avatar">${f.name[0]}<div class="fdot ${dotClass}"></div></div>
+      <div class="fp-row-info">
+        <div class="fp-row-name">${f.name}</div>
+        <div class="fp-row-sub">${f.sub || f.activity || ''}</div>
+      </div>
+      <div class="fp-row-actions">${actions}</div>
+    </div>`;
+}
+
+function renderFpList(tab){
+  const list = document.getElementById('fpList');
+  let html = '';
+  if(tab === 'online'){
+    const online = FRIENDS.filter(f=>f.dot==='online');
+    html = online.length ? online.map(f=>buildFpRow(f,'online')).join('') : `<div class="fp-empty">No friends online right now.</div>`;
+  } else if(tab === 'all'){
+    html = FRIENDS.map(f=>buildFpRow(f,'all')).join('');
+  } else if(tab === 'pending'){
+    html = PENDING.length ? PENDING.map(f=>buildFpRow(f,'pending')).join('') : `<div class="fp-empty">No pending requests.</div>`;
+  } else if(tab === 'blocked'){
+    html = BLOCKED.length ? BLOCKED.map(f=>buildFpRow(f,'blocked')).join('') : `<div class="fp-empty">No blocked users.</div>`;
+  }
+  list.innerHTML = html;
+}
+renderFpList('online');
+
+document.querySelectorAll('.fp-tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.fp-tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    renderFpList(tab.dataset.tab);
+  });
+});
+
+document.getElementById('fpList').addEventListener('click', (e)=>{
+  const btn = e.target.closest('.fp-btn');
+  if(!btn) return;
+  if(requireAccount('Arkadaşlarını yönetmek için kayıt olmalısın')) return;
+  const action = btn.dataset.action;
+  const id = btn.dataset.id;
+  const map = {
+    message:'Mesaj penceresi açıldı',
+    invite:'Parti daveti gönderildi',
+    accept:'Arkadaşlık isteği kabul edildi',
+    decline:'Arkadaşlık isteği reddedildi',
+    unblock:'Kullanıcının engeli kaldırıldı'
+  };
+  showToast(map[action] || 'İşlem tamamlandı');
+  if(action === 'accept' || action === 'decline'){
+    const idx = PENDING.findIndex(p=>p.id===id);
+    if(idx>-1) PENDING.splice(idx,1);
+    renderFpList('pending');
+  }
+  if(action === 'unblock'){
+    const idx = BLOCKED.findIndex(p=>p.id===id);
+    if(idx>-1) BLOCKED.splice(idx,1);
+    renderFpList('blocked');
+  }
+});
+
+document.getElementById('addFriendBtn').addEventListener('click', ()=>{
+  if(requireAccount('Arkadaş eklemek için kayıt olmalısın')) return;
+  showToast('Arkadaşlık isteği gönderildi');
+});
+
+/* =====================================================
+   NAVIGATION
+===================================================== */
+const pageLabels = {
+  home:'Home', friends:'Friends', settings:'Settings', profile:'Profile'
+};
+
+function goToPage(pageId){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const navBtn = document.querySelector(`.nav-item[data-page="${pageId}"]`);
+  if(navBtn) navBtn.classList.add('active');
+
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-' + pageId).classList.add('active');
+
+  document.getElementById('crumbCurrent').textContent = pageLabels[pageId] || pageId;
+  updateGuestLocks();
+}
+
+document.querySelectorAll('.nav-item').forEach(item=>{
+  item.addEventListener('click', ()=> goToPage(item.dataset.page));
+});
+
+/* =====================================================
+   SEARCH (filters friends list live)
+===================================================== */
+document.getElementById('searchInput').addEventListener('input', (e)=>{
+  const q = e.target.value.trim().toLowerCase();
+  document.querySelectorAll('.friend-item').forEach(item=>{
+    const name = item.querySelector('.friend-name').textContent.toLowerCase();
+    item.classList.toggle('hidden-by-search', q.length>0 && !name.includes(q));
+  });
+});
+
+/* =====================================================
+   FRIEND ROW CLICK -> OPEN PROFILE PANEL
+===================================================== */
+const overlay = document.getElementById('overlay');
+const panel = document.getElementById('profilePanel');
+const ppClose = document.getElementById('ppClose');
+
+function openFriendProfile(id){
+  const f = FRIENDS.find(x=>x.id===id);
+  if(!f) return;
+  document.getElementById('ppName').textContent = f.name;
+  document.getElementById('ppStatus').textContent = f.activity;
+  document.getElementById('ppPing').textContent = f.ping;
+  document.getElementById('ppTime').textContent = f.time;
+  document.getElementById('ppAvatarLetter').firstChild.textContent = f.name[0];
+  const map = {online:'var(--accent)', away:'#8A8A8A', offline:'#333'};
+  document.getElementById('ppDot').style.background = map[f.dot];
+  document.getElementById('ppStatusVal').textContent =
+    f.dot === 'online' ? 'Online' : f.dot === 'away' ? 'Away' : 'Offline';
+
+  overlay.classList.add('show');
+  panel.classList.add('show');
+}
+
+document.addEventListener('click', (e)=>{
+  const actionBtn = e.target.closest('.fa-btn');
+  const item = e.target.closest('.friend-item');
+  if(actionBtn){
+    const action = actionBtn.dataset.action;
+    const id = actionBtn.dataset.id;
+    const f = FRIENDS.find(x=>x.id===id);
+    if(action === 'message'){
+      if(requireAccount('Mesaj göndermek için kayıt olmalısın')) return;
+      showToast(`${f.name} adlı arkadaşına mesaj penceresi açıldı`);
+    }
+    if(action === 'join') showToast(`${f.name} adlı arkadaşının odasına katılınıyor...`);
+    return;
+  }
+  if(item){
+    openFriendProfile(item.dataset.id);
+  }
+});
+
+function closePanel(){
+  overlay.classList.remove('show');
+  panel.classList.remove('show');
+}
+overlay.addEventListener('click', closePanel);
+ppClose.addEventListener('click', closePanel);
+
+document.getElementById('ppMsgBtn').addEventListener('click', ()=>{
+  if(requireAccount('Mesaj göndermek için kayıt olmalısın')) return;
+  showToast(`${document.getElementById('ppName').textContent} adlı kullanıcıya mesaj gönderildi`);
+});
+document.getElementById('ppViewBtn').addEventListener('click', ()=>{
+  closePanel();
+  showToast('Tam profil açılıyor...');
+});
+
+/* =====================================================
+   OWN PROFILE
+===================================================== */
+document.getElementById('ownProfileBtn').addEventListener('click', ()=>{
+  goToPage('profile');
+});
+
+/* =====================================================
+   NOTIFICATIONS DROPDOWN
+===================================================== */
+const notifBtn = document.getElementById('notifBtn');
+const notifDropdown = document.getElementById('notifDropdown');
+const notifDot = document.getElementById('notifDot');
+const notifList = document.getElementById('notifList');
+const clearAll = document.getElementById('clearAll');
+
+notifBtn.addEventListener('click', (e)=>{
+  e.stopPropagation();
+  notifDropdown.classList.toggle('show');
+  notifDot.classList.add('hidden');
+});
+
+document.addEventListener('click', (e)=>{
+  if(!notifDropdown.contains(e.target) && e.target !== notifBtn){
+    notifDropdown.classList.remove('show');
+  }
+});
+
+notifList.addEventListener('click', (e)=>{
+  const item = e.target.closest('.notif-dd-item');
+  if(!item) return;
+  showToast(item.dataset.toast);
+  item.remove();
+  if(!notifList.querySelector('.notif-dd-item')){
+    notifList.innerHTML = `<div class="notif-dd-empty">You're all caught up.</div>`;
+  }
+});
+
+clearAll.addEventListener('click', (e)=>{
+  e.stopPropagation();
+  notifList.innerHTML = `<div class="notif-dd-empty">You're all caught up.</div>`;
+});
+
+/* =====================================================
+   PLAY BUTTON — LAUNCH SEQUENCE
+===================================================== */
+const playBtn = document.getElementById('playBtn');
+const playBar = document.getElementById('playBar');
+const playLabel = document.getElementById('playLabel');
+let launching = false;
+
+playBtn.addEventListener('click', ()=>{
+  if(launching) return;
+  launching = true;
+  playBtn.classList.add('launching');
+  playLabel.innerHTML = 'LAUNCHING...';
+  let pct = 0;
+  const iv = setInterval(()=>{
+    pct += 4;
+    playBar.style.width = pct + '%';
+    if(pct >= 100){
+      clearInterval(iv);
+      playLabel.innerHTML = `<svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg> RUNNING`;
+      showToast('Vexa LAUNCHER başlatıldı');
+      setTimeout(()=>{
+        playBar.style.width = '0%';
+        playLabel.innerHTML = `<svg viewBox="0 0 24 24"><path d="M6 4l14 8-14 8V4z"/></svg> PLAY`;
+        playBtn.classList.remove('launching');
+        launching = false;
+      }, 1800);
+    }
+  }, 60);
+});
+
+/* =====================================================
+   STORE / LIBRARY BUTTONS
+===================================================== */
+document.querySelectorAll('.get-btn:not(.owned)').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const title = btn.closest('.store-card').querySelector('h4').textContent;
+    btn.textContent = 'Owned';
+    btn.classList.add('owned');
+    showToast(`${title} kütüphanene eklendi`);
+  });
+});
+document.getElementById('seasonPassBtn')?.addEventListener('click', ()=>{
+  showToast('Season Pass satın alındı');
+});
+document.querySelectorAll('.lib-play').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const title = btn.closest('.lib-card').querySelector('h4').textContent;
+    showToast(`${title} başlatılıyor...`);
+  });
+});
+
+/* =====================================================
+   SETTINGS TOGGLES
+===================================================== */
+document.querySelectorAll('.toggle').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    t.classList.toggle('on');
+  });
+});
+
+/* =====================================================
+   AUTH SCREEN (login / register)
+===================================================== */
+const authScreen = document.getElementById('authScreen');
+const authTitle = document.getElementById('authTitle');
+const authSub = document.getElementById('authSub');
+
+// simulated "existing account" — anything else typed on login triggers the error state
+const EXISTING_ACCOUNT = {user:'mami', pass:'vexa123'};
+
+// whether the current session is a guest (no account) session
+let isGuest = true;
+
+/* Switches the auth screen to a given tab ('login' or 'register') and shows it. */
+function openAuthScreen(tab){
+  document.querySelector(`.auth-tab[data-auth-tab="${tab}"]`)?.click();
+  authScreen.classList.remove('hide');
+}
+
+/* Gate for account-only features. Returns true (and blocks the action) if the
+   current user is a guest; shows a toast + register prompt in that case. */
+function requireAccount(message){
+  if(!isGuest) return false;
+  showToast(message);
+  openAuthScreen('register');
+  return true;
+}
+
+/* Shows/hides the in-page "register to unlock" overlays on Friends & Profile. */
+function updateGuestLocks(){
+  document.getElementById('friendsLock')?.classList.toggle('show', isGuest);
+  document.getElementById('profileLock')?.classList.toggle('show', isGuest);
+  document.getElementById('friendsColHomeLock')?.classList.toggle('show', isGuest);
+}
+
+/* Swaps the sidebar avatar initials between the guest placeholder and the account's. */
+function updateOwnAvatar(){
+  const btn = document.getElementById('ownProfileBtn');
+  if(btn && btn.firstChild) btn.firstChild.textContent = isGuest ? 'K' : 'MC';
+}
+
+document.getElementById('friendsLockBtn')?.addEventListener('click', ()=> openAuthScreen('register'));
+document.getElementById('profileLockBtn')?.addEventListener('click', ()=> openAuthScreen('register'));
+document.getElementById('friendsColHomeLockBtn')?.addEventListener('click', ()=> openAuthScreen('register'));
+
+document.querySelectorAll('.auth-tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.auth-tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    const target = tab.dataset.authTab;
+    document.getElementById('loginForm').classList.toggle('active', target==='login');
+    document.getElementById('registerForm').classList.toggle('active', target==='register');
+    if(target === 'login'){
+      authTitle.textContent = 'Welcome back';
+      authSub.textContent = 'Sign in to continue to Vexa LAUNCHER';
+    } else {
+      authTitle.textContent = 'Create your account';
+      authSub.textContent = "Don't have a profile yet? Set one up in seconds";
+    }
+  });
+});
+
+function enterApp(message){
+  authScreen.classList.add('hide');
+  setTimeout(()=> showToast(message), 350);
+}
+
+document.getElementById('guestBtn').addEventListener('click', ()=>{
+  isGuest = true;
+  updateGuestLocks();
+  updateOwnAvatar();
+  enterApp('Misafir olarak geziniyorsun. Mesajlaşma ve arkadaş ekleme için kayıt olman gerekir.');
+});
+
+document.getElementById('loginSubmit').addEventListener('click', ()=>{
+  const user = document.getElementById('loginUser').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  const errorEl = document.getElementById('loginError');
+  if(!user || !pass){
+    errorEl.textContent = 'Kullanıcı adı ve şifre gerekli.';
+    errorEl.classList.add('show');
+    return;
+  }
+  errorEl.classList.remove('show');
+  isGuest = false;
+  updateGuestLocks();
+  updateOwnAvatar();
+  enterApp(`${user} olarak giriş yapıldı`);
+});
+
+document.getElementById('regSubmit').addEventListener('click', ()=>{
+  const user = document.getElementById('regUser').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pass = document.getElementById('regPass').value;
+  const errorEl = document.getElementById('regError');
+  if(!user || !email || !pass){
+    errorEl.textContent = 'Lütfen tüm alanları doldurun.';
+    errorEl.classList.add('show');
+    return;
+  }
+  errorEl.classList.remove('show');
+  isGuest = false;
+  updateGuestLocks();
+  updateOwnAvatar();
+  enterApp(`Hesap oluşturuldu, ${user} olarak giriş yapıldı`);
+});
+
+/* =====================================================
+   INITIAL STATE
+===================================================== */
+updateGuestLocks();
+updateOwnAvatar();
+
+/* =====================================================
+   TOASTS
+===================================================== */
+function showToast(msg){
+  const stack = document.getElementById('toastStack');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.innerHTML = `<div class="dot"></div>${msg}`;
+  stack.appendChild(el);
+  requestAnimationFrame(()=> el.classList.add('show'));
+  setTimeout(()=>{
+    el.classList.remove('show');
+    setTimeout(()=> el.remove(), 250);
+  }, 2600);
+}
+</script>
+
+</body>
+</html>
