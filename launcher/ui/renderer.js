@@ -1361,7 +1361,7 @@ document.getElementById('saveProfileBtn')?.addEventListener('click', async () =>
     updateProfileEditorUI();
 
     try {
-        await apiCall('/user/profile', 'POST', {
+        const result = await apiCall('/user/profile', 'POST', {
             userId: currentUser.id,
             updates: {
                 bio: bioText,
@@ -1369,7 +1369,21 @@ document.getElementById('saveProfileBtn')?.addEventListener('click', async () =>
                 banner: (currentUser && currentUser.banner) || ''
             }
         });
-    } catch(e) {}
+        
+        // Sync Cloudinary URLs back from server
+        if (result && result.success && result.profile) {
+            if (result.profile.avatar) {
+                localStorage.setItem('vexa_avatar', result.profile.avatar);
+                if (currentUser) currentUser.avatar = result.profile.avatar;
+            }
+            if (result.profile.banner) {
+                localStorage.setItem('vexa_banner', result.profile.banner);
+                if (currentUser) currentUser.banner = result.profile.banner;
+            }
+            updateOwnAvatar();
+            updateProfileEditorUI();
+        }
+    } catch(e) { console.error('Profile save error:', e); }
 
     showToast('Profilin başarıyla güncellendi!');
 });
