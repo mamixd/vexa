@@ -175,6 +175,11 @@ document.getElementById('logoutBtn')?.addEventListener('click', () => {
     localStorage.removeItem('vexa_user_id');
     localStorage.removeItem('vexa_username');
     localStorage.removeItem('vexa_token');
+    localStorage.removeItem('vexa_avatar');
+    localStorage.removeItem('vexa_banner');
+    localStorage.removeItem('vexa_bio');
+    localStorage.removeItem('vexa_play_time');
+    localStorage.removeItem('vexa_cached_friends');
     currentUser = null;
     document.getElementById('sidebarProfileName').textContent = 'Misafir';
     document.getElementById('sidebarProfileStatus').textContent = 'Çevrimdışı';
