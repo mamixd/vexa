@@ -40,6 +40,9 @@
                   "productName":  "Vexa Launcher",
                   "copyright":  "Copyright Â© 2026 Vexa Software",
                   "asar":  true,
+                  "asarUnpack": [
+                                    "hxalltool/**/*"
+                                ],
                   "directories":  {
                                       "output":  "dist",
                                       "buildResources":  "build"
@@ -48,6 +51,7 @@
                                 "launcher/**/*",
                                 "electron/**/*",
                                 "inject/**/*",
+                                "hxalltool/**/*",
                                 ".env",
                                 "node_modules/**/*",
                                 "package.json",

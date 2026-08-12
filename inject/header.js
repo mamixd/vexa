@@ -11,10 +11,10 @@
         const style = document.createElement('style');
         style.innerHTML = `
             body { background-color: #111318 !important; color: #fff !important; overflow: hidden !important; }
-            .header, .rightbar { display: none !important; }
+            .rightbar { display: none !important; }
             .container { width: 100vw !important; height: 100vh !important; margin: 0 !important; padding: 0 !important; max-width: none !important; }
-            .flexRow.flexGrow { height: 100vh !important; }
-            iframe.gameframe { border: none !important; width: 100vw !important; height: 100vh !important; box-shadow: none !important; }
+            .flexRow.flexGrow { height: calc(100vh - 48px) !important; }
+            iframe.gameframe { border: none !important; width: 100vw !important; height: calc(100vh - 48px) !important; box-shadow: none !important; }
         `;
         document.head.appendChild(style);
 
@@ -158,16 +158,27 @@
         rightWrapper.style.cssText = "display:flex; align-items:center; gap:8px; flex-shrink:0; min-width:300px; justify-content:flex-end; -webkit-app-region:no-drag;";
 
         const replayBtn = document.createElement('button');
-        replayBtn.innerHTML = '🎬 <span style="margin-left:3px;">Replays</span>';
         replayBtn.id = "vexa-replay-btn";
         replayBtn.style.cssText = "background:#1a1c20 !important; color:#8b949e !important; border:1px solid #2d3035 !important; border-radius:6px; padding:8px 13px; font-size:12px; font-weight:700; cursor:pointer; transition:color 0.15s, background 0.15s; white-space:nowrap; margin-right:4px; display:flex; align-items:center;";
         replayBtn.onmouseover = () => { replayBtn.style.color = '#c9d1d9'; replayBtn.style.background = '#22252b'; replayBtn.style.borderColor = '#3d4149'; };
         replayBtn.onmouseout = () => { replayBtn.style.color = '#8b949e'; replayBtn.style.background = '#1a1c20'; replayBtn.style.borderColor = '#2d3035'; };
-        replayBtn.onclick = () => {
-            if (window.electronAPI && window.electronAPI.openReplayViewer) {
-                window.electronAPI.openReplayViewer();
-            }
-        };
+        if (window.location.pathname.includes('/replay')) {
+            replayBtn.innerHTML = '📂 <span style="margin-left:3px;">Dosya Aç</span>';
+            replayBtn.onclick = () => {
+                const iframe = document.getElementById('gameframe');
+                if (iframe && iframe.contentDocument) {
+                    const fileInput = iframe.contentDocument.querySelector('input[type="file"]');
+                    if (fileInput) fileInput.click();
+                }
+            };
+        } else {
+            replayBtn.innerHTML = '🎬 <span style="margin-left:3px;">Replays</span>';
+            replayBtn.onclick = () => {
+                if (window.electronAPI && window.electronAPI.openReplayViewer) {
+                    window.electronAPI.openReplayViewer();
+                }
+            };
+        }
 
         const settingsBtn = document.createElement('button');
         settingsBtn.innerText = '⚙ Ayarlar';

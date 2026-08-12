@@ -267,7 +267,11 @@ function startGame(replayFilePath = null) {
 function handleArgs(argv) {
     const replayFile = argv.find(arg => arg.toLowerCase().endsWith('.hbr2'));
     if (replayFile) {
-        openReplayViewer(replayFile);
+        if (mainWindow && !mainWindow.isDestroyed()) {
+            openReplayViewer(replayFile);
+        } else {
+            startGame(replayFile);
+        }
         return true;
     }
     return false;
