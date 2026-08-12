@@ -140,3 +140,166 @@
 }
 .chat-input-area button:hover { filter: brightness(1.05); }
 .chat-input-area button svg { width: 16px; height: 16px; }
+
+/* ===================== PREMIUM GAMING LAUNCHER DESIGN SYSTEM ===================== */
+/* App Background Ambient Glow */
+.app {
+  background: radial-gradient(circle at 40% 15%, rgba(63, 227, 161, 0.06) 0%, #070707 60%) !important;
+}
+
+/* Sidebar Polish */
+.sidebar {
+  background: #0b0b0b !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Sidebar Logo Glow */
+.logo {
+  box-shadow: 0 0 20px rgba(63, 227, 161, 0.35);
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+.logo:hover {
+  transform: scale(1.06) rotate(4deg);
+  box-shadow: 0 0 30px rgba(63, 227, 161, 0.65);
+}
+
+.logo-text {
+  background: linear-gradient(135deg, #ffffff 30%, #3FE3A1 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  font-weight: 800 !important;
+}
+
+/* Navigation Items Glow & Pill Highlight */
+.nav-item {
+  transition: background 180ms ease, color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  border-radius: 10px !important;
+  margin: 2px 0;
+}
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.03);
+  transform: translateX(2px);
+}
+.nav-item.active {
+  background: rgba(63, 227, 161, 0.09) !important;
+  color: #3FE3A1 !important;
+  box-shadow: inset 3px 0 0 #3FE3A1, 0 0 18px rgba(63, 227, 161, 0.14);
+}
+
+/* Bottom Sidebar Profile Box */
+.profile-area {
+  background: #121212 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* Hero Title Gradient */
+.hero-title {
+  background: linear-gradient(135deg, #ffffff 20%, #3FE3A1 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.5px !important;
+}
+
+/* Status Card Glassmorphism */
+.status-card {
+  background: rgba(18, 18, 18, 0.8) !important;
+  border: 1px solid rgba(63, 227, 161, 0.2) !important;
+  border-radius: 16px !important;
+  backdrop-filter: blur(12px) !important;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5);
+}
+
+/* Status Version Pill Badge */
+.status-version {
+  background: rgba(63, 227, 161, 0.1) !important;
+  border: 1px solid rgba(63, 227, 161, 0.3) !important;
+  color: #3FE3A1 !important;
+  padding: 4px 12px !important;
+  border-radius: 20px !important;
+  font-weight: 700 !important;
+  font-size: 11px !important;
+  box-shadow: 0 0 12px rgba(63, 227, 161, 0.15);
+}
+
+/* Play Button Glow & Hover Animation */
+#playBtn, .play-btn {
+  background: linear-gradient(135deg, #3FE3A1 0%, #29be82 100%) !important;
+  transition: transform 220ms ease, box-shadow 220ms ease, filter 220ms ease;
+  box-shadow: 0 0 24px rgba(63, 227, 161, 0.35);
+  color: #050d09 !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.5px;
+}
+#playBtn:hover, .play-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 0 38px rgba(63, 227, 161, 0.6);
+}
+#playBtn:active, .play-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Cards & Panels Polish */
+.news-card, .settings-card, .notif-dd-header {
+  background: #121212 !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  border-radius: 14px !important;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+.news-card:hover, .settings-card:hover {
+  border-color: rgba(63, 227, 161, 0.35) !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+  transform: translateY(-2px);
+}
+
+/* Friends List Panel (Right side) */
+.friends-col {
+  background: #0d0d0d !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-radius: 14px !important;
+  padding: 16px !important;
+}
+.fp-row {
+  transition: background 150ms ease, transform 150ms ease;
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+.fp-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+  transform: translateX(3px);
+}
+
+/* Toggle Switches */
+.toggle.on {
+  background: #3FE3A1 !important;
+  box-shadow: 0 0 12px rgba(63, 227, 161, 0.4);
+}
+
+/* Input Focus Glow */
+input:focus, textarea:focus {
+  border-color: rgba(63, 227, 161, 0.5) !important;
+  box-shadow: 0 0 14px rgba(63, 227, 161, 0.18) !important;
+}
+
+/* Pulsing Status Dots */
+.fdot.online, .status-dot.online {
+  box-shadow: 0 0 10px rgba(35, 165, 89, 0.7);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(63, 227, 161, 0.45);
+}

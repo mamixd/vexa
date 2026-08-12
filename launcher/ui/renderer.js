@@ -14,7 +14,14 @@ document.getElementById('win-minimize')?.addEventListener('click', () => {
     if (window.api && window.api.minimize) window.api.minimize();
 });
 document.getElementById('win-close')?.addEventListener('click', () => {
-    if (window.api && window.api.close) window.api.close();
+    savePlayTime();
+    if (typeof currentUser !== 'undefined' && currentUser && window.api && window.api.setOffline) {
+        window.api.setOffline({ userId: currentUser.id, playTime: getPlayTimeSeconds() });
+    }
+    // IPC mesajının gitmesi için çok kısa bir bekleme süresi
+    setTimeout(() => {
+        if (window.api && window.api.close) window.api.close();
+    }, 50);
 });
 
 /* =====================================================
@@ -297,12 +304,34 @@ async function loadFriends() {
         if (data.friends) {
             friendsList = data.friends;
             localStorage.setItem('vexa_cached_friends', JSON.stringify(friendsList));
-            buildFriendsColumn();
-            const activeTab = document.querySelector('.fp-tab.active');
-            if (!activeTab || activeTab.dataset.tab !== 'pending') renderFpList(activeTab ? activeTab.dataset.tab : 'online');
         } else {
             friendsList = [];
-            buildFriendsColumn();
+        }
+
+        if (data.requests) {
+            const oldRequestIds = pendingRequests.map(r => r.id);
+            pendingRequests = data.requests;
+            localStorage.setItem('vexa_cached_pending', JSON.stringify(pendingRequests));
+            
+            // Check for new incoming requests
+            pendingRequests.forEach(req => {
+                if (!oldRequestIds.includes(req.id)) {
+                    showToast('🔔 Yeni arkadaşlık isteği: ' + req.name);
+                }
+            });
+
+            // Update pending tab counter in real-time
+            const pendingTab = document.querySelector('.fp-tab[data-tab="pending"]');
+            if (pendingTab) {
+                pendingTab.innerHTML = pendingRequests.length ? `Bekleyenler <span style="background:var(--accent);color:#000;padding:2px 6px;border-radius:10px;font-size:10px;margin-left:4px;">${pendingRequests.length}</span>` : `Bekleyenler`;
+            }
+        }
+
+        buildFriendsColumn();
+        const activeTab = document.querySelector('.fp-tab.active');
+        if (activeTab) {
+            renderFpList(activeTab.dataset.tab);
+        } else {
             renderFpList('online');
         }
     } catch (e) {
@@ -326,11 +355,12 @@ function buildFriendsColumn() {
     function row(f) {
         const avatarContent = f.avatar ? `<div class="fdot ${f.dot}"></div>` : `${f.name[0].toUpperCase()}<div class="fdot ${f.dot}"></div>`;
         const avatarStyle = f.avatar ? `style="background-image:url('${f.avatar}');background-size:cover;background-position:center;"` : '';
+        const unreadBadge = f.unreadCount > 0 ? `<span style="background:var(--accent);color:#000;border-radius:10px;padding:2px 6px;font-size:10px;margin-left:6px;font-weight:600;">${f.unreadCount}</span>` : '';
         return `
         <div class="friend-item ${f.dot==='offline'?'offline':''}" data-id="${f.id}">
           <div class="friend-avatar" ${avatarStyle}>${avatarContent}</div>
           <div class="friend-info">
-            <div class="friend-name">${f.name}</div>
+            <div class="friend-name">${f.name}${unreadBadge}</div>
             <div class="friend-activity">${f.activity}</div>
           </div>
           <div class="friend-actions">
@@ -380,16 +410,17 @@ function buildFpRow(f, mode) {
     } else {
         actions = `
           <div class="fp-btn" data-action="message" data-id="${f.id}">${arrowSvg}Mesaj</div>
-          <div class="fp-btn" data-action="invite" data-id="${f.id}">Davet Et</div>`;
+          <div class="fp-btn" data-action="remove" data-id="${f.id}" style="color: #ff4d4d; border-color: rgba(255, 77, 77, 0.25);" onmouseover="this.style.background='rgba(255, 77, 77, 0.1)'" onmouseout="this.style.background='transparent'">Sil</div>`;
     }
     const dotClass = f.dot || 'offline';
     const avatarContent = f.avatar ? `<div class="fdot ${dotClass}"></div>` : `${f.name[0].toUpperCase()}<div class="fdot ${dotClass}"></div>`;
     const avatarStyle = f.avatar ? `style="background-image:url('${f.avatar}');background-size:cover;background-position:center;"` : '';
+    const unreadBadge = f.unreadCount > 0 ? `<span style="background:var(--accent);color:#000;border-radius:10px;padding:2px 6px;font-size:10px;margin-left:6px;font-weight:600;">${f.unreadCount}</span>` : '';
     return `
       <div class="fp-row" data-id="${f.id}">
         <div class="friend-avatar" ${avatarStyle}>${avatarContent}</div>
         <div class="fp-row-info">
-          <div class="fp-row-name">${f.name}</div>
+          <div class="fp-row-name">${f.name}${unreadBadge}</div>
           <div class="fp-row-sub">${f.activity || ''}</div>
         </div>
         <div class="fp-row-actions">${actions}</div>
@@ -416,17 +447,10 @@ async function renderFpList(tab) {
 
         document.getElementById('sidebarProfileName').textContent = currentUser.username;
         document.getElementById('sidebarProfileStatus').textContent = 'Çevrimiçi';
-        try {
-            const data = await apiCall(`/friends/requests?userId=${currentUser.id}`);
-            if (data.requests) {
-                pendingRequests = data.requests;
-                localStorage.setItem('vexa_cached_pending', JSON.stringify(pendingRequests));
-                html = pendingRequests.length ? pendingRequests.map(f => buildFpRow(f, 'pending')).join('') : `<div class="fp-empty">Bekleyen arkadaşlık isteği yok.</div>`;
-                document.querySelector('.fp-tab[data-tab="pending"]').innerHTML = pendingRequests.length ? `Bekleyenler <span style="background:var(--accent);color:#000;padding:2px 6px;border-radius:10px;font-size:10px;margin-left:4px;">${pendingRequests.length}</span>` : `Bekleyenler`;
-            }
-        } catch(e) {
-            if (!cached) html = `<div class="fp-empty">Bir hata oluştu.</div>`;
-        }
+        
+        // Render pending list instantly from memory cache
+        html = pendingRequests.length ? pendingRequests.map(f => buildFpRow(f, 'pending')).join('') : `<div class="fp-empty">Bekleyen arkadaşlık isteği yok.</div>`;
+        document.querySelector('.fp-tab[data-tab="pending"]').innerHTML = pendingRequests.length ? `Bekleyenler <span style="background:var(--accent);color:#000;padding:2px 6px;border-radius:10px;font-size:10px;margin-left:4px;">${pendingRequests.length}</span>` : `Bekleyenler`;
         list.innerHTML = html;
     } else if (tab === 'online') {
         const online = friendsList.filter(f => f.dot === 'online');
@@ -456,12 +480,18 @@ document.addEventListener('click', (e) => {
             if (requireAccount('Mesaj göndermek için giriş yapmalısın')) return;
             openChat(f.id, f.name);
         } else if (action === 'accept') {
-            apiCall('/friends/accept', 'POST', { userId: currentUser.id, friendId: id }).then(()=>{
-                renderFpList('pending');
+            apiCall('/friends/accept', 'POST', { userId: currentUser.id, senderId: id }).then(()=>{
                 loadFriends();
             });
         } else if (action === 'reject') {
-            renderFpList('pending');
+            apiCall('/friends/reject', 'POST', { userId: currentUser.id, senderId: id }).then(()=>{
+                loadFriends();
+            });
+        } else if (action === 'remove') {
+            apiCall('/friends/remove', 'POST', { userId: currentUser.id, friendId: id }).then(()=>{
+                showToast('❌ Arkadaşlıktan çıkarıldı.');
+                loadFriends();
+            });
         }
         return;
     }
@@ -538,6 +568,12 @@ function openProfilePanel(friendId) {
             ppTimeEl.textContent = formatPlayTime(f.playTime || 0);
         }
     }
+    // Status value
+    const ppStatusVal = document.getElementById('ppStatusVal');
+    if (ppStatusVal) {
+        ppStatusVal.textContent = (f.dot === 'online' || isOwn) ? 'Çevrimiçi' : 'Çevrimdışı';
+        ppStatusVal.style.color = (f.dot === 'online' || isOwn) ? 'var(--accent)' : 'var(--text-secondary)';
+    }
     
     const msgBtn = document.getElementById('ppMsgBtn');
     const editBtn = document.getElementById('ppEditProfileBtn');
@@ -552,7 +588,25 @@ function openProfilePanel(friendId) {
             };
         }
     } else {
-        if (msgBtn) msgBtn.style.display = 'flex';
+        if (msgBtn) {
+            msgBtn.style.display = 'flex';
+            // Unread count animation and text
+            if (f.unreadCount > 0) {
+                msgBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/></svg> Mesaj Oku (${f.unreadCount} Yeni)`;
+                msgBtn.style.animation = 'pulse 2s infinite';
+                msgBtn.style.background = '#ff4444';
+            } else {
+                msgBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/></svg> Mesaj Gönder`;
+                msgBtn.style.animation = 'none';
+                msgBtn.style.background = 'var(--accent)';
+            }
+
+            msgBtn.onclick = () => {
+                document.getElementById('ppClose')?.click();
+                if (requireAccount('Mesaj göndermek için giriş yapmalısın')) return;
+                openChat(f.id, f.name);
+            };
+        }
         if (editBtn) editBtn.style.display = 'none';
     }
     
@@ -786,7 +840,7 @@ setInterval(() => {
             renderFpList('pending');
         }
     }
-}, 5000);
+}, 3000);
 
 setInterval(() => {
     if (currentChatFriendId) loadChatHistory();
@@ -818,22 +872,34 @@ document.querySelectorAll('.nav-item').forEach(item => {
    GITHUB NEWS / PATCH NOTES
 ===================================================== */
 async function fetchGithubNews() {
+    const newsList = document.querySelector('.news-list');
+
+    // 1. Önce cache'den hemen göster
+    const cached = localStorage.getItem('vexa_cached_news');
+    if (cached && newsList) {
+        try { newsList.innerHTML = JSON.parse(cached); } catch(e) {}
+    }
+
+    // 2. Arka planda yeni veri çek
     try {
-        const res = await fetch('https://api.github.com/repos/vexa-client/vexa/releases');
+        const res = await fetch('https://api.github.com/repos/vexa-client/vexa/releases', {
+            headers: { 'Accept': 'application/vnd.github.v3+json' },
+            signal: AbortSignal.timeout(5000)
+        });
         const releases = await res.json();
         
-        const newsList = document.querySelector('.news-list');
         if (releases && releases.length > 0) {
-            // Update the version badge with the latest GitHub tag
             const statusVer = document.querySelector('.status-version');
             if (statusVer) statusVer.textContent = releases[0].tag_name || 'v1.0.0';
 
             if (newsList) {
-                newsList.innerHTML = releases.slice(0, 4).map(release => {
+                const html = releases.slice(0, 4).map(release => {
                     const date = new Date(release.published_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
                     let desc = release.body ? release.body.replace(/[#*`_]/g, '').substring(0, 100) + '...' : 'Detaylar için tıklayın.';
+                    const safeTitle = (release.name || release.tag_name || 'Haber').replace(/'/g, "\\'");
+                    const safeBody = (release.body || 'Detay bulunamadı.').replace(/'/g, "\\'").replace(/\n/g, "\\n");
                     return `
-                    <div class="news-card" onclick="if(window.api && window.api.openExternal) window.api.openExternal('${release.html_url}')">
+                    <div class="news-card" style="cursor:pointer" onclick="showPatchNotesModal('${safeTitle}', '${safeBody}')">
                       <div class="news-thumb" style="display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--accent);">${release.tag_name}</div>
                       <div class="news-body">
                         <div class="news-title">${release.name || release.tag_name}</div>
@@ -842,12 +908,85 @@ async function fetchGithubNews() {
                       </div>
                     </div>`;
                 }).join('');
+                newsList.innerHTML = html;
             }
         }
     } catch(e) {
-        console.error('Github news error', e);
+        console.warn('Github news error, trying Vexa API fallback...', e.message);
+        try {
+            const fallbackRes = await fetch(`${API_URL}/updates/patch-notes`);
+            const text = await fallbackRes.text();
+            if (newsList && text) {
+                window._currentPatchNotesText = text;
+                const html = `
+                <div class="news-card" style="cursor:pointer" onclick="showPatchNotesModal('Vexa Client v1.3.0 Güncelleme Notları', window._currentPatchNotesText)">
+                  <div class="news-thumb" style="display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--accent);">v1.3.0</div>
+                  <div class="news-body">
+                    <div class="news-title">Vexa Client v1.3.0 Güncelleme Notları</div>
+                    <div class="news-desc">${text.substring(0, 120).replace(/[#*`_>]/g, '')}...</div>
+                    <div class="news-meta"><span class="news-date">Güncel</span><span class="news-read">Devamını oku</span></div>
+                  </div>
+                </div>`;
+                newsList.innerHTML = html;
+            }
+        } catch(fallbackErr) {
+            if (!cached && newsList) {
+                newsList.innerHTML = `
+                <div class="news-card">
+                  <div class="news-body">
+                    <div class="news-title">Haberler Alınamadı</div>
+                    <div class="news-desc">Haberler şu anda yüklenemiyor. Lütfen internet bağlantınızı kontrol edin.</div>
+                  </div>
+                </div>`;
+            }
+        }
     }
 }
+
+function parseSimpleMarkdown(md) {
+    if (!md) return '';
+    return md
+        .replace(/^### (.*$)/gim, '<h4 style="color:#3FE3A1;margin:14px 0 6px;font-size:14px;font-weight:700;">$1</h4>')
+        .replace(/^## (.*$)/gim, '<h3 style="color:#F4F4F4;margin:18px 0 8px;font-size:15px;font-weight:700;border-bottom:1px solid #242424;padding-bottom:6px;">$1</h3>')
+        .replace(/^# (.*$)/gim, '<h2 style="color:#3FE3A1;margin:10px 0 10px;font-size:17px;font-weight:800;">$1</h2>')
+        .replace(/^> (.*$)/gim, '<blockquote style="border-left:3px solid #3FE3A1;background:rgba(63,227,161,0.06);padding:10px 14px;border-radius:0 8px 8px 0;margin:10px 0;font-size:13px;color:#8A8A8A;line-height:1.5;">$1</blockquote>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong style="color:#F4F4F4;">$1</strong>')
+        .replace(/---/g, '<hr style="border:none;border-top:1px solid #242424;margin:14px 0;">')
+        .replace(/\n/g, '<br>');
+}
+
+function showPatchNotesModal(title, text) {
+    let existing = document.getElementById('patchNotesModal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'patchNotesModal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;z-index:999999;padding:20px;-webkit-app-region:no-drag;pointer-events:auto;';
+    
+    modal.innerHTML = `
+      <div style="width:100%;max-width:580px;max-height:85vh;background:#151515;border:1px solid #242424;border-radius:14px;box-shadow:0 20px 50px rgba(0,0,0,0.9);display:flex;flex-direction:column;overflow:hidden;animation:fadeIn 0.18s ease;-webkit-app-region:no-drag;pointer-events:auto;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #242424;background:#111111;-webkit-app-region:no-drag;">
+          <h3 style="color:#3FE3A1;font-size:15px;font-weight:700;margin:0;">${title || 'Yama Notları'}</h3>
+          <button id="pnModalCloseBtn" onclick="document.getElementById('patchNotesModal')?.remove()" style="background:#242424;border:none;color:#F4F4F4;width:30px;height:30px;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1;transition:180ms ease;-webkit-app-region:no-drag;pointer-events:auto;">&times;</button>
+        </div>
+        <div style="padding:20px;font-size:13px;color:#8A8A8A;line-height:1.6;overflow-y:auto;max-height:calc(85vh - 65px);-webkit-app-region:no-drag;">
+          ${parseSimpleMarkdown(text || '')}
+        </div>
+      </div>`;
+
+    document.body.appendChild(modal);
+
+    const closeBtn = modal.querySelector('#pnModalCloseBtn');
+    if (closeBtn) {
+        closeBtn.onmouseover = () => closeBtn.style.background = '#e11d48';
+        closeBtn.onmouseout = () => closeBtn.style.background = '#242424';
+    }
+
+    modal.onclick = (e) => {
+        if (e.target === modal) modal.remove();
+    };
+}
+
 fetchGithubNews();
 
 
@@ -867,6 +1006,16 @@ function savePlayTime() {
     const total = getPlayTimeSeconds() + elapsed;
     localStorage.setItem('vexa_play_time', String(total));
     _playSessionStart = Date.now(); // reset anchor so we don't double-count
+
+    // Sync to backend
+    if (!isGuest()) {
+        apiCall('/ping', 'POST', {
+            userId: currentUser.id,
+            activity: 'In Launcher',
+            dot: 'online',
+            playTime: total
+        }).catch(() => {});
+    }
 }
 
 function startPlayTimeTracking() {
@@ -893,8 +1042,14 @@ function formatPlayTime(totalSeconds) {
     return `${totalSeconds}sn`;
 }
 
-// Save play time if user closes the window mid-session
-window.addEventListener('beforeunload', () => { savePlayTime(); });
+// Save play time and set offline when user closes the window
+window.addEventListener('beforeunload', () => {
+    savePlayTime();
+    // Electron'da sendBeacon çalışmaz — IPC ile main process'e bildir
+    if (!isGuest() && currentUser && window.api && window.api.setOffline) {
+        window.api.setOffline({ userId: currentUser.id, playTime: getPlayTimeSeconds() });
+    }
+});
 
 /* =====================================================
    ELECTRON / PLAY BUTTON LOGIC
@@ -923,6 +1078,11 @@ async function checkUpdates() {
     try {
         currentUpdateInfo = await window.api.checkUpdate();
         
+        const statusVer = document.querySelector('.status-version');
+        if (statusVer && currentUpdateInfo.localVersion) {
+            statusVer.textContent = 'v' + currentUpdateInfo.localVersion;
+        }
+
         if (currentUpdateInfo.updateAvailable && currentUpdateInfo.updateType === 'launcher') {
             setStatusUI('Launcher Güncellemesi', 'Yeni launcher sürümü mevcut! Güncellemek için tıklayın.', 'GÜNCELLE', ICON_DOWNLOAD);
         } else {
@@ -1152,10 +1312,13 @@ function openCropper(file, mode) {
             const circleMask = document.getElementById('cropperCircleMask');
             const rectMask = document.getElementById('cropperRectMask');
             if (mode === 'avatar') {
-                if (circleMask) { circleMask.style.display = 'block'; }
+                if (circleMask) {
+                    circleMask.setAttribute('viewBox', `0 0 ${AVATAR_SIZE} ${AVATAR_SIZE}`);
+                    circleMask.style.display = 'block';
+                }
                 if (rectMask) { rectMask.style.display = 'none'; }
-                // Position circle mask in center
-                const r = AVATAR_SIZE * 0.45;
+                // Position circle mask in center touching edges
+                const r = (AVATAR_SIZE / 2) - 2;
                 const mcx = AVATAR_SIZE / 2;
                 const mcy = AVATAR_SIZE / 2;
                 document.getElementById('cropperMaskCircle')?.setAttribute('cx', mcx);
@@ -1166,14 +1329,16 @@ function openCropper(file, mode) {
                 document.getElementById('cropperMaskBorder')?.setAttribute('r', r);
             } else {
                 if (circleMask) { circleMask.style.display = 'none'; }
-                if (rectMask) { rectMask.style.display = 'block'; }
-                // Position rect mask with padding
-                const pad = 10;
-                const rw = BANNER_W - pad * 2;
-                const rh = BANNER_H - pad * 2;
+                if (rectMask) {
+                    rectMask.setAttribute('viewBox', `0 0 ${BANNER_W} ${BANNER_H}`);
+                    rectMask.style.display = 'block';
+                }
+                // Full rectangle selection for banner
+                const rw = BANNER_W;
+                const rh = BANNER_H;
                 ['cropperMaskRect', 'cropperMaskRectBorder'].forEach(id => {
                     const el = document.getElementById(id);
-                    if (el) { el.setAttribute('x', pad); el.setAttribute('y', pad); el.setAttribute('width', rw); el.setAttribute('height', rh); }
+                    if (el) { el.setAttribute('x', 0); el.setAttribute('y', 0); el.setAttribute('width', rw); el.setAttribute('height', rh); }
                 });
             }
 

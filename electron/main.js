@@ -21,7 +21,7 @@ if (!settings.clientId) {
 }
 
 // --- Live Active Users Heartbeat ---
-const VERCEL_API_URL = process.env.VERCEL_API_URL || 'http://api.vexaclient.com';
+const VERCEL_API_URL = process.env.VERCEL_API_URL || 'https://api.vexaclient.com';
 
 function sendHeartbeat() {
     const axios = require('axios');
@@ -65,7 +65,7 @@ function setActivity(state, details, nick) {
         smallImageText: (nick && nick.length >= 2) ? `${nick}` : undefined,
         instance: false,
         buttons: [
-            { label: 'İndir', url: 'https://vexa-client.github.io' },
+            { label: 'İndir', url: 'https://vexaclient.com' },
             { label: 'GitHub', url: 'https://github.com/vexa-client/vexa' }
         ]
     }).catch(err => console.error('Discord RPC Error:', err));

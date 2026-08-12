@@ -13,5 +13,6 @@ contextBridge.exposeInMainWorld('api', {
     openExternal: (url) => ipcRenderer.invoke('open-external', url),
     getConfig: () => ipcRenderer.invoke('get-config'),
     setConfig: (newConfig) => ipcRenderer.invoke('set-config', newConfig),
-    showNotification: (title, body) => ipcRenderer.send('show-notification', { title, body })
+    showNotification: (title, body) => ipcRenderer.send('show-notification', { title, body }),
+    setOffline: (data) => ipcRenderer.send('set-offline', data)
 });

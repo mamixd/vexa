@@ -25,8 +25,8 @@ temp_extract2/
 yedek_launcher/
 __og_client_ref/
 vercel-backend/
-vexa-client.github.io/
-vexa-client.github.io.zip
+vexaclient.com/
+vexaclient.com.zip
 launcher.zip
 vexalauncher.html
 recovered_renderer.js
@@ -38,3 +38,9 @@ fix.js
 split.js
 best_view.txt
 vds-backend/
+frontend-old/
+temp_github_site/
+vexa-client.github.io/
+vexa-client.github.io.zip
+vexa_backend.zip
+vexa_website.zip

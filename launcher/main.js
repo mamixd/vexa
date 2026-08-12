@@ -20,10 +20,10 @@ const InstallerManager = require('./installer');
 let mainWindow;
 let installer;
 const GITHUB_REPO = 'vexa-client/vexa';
-const VERSIONS_RAW_URL = `http://api.vexaclient.com/api/updates/versions.json?t=${Date.now()}`;
-const PATCH_NOTES_RAW_URL = `http://api.vexaclient.com/api/updates/patch-notes?t=${Date.now()}`;
-const FALLBACK_CLIENT_DOWNLOAD_URL = `http://cdn.vexaclient.com/downloads/vexa-launcher-setup.exe`;
-const FALLBACK_RELEASE_URL = `http://cdn.vexaclient.com/downloads/`;
+const VERSIONS_RAW_URL = `https://api.vexaclient.com/api/updates/versions.json?t=${Date.now()}`;
+const PATCH_NOTES_RAW_URL = `https://api.vexaclient.com/api/updates/patch-notes?t=${Date.now()}`;
+const FALLBACK_CLIENT_DOWNLOAD_URL = `https://cdn.vexaclient.com/downloads/vexa-launcher-setup.exe`;
+const FALLBACK_RELEASE_URL = `https://cdn.vexaclient.com/downloads/`;
 let APP_DATA_PATH;
 let VERSION_FILE;
 
@@ -42,7 +42,7 @@ async function readLocalInstallState() {
 async function getPatchNotes(fallbackText) {
     try {
         const notesResponse = await axios.get(PATCH_NOTES_RAW_URL, {
-            timeout: 10000,
+            timeout: 3000,
             headers: { 'User-Agent': 'VexaLauncher-PatchNotes' }
         });
 
@@ -107,7 +107,7 @@ rpc.on('ready', () => {
         largeImageText: 'Vexa Client',
         instance: false,
         buttons: [
-            { label: 'İndir', url: 'https://vexa-client.github.io' },
+            { label: 'İndir', url: 'https://vexaclient.com' },
             { label: 'GitHub', url: `https://github.com/${GITHUB_REPO}` }
         ]
     }).catch(console.error);
@@ -165,27 +165,40 @@ ipcMain.handle('check-update', async () => {
         let versions = { launcher: '0.0.0', client: '0.0.0' };
         let patchNotesRaw = 'Yeni güncelleme mevcut!';
         
-        try {
-            const vRes = await axios.get(VERSIONS_RAW_URL, {
+        // İkisini aynı anda çek — birini beklemeden diğeri başlasın
+        const [vResult, pResult] = await Promise.allSettled([
+            axios.get(VERSIONS_RAW_URL, {
                 headers: { 'Cache-Control': 'no-cache', 'User-Agent': 'VexaLauncher-AutoUpdate' },
-                timeout: 10000
-            });
-            if (vRes.data && vRes.data.launcher) {
-                versions = vRes.data;
-            }
-        } catch (e) {
-            console.warn('[Launcher] Failed to fetch versions.json:', e.message);
+                timeout: 3000
+            }),
+            axios.get(PATCH_NOTES_RAW_URL, {
+                timeout: 3000,
+                headers: { 'User-Agent': 'VexaLauncher-PatchNotes' }
+            })
+        ]);
+
+        if (vResult.status === 'fulfilled' && vResult.value.data && vResult.value.data.launcher) {
+            versions = vResult.value.data;
+        } else {
+            console.warn('[Launcher] Failed to fetch versions.json');
+        }
+
+        let patchNotes = patchNotesRaw;
+        if (pResult.status === 'fulfilled' && typeof pResult.value.data === 'string' && pResult.value.data.trim()) {
+            patchNotes = pResult.value.data;
+        } else {
+            console.warn('[Launcher] Failed to fetch patch-notes');
         }
 
         const latestLauncherVersion = normalizeVersion(versions.launcher);
         const latestClientVersion = normalizeVersion(versions.client);
 
         const launcherDownloadUrl = latestLauncherVersion !== '0.0.0' 
-            ? `http://cdn.vexaclient.com/downloads/vexa-launcher-setup-${latestLauncherVersion}.exe`
+            ? `https://cdn.vexaclient.com/downloads/vexa-launcher-setup-${latestLauncherVersion}.exe`
             : FALLBACK_RELEASE_URL;
             
         const clientDownloadUrl = latestClientVersion !== '0.0.0'
-            ? `http://cdn.vexaclient.com/downloads/app.zip`
+            ? `https://cdn.vexaclient.com/downloads/app.zip`
             : FALLBACK_CLIENT_DOWNLOAD_URL;
 
         const localLauncherVersion = normalizeVersion(app.getVersion());
@@ -196,8 +209,6 @@ ipcMain.handle('check-update', async () => {
         
         const updateType = initialInstallRequired ? 'client' : (launcherUpdateAvailable ? 'launcher' : (clientUpdateAvailable ? 'client' : 'none'));
         const updateAvailable = initialInstallRequired || launcherUpdateAvailable || clientUpdateAvailable;
-        const patchNotes = await getPatchNotes(patchNotesRaw);
-
         return {
             updateAvailable,
             updateType,
@@ -284,8 +295,29 @@ ipcMain.on('close-app', () => {
     if (mainWindow) mainWindow.close();
 });
 
+ipcMain.on('set-offline', async (event, data) => {
+    try {
+        await axios.post('http://api.vexaclient.com/api/ping', {
+            userId: data.userId,
+            activity: 'offline',
+            dot: 'offline',
+            playTime: data.playTime
+        }, { timeout: 3000 });
+    } catch (err) {
+        console.warn('Set offline failed:', err.message);
+    }
+});
+
 ipcMain.on('minimize-app', () => {
     if (mainWindow) mainWindow.minimize();
+});
+
+ipcMain.handle('get-config', () => {
+    return {};
+});
+
+ipcMain.handle('set-config', (event, newConfig) => {
+    return { success: true };
 });
 
 ipcMain.handle('open-external', async (event, url) => {

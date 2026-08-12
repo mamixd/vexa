@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://vexa-client.github.io/">
+  <a href="https://vexaclient.com/">
     <img src="build/icon.png" alt="Vexa Client" width="118" />
   </a>
 </p>
@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <a href="https://vexa-client.github.io/"><img src="https://img.shields.io/badge/Website-vexa--client.github.io-00c853?style=for-the-badge" alt="Website" /></a>
+  <a href="https://vexaclient.com/"><img src="https://img.shields.io/badge/Website-vexaclient.com-00c853?style=for-the-badge" alt="Website" /></a>
   <a href="https://github.com/vexa-client/vexa/releases/latest"><img src="https://img.shields.io/github/v/release/vexa-client/vexa?style=for-the-badge&color=00c853&label=Latest%20Release" alt="Latest Release" /></a>
   <a href="https://github.com/vexa-client/vexa/actions/workflows/build-and-release.yml"><img src="https://img.shields.io/github/actions/workflow/status/vexa-client/vexa/build-and-release.yml?style=for-the-badge&label=Build" alt="Build Status" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPLv3-blue?style=for-the-badge" alt="License" /></a>
@@ -28,7 +28,7 @@ The project is split into two applications:
 - `Vexa Launcher`: installs, updates, and starts the game client.
 - `Vexa Client`: opens HaxBall and injects the Vexa interface and gameplay tools.
 
-Website: [https://vexa-client.github.io/](https://vexa-client.github.io/)
+Website: [https://vexaclient.com/](https://vexaclient.com/)
 
 ## Features
 
@@ -49,7 +49,7 @@ Website: [https://vexa-client.github.io/](https://vexa-client.github.io/)
 
 Screenshots and download links are available on the project website:
 
-[https://vexa-client.github.io/](https://vexa-client.github.io/)
+[https://vexaclient.com/](https://vexaclient.com/)
 
 ## Project Structure
 
@@ -221,7 +221,7 @@ Add the repository secret `DISCORD_CLIENT_ID`, then rerun the release workflow o
 
 ## Useful Links
 
-- Website: [https://vexa-client.github.io/](https://vexa-client.github.io/)
+- Website: [https://vexaclient.com/](https://vexaclient.com/)
 - Releases: [https://github.com/vexa-client/vexa/releases](https://github.com/vexa-client/vexa/releases)
 - Actions: [https://github.com/vexa-client/vexa/actions](https://github.com/vexa-client/vexa/actions)
 - Issues: [https://github.com/vexa-client/vexa/issues](https://github.com/vexa-client/vexa/issues)
