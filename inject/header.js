@@ -204,23 +204,25 @@
             }
         };
 
-        // Alt Bilgi (Watermarks)
+        // Alt Bilgi (Watermarks) + Gizle Butonu
         const watermarkContainer = document.createElement('div');
-        watermarkContainer.style.cssText = "position:fixed; bottom:0; left:0; width:100%; display:flex; justify-content:space-between; padding:10px 15px; box-sizing:border-box; pointer-events:none; z-index:9999; font-family:Tahoma, Arial, sans-serif;";
+        watermarkContainer.style.cssText = "position:fixed; bottom:0; left:0; width:100%; display:flex; justify-content:space-between; align-items:center; padding:8px 14px; box-sizing:border-box; z-index:9999; font-family:Tahoma, Arial, sans-serif; pointer-events:none;";
         
-        const creatorSpan = document.createElement('span');
-        creatorSpan.style.cssText = "color:rgba(255,255,255,0.25); font-size:12px; font-weight:bold; letter-spacing:0.5px;";
-        creatorSpan.innerText = "Created by Vexa";
-        
+        // Sol Alt: Sürüm
         const versionSpan = document.createElement('span');
-        versionSpan.style.cssText = "color:rgba(255,255,255,0.25); font-size:12px; font-weight:bold; letter-spacing:0.5px;";
+        versionSpan.style.cssText = "color:rgba(255,255,255,0.25); font-size:11px; font-weight:bold; letter-spacing:0.5px; pointer-events:none;";
         versionSpan.innerText = "v0.0.0";
         if (window.electronAPI && window.electronAPI.getVersion) {
             window.electronAPI.getVersion().then(v => versionSpan.innerText = "v" + v).catch(()=>{});
         }
         
-        watermarkContainer.appendChild(creatorSpan);
+        // Sağ Alt: Yapımcı
+        const creatorSpan = document.createElement('span');
+        creatorSpan.style.cssText = "color:rgba(255,255,255,0.25); font-size:11px; font-weight:bold; letter-spacing:0.5px; pointer-events:none;";
+        creatorSpan.innerText = "Created by Vexa";
+        
         watermarkContainer.appendChild(versionSpan);
+        watermarkContainer.appendChild(creatorSpan);
         document.body.appendChild(watermarkContainer);
 
         // Reklam Saklayıcı
@@ -228,6 +230,7 @@
         style.innerHTML = "iframe[src*='cpmstar'] { display: none !important; opacity: 0 !important; } div[id*='ad'] { display: none !important; opacity: 0 !important; }";
         document.head.appendChild(style);
     }
+
 
     // Expose openVexaSettings globally
     window.openVexaSettings = (tab) => openSettingsModal(tab);
