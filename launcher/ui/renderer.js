@@ -1101,7 +1101,24 @@ checkUpdates();
 if (window.api && window.api.onDownloadProgress) {
     window.api.onDownloadProgress((progress) => {
         if (playBar) playBar.style.width = progress.percentage + '%';
-        if (playLabel) playLabel.innerHTML = `İNDİRİLİYOR %${progress.percentage.toFixed(0)}`;
+        if (playLabel && !playLabel.hasAttribute('data-custom-text')) {
+            playLabel.innerHTML = `İNDİRİLİYOR %${progress.percentage.toFixed(0)}`;
+        }
+    });
+}
+
+if (window.api && window.api.onInstallerStatus) {
+    window.api.onInstallerStatus((data) => {
+        const { status, progress, details } = data;
+        if (playBar && progress !== null) playBar.style.width = progress + '%';
+        if (playLabel) {
+            playLabel.setAttribute('data-custom-text', 'true');
+            if (details && details.text) {
+                playLabel.innerHTML = `<span style="font-size: 14px;">${status}</span><br><span style="font-size: 11px; opacity: 0.8;">${details.text}</span>`;
+            } else {
+                playLabel.innerHTML = status;
+            }
+        }
     });
 }
 
@@ -1123,14 +1140,19 @@ playBtn?.addEventListener('click', () => {
     
     const isUpdate = playLabel.textContent.includes('GÜNCELLE');
     
-    if (isUpdate && currentUpdateInfo && currentUpdateInfo.downloadUrl && window.api && window.api.openExternal) {
-        // Güncelleme: setup.exe indir ve çalıştır
-        window.api.openExternal(currentUpdateInfo.downloadUrl);
-        showToast('Kurulum dosyası indiriliyor...');
-        setTimeout(() => {
-            playBtn.classList.remove('launching');
-            launching = false;
-        }, 2000);
+    if (isUpdate && currentUpdateInfo && currentUpdateInfo.downloadUrl && window.api && window.api.startLauncherUpdate) {
+        // Güncelleme: Setup dosyasını launcher içinden indir ve kur (arkaplan değil, pencereli)
+        playLabel.innerHTML = 'İNDİRME BAŞLATILIYOR...';
+        playBar.style.width = '0%';
+        
+        window.api.startLauncherUpdate(currentUpdateInfo.downloadUrl)
+            .catch(err => {
+                showToast('Güncelleme hatası: ' + err.message);
+                playBtn.classList.remove('launching');
+                launching = false;
+                playLabel.removeAttribute('data-custom-text');
+                checkUpdates();
+            });
     } else if (window.api && window.api.launchGame) {
         playLabel.innerHTML = 'BAŞLATILIYOR...';
         playBar.style.width = '100%';

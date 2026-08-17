@@ -294,33 +294,18 @@ class InstallerManager {
         const tempDir = os.tmpdir();
         const launcherUpdatePath = path.join(tempDir, 'update.exe');
         if (!fs.existsSync(launcherUpdatePath)) {
-            throw new Error('Launcher güncelleme dosyası bulunamadı.');
+            throw new Error('Kurulum dosyası bulunamadı.');
         }
 
-        this.notify('Launcher güncellemesi başlatılıyor...');
+        this.notify('Kurulum başlatılıyor...');
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        const scriptPath = path.join(tempDir, 'update.bat');
-        const exePath = process.execPath;
-        const exeName = path.basename(exePath);
-        
-        // Timeout and taskkill to ensure the launcher is completely closed
-        const batContent = `
-@echo off
-echo Guncelleme kuruluyor lutfen bekleyin...
-timeout /t 2 /nobreak > NUL
-taskkill /F /IM "${exeName}" /T > NUL 2>&1
-timeout /t 1 /nobreak > NUL
-cd /d "%~dp0"
-start /wait "" "${launcherUpdatePath}" /S
-timeout /t 1 /nobreak > NUL
-start "" "${exePath}"
-(goto) 2>nul & del "%~f0" & exit
-`;
-        await fs.writeFile(scriptPath, batContent);
-        
-        // Execute the script in a new detached window, running from temp dir
-        spawn('cmd.exe', ['/c', 'start', '""', scriptPath], { detached: true, stdio: 'ignore', cwd: tempDir }).unref();
+        // Setup dosyasını doğrudan çalıştır (kullanıcıya pencere görünsün)
+        const child = spawn(launcherUpdatePath, [], { 
+            detached: true, 
+            stdio: 'ignore'
+        });
+        child.unref();
         
         return { success: true };
     }
