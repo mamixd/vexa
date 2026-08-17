@@ -36,7 +36,17 @@ function isSameVersion(left, right) {
 }
 
 async function readLocalInstallState() {
-    return { isInstalled: true, localVersion: app.getVersion() };
+    try {
+        if (VERSION_FILE && fs.existsSync(VERSION_FILE)) {
+            const data = await fs.readJson(VERSION_FILE);
+            if (data && data.version) {
+                return { isInstalled: true, localVersion: normalizeVersion(data.version) };
+            }
+        }
+    } catch (e) {
+        console.warn('[Launcher] version.json okunamadı:', e.message);
+    }
+    return { isInstalled: false, localVersion: 'Yüklü Değil' };
 }
 
 async function getPatchNotes(fallbackText) {
