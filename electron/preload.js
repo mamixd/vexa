@@ -32,6 +32,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     saveCustomBackground: (filePath) => ipcRenderer.invoke('save-custom-bg', filePath),
     deleteCustomBackground: (fileUrl) => ipcRenderer.invoke('delete-custom-bg', fileUrl),
     windowControl: (action) => ipcRenderer.send('window-control', action),
-    openReplayViewer: () => ipcRenderer.send('open-replay-viewer')
+    openReplayViewer: () => ipcRenderer.send('open-replay-viewer'),
+    getVersion: () => ipcRenderer.invoke('get-app-version')
 });
 

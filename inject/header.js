@@ -204,6 +204,25 @@
             }
         };
 
+        // Alt Bilgi (Watermarks)
+        const watermarkContainer = document.createElement('div');
+        watermarkContainer.style.cssText = "position:fixed; bottom:0; left:0; width:100%; display:flex; justify-content:space-between; padding:10px 15px; box-sizing:border-box; pointer-events:none; z-index:9999; font-family:Tahoma, Arial, sans-serif;";
+        
+        const creatorSpan = document.createElement('span');
+        creatorSpan.style.cssText = "color:rgba(255,255,255,0.25); font-size:12px; font-weight:bold; letter-spacing:0.5px;";
+        creatorSpan.innerText = "Created by Vexa";
+        
+        const versionSpan = document.createElement('span');
+        versionSpan.style.cssText = "color:rgba(255,255,255,0.25); font-size:12px; font-weight:bold; letter-spacing:0.5px;";
+        versionSpan.innerText = "v0.0.0";
+        if (window.electronAPI && window.electronAPI.getVersion) {
+            window.electronAPI.getVersion().then(v => versionSpan.innerText = "v" + v).catch(()=>{});
+        }
+        
+        watermarkContainer.appendChild(creatorSpan);
+        watermarkContainer.appendChild(versionSpan);
+        document.body.appendChild(watermarkContainer);
+
         // Reklam Saklayıcı
         const style = document.createElement('style');
         style.innerHTML = "iframe[src*='cpmstar'] { display: none !important; opacity: 0 !important; } div[id*='ad'] { display: none !important; opacity: 0 !important; }";

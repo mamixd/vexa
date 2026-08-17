@@ -364,6 +364,10 @@ ipcMain.handle('log-haxball-event', (event, data) => {
     return { success: true };
 });
 
+ipcMain.handle('get-app-version', () => {
+    return app.getVersion();
+});
+
 ipcMain.handle('save-custom-bg', async (event, filePath) => {
     try {
         if (!fs.existsSync(filePath)) {
