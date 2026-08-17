@@ -1085,6 +1085,8 @@ async function checkUpdates() {
 
         if (currentUpdateInfo.updateAvailable && currentUpdateInfo.updateType === 'launcher') {
             setStatusUI('Launcher Güncellemesi', 'Yeni launcher sürümü mevcut! Güncellemek için tıklayın.', 'GÜNCELLE', ICON_DOWNLOAD);
+        } else if (currentUpdateInfo.updateAvailable && currentUpdateInfo.updateType === 'client') {
+            setStatusUI('Güncelleme Mevcut', `v${currentUpdateInfo.latestVersion} sürümü hazır! Güncellemek için tıklayın.`, 'GÜNCELLE', ICON_DOWNLOAD);
         } else {
             setStatusUI('Maceraya Hazır', 'Her şey hazır! Vexa Client en güncel sürümde.', 'OYNA', ICON_PLAY);
         }
@@ -1121,10 +1123,10 @@ playBtn?.addEventListener('click', () => {
     
     const isUpdate = playLabel.textContent.includes('GÜNCELLE');
     
-    if (isUpdate && currentUpdateInfo && currentUpdateInfo.launcherDownloadUrl && window.api && window.api.openExternal) {
-        // Launcher güncellemesi: tarayıcıda indirme linkini aç
-        window.api.openExternal(currentUpdateInfo.launcherDownloadUrl);
-        showToast('Güncelleme indirme sayfası açıldı!');
+    if (isUpdate && currentUpdateInfo && currentUpdateInfo.downloadUrl && window.api && window.api.openExternal) {
+        // Güncelleme: setup.exe indir ve çalıştır
+        window.api.openExternal(currentUpdateInfo.downloadUrl);
+        showToast('Kurulum dosyası indiriliyor...');
         setTimeout(() => {
             playBtn.classList.remove('launching');
             launching = false;

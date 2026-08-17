@@ -204,11 +204,11 @@ ipcMain.handle('check-update', async () => {
         const latestClientVersion = normalizeVersion(versions.client);
 
         const launcherDownloadUrl = latestLauncherVersion !== '0.0.0' 
-            ? `https://cdn.vexaclient.com/downloads/vexa-launcher-setup-${latestLauncherVersion}.exe`
+            ? `https://github.com/vexa-client/vexa/releases/download/v${latestLauncherVersion}/vexa-launcher-setup-${latestLauncherVersion}.exe`
             : FALLBACK_RELEASE_URL;
             
         const clientDownloadUrl = latestClientVersion !== '0.0.0'
-            ? `https://cdn.vexaclient.com/downloads/app.zip`
+            ? `https://github.com/vexa-client/vexa/releases/download/v${latestClientVersion}/vexa-launcher-setup-${latestClientVersion}.exe`
             : FALLBACK_CLIENT_DOWNLOAD_URL;
 
         const localLauncherVersion = normalizeVersion(app.getVersion());
