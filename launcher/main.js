@@ -22,8 +22,8 @@ let installer;
 const GITHUB_REPO = 'vexa-client/vexa';
 const VERSIONS_RAW_URL = `https://api.vexaclient.com/api/updates/versions.json?t=${Date.now()}`;
 const PATCH_NOTES_RAW_URL = `https://api.vexaclient.com/api/updates/patch-notes?t=${Date.now()}`;
-const FALLBACK_CLIENT_DOWNLOAD_URL = `https://cdn.vexaclient.com/downloads/vexa-launcher-setup.exe`;
-const FALLBACK_RELEASE_URL = `https://cdn.vexaclient.com/downloads/`;
+const FALLBACK_CLIENT_DOWNLOAD_URL = `https://cdn.vexaclient.com/downloads/vexa-setup.exe`;
+const FALLBACK_RELEASE_URL = `https://cdn.vexaclient.com/downloads/vexa-setup.exe`;
 let APP_DATA_PATH;
 let VERSION_FILE;
 
@@ -204,11 +204,11 @@ ipcMain.handle('check-update', async () => {
         const latestClientVersion = normalizeVersion(versions.client);
 
         const launcherDownloadUrl = latestLauncherVersion !== '0.0.0' 
-            ? `https://github.com/vexa-client/vexa/releases/download/v${latestLauncherVersion}/vexa-launcher-setup-${latestLauncherVersion}.exe`
+            ? `https://cdn.vexaclient.com/downloads/vexa-setup.exe`
             : FALLBACK_RELEASE_URL;
             
         const clientDownloadUrl = latestClientVersion !== '0.0.0'
-            ? `https://github.com/vexa-client/vexa/releases/download/v${latestClientVersion}/vexa-launcher-setup-${latestClientVersion}.exe`
+            ? `https://cdn.vexaclient.com/downloads/vexa-setup.exe`
             : FALLBACK_CLIENT_DOWNLOAD_URL;
 
         const localLauncherVersion = normalizeVersion(app.getVersion());

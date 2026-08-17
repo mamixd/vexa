@@ -86,7 +86,7 @@
                                "createDesktopShortcut":  true,
                                "createStartMenuShortcut":  true,
                                "shortcutName":  "Vexa Launcher",
-                               "artifactName":  "vexa-launcher-setup-${version}.${ext}",
+                               "artifactName":  "vexa-setup.${ext}",
                                "runAfterFinish":  true,
                                "deleteAppDataOnUninstall":  false
                            },
