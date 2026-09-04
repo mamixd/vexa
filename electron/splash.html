@@ -1,229 +1,177 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <title>Vexa HaxBall Client</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Rajdhani:wght@500;600;700&family=Michroma&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg: #050a0e;
-            --accent: #3cd89b;
-            --white: #f0f4f8;
-            --gray: #8a94a0;
-        }
+<meta charset="UTF-8">
+<title>Vexa HaxBall Client — Yükleniyor</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600&family=Michroma&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-color: #070707; /* Tamamen mat, dipsiz siyah */
+    --text-pure: #ffffff; /* Saf beyaz */
+    --text-dim: #606060; /* Kömür grisi */
+    --line-dim: #1c1c1c; /* Koyu gri ince çizgi */
+  }
+  
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    background-color: var(--bg-color);
+    color: var(--text-pure);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Barlow Condensed', sans-serif;
+    overflow: hidden;
+    user-select: none;
+  }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+  /* Herhangi bir kutu yok, elemanlar direkt ekranda */
+  .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: all 0.6s ease;
+  }
 
-        body {
-            background: transparent;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            font-family: 'Outfit', system-ui, sans-serif;
-            color: var(--white);
-            overflow: hidden;
-        }
+  /* Çıkış yaparken sadece hafifçe bulanıklaşıp kaybolur */
+  .container.leaving {
+    opacity: 0;
+    transform: scale(1.04);
+    filter: blur(4px);
+  }
 
-        .card {
-            width: 400px;
-            height: 280px;
-            background: rgba(5, 10, 14, 0.92);
-            border: 1px solid rgba(60,216,155,0.12);
-            border-radius: 16px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 40px rgba(60,216,155,0.05);
-        }
+  .logo {
+    font-family: 'Michroma', sans-serif;
+    font-size: 28px;
+    letter-spacing: 9px;
+    margin-bottom: 50px;
+    display: flex;
+    align-items: center;
+    opacity: 0;
+    animation: fadeIn 0.8s ease 0.15s forwards;
+  }
+  
+  .logo-vexa { color: var(--text-pure); }
+  .logo-client { color: var(--text-dim); margin-left: 10px; }
 
-        /* ── Grid ── */
-        .grid {
-            position: absolute; inset: 0;
-            background-image:
-                linear-gradient(to right, rgba(255,255,255,.025) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(255,255,255,.025) 1px, transparent 1px);
-            background-size: 30px 30px;
-            mask-image: radial-gradient(ellipse at center, rgba(0,0,0,0.4) 0%, transparent 80%);
-            -webkit-mask-image: radial-gradient(ellipse at center, rgba(0,0,0,0.4) 0%, transparent 80%);
-            pointer-events: none;
-        }
+  .progress-area {
+    width: 270px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    opacity: 0;
+    animation: fadeIn 0.8s ease 0.3s forwards;
+  }
 
-        /* ── Glow ── */
-        .glow {
-            position: absolute;
-            width: 250px; height: 250px;
-            background: rgba(60,216,155,0.08);
-            border-radius: 50%;
-            filter: blur(80px);
-            bottom: -120px; right: -80px;
-            pointer-events: none;
-            animation: pulseGlow 6s infinite alternate ease-in-out;
-        }
-        @keyframes pulseGlow {
-            0%   { opacity: 0.6; transform: scale(1); }
-            100% { opacity: 1;   transform: scale(1.1); }
-        }
+  /* İnce net arka plan çizgisi */
+  .bar {
+    width: 100%;
+    height: 2px; 
+    background-color: var(--line-dim);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 22px;
+    border-radius: 2px;
+  }
 
-        /* ── Logo ── */
-        .logo {
-            font-family: 'Michroma', sans-serif;
-            font-size: 36px;
-            letter-spacing: 3px;
-            margin-bottom: 6px;
-            line-height: 1;
-            position: relative;
-            z-index: 1;
-        }
-        .logo-green { color: var(--accent); text-shadow: 0 0 20px rgba(60,216,155,0.35); }
-        .logo-white { color: var(--white); text-shadow: 0 0 10px rgba(255,255,255,0.1); }
+  /* Akıcı şekilde kayan saf beyaz ilerleme çizgisi */
+  .bar-fill {
+    width: 40%;
+    height: 100%;
+    background-color: var(--text-pure);
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.85);
+    position: absolute;
+    left: -40%;
+    border-radius: 2px;
+    animation: slide 1.4s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  }
 
-        .subtitle {
-            color: var(--gray);
-            font-size: 8px;
-            font-weight: 600;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            margin-bottom: 36px;
-            position: relative;
-            z-index: 1;
-        }
+  @keyframes slide {
+    0% { left: -40%; }
+    100% { left: 100%; }
+  }
 
-        /* ── Hide until fonts ready ── */
-        .card {
-            opacity: 0;
-            transform: scale(0.95);
-            transition: opacity 0.5s ease, transform 0.5s ease;
-        }
-        .card.ready {
-            opacity: 1;
-            transform: scale(1);
-        }
+  .bar-fill.finish {
+    animation: none !important;
+    left: 0 !important;
+    width: 100% !important;
+    transition: width 0.35s ease-out;
+  }
 
-        /* ── Loader ── */
-        .loader-container {
-            width: 220px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
-            z-index: 1;
-        }
+  .status {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 6px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    opacity: 0;
+    animation: fadeIn 0.8s ease 0.45s forwards;
+  }
 
-        .loader-bar {
-            width: 100%;
-            height: 2px;
-            background: rgba(255,255,255,0.04);
-            border-radius: 2px;
-            overflow: hidden;
-            margin-bottom: 14px;
-        }
+  /* Hazır olduğunda renk beyaza döner ve harf arası hafif açılır */
+  .status.done {
+    color: var(--text-pure);
+    letter-spacing: 8px;
+    transition: all 0.35s ease;
+  }
 
-        .loader-bar-fill {
-            width: 0%;
-            height: 100%;
-            background: linear-gradient(90deg, var(--accent), #2af0a0);
-            border-radius: 2px;
-            box-shadow: 0 0 10px rgba(60,216,155,0.5);
-            animation: loading 3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-
-        @keyframes loading {
-            0%   { width: 0%; }
-            20%  { width: 10%; }
-            50%  { width: 60%; }
-            80%  { width: 90%; }
-            100% { width: 100%; }
-        }
-
-        .status {
-            color: var(--accent);
-            font-family: 'Rajdhani', sans-serif;
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 2px;
-            animation: statusPulse 1.8s ease-in-out infinite;
-        }
-
-        @keyframes statusPulse {
-            0%, 100% { opacity: 0.4; }
-            50%      { opacity: 1; }
-        }
-
-        /* ── Decorative ring ── */
-        .ring {
-            position: absolute;
-            width: 200px; height: 200px;
-            border: 1px solid rgba(60,216,155,0.05);
-            border-radius: 50%;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            pointer-events: none;
-            animation: ringPulse 6s ease-in-out infinite;
-        }
-        @keyframes ringPulse {
-            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.4; }
-            50%      { transform: translate(-50%, -50%) scale(1.08); opacity: 0.8; }
-        }
-
-        /* ── Particles via CSS ── */
-        .particle {
-            position: absolute;
-            width: 3px; height: 3px;
-            background: rgba(60,216,155,0.3);
-            border-radius: 50%;
-            pointer-events: none;
-            animation: float linear infinite;
-        }
-        @keyframes float {
-            0%   { transform: translateY(0) translateX(0); opacity: 0; }
-            10%  { opacity: 1; }
-            90%  { opacity: 1; }
-            100% { transform: translateY(-280px) translateX(30px); opacity: 0; }
-        }
-    </style>
+  @keyframes fadeIn {
+    to { opacity: 1; }
+  }
+</style>
 </head>
 <body>
-    <div class="card">
-        <div class="grid"></div>
-        <div class="glow"></div>
-        <div class="ring"></div>
 
-        <!-- CSS particles -->
-        <div class="particle" style="left:15%;bottom:10%;animation-duration:4s;animation-delay:0s;width:2px;height:2px;"></div>
-        <div class="particle" style="left:35%;bottom:5%;animation-duration:5s;animation-delay:0.5s;"></div>
-        <div class="particle" style="left:55%;bottom:15%;animation-duration:4.5s;animation-delay:1s;width:2px;height:2px;"></div>
-        <div class="particle" style="left:75%;bottom:8%;animation-duration:3.8s;animation-delay:0.3s;"></div>
-        <div class="particle" style="left:85%;bottom:12%;animation-duration:5.5s;animation-delay:1.5s;width:1.5px;height:1.5px;"></div>
-        <div class="particle" style="left:25%;bottom:18%;animation-duration:4.2s;animation-delay:2s;width:2px;height:2px;"></div>
-        <div class="particle" style="left:65%;bottom:3%;animation-duration:3.5s;animation-delay:0.8s;"></div>
-        <div class="particle" style="left:45%;bottom:20%;animation-duration:6s;animation-delay:1.2s;width:1.5px;height:1.5px;"></div>
-
-        <div class="logo">
-            <span class="logo-green">VEXΛ</span> <span class="logo-white">CLIENT</span>
-        </div>
-        <div class="subtitle">YENİ NESİL PERFORMANS. SINIRSIZ OLANAKLAR.</div>
-
-        <div class="loader-container">
-            <div class="loader-bar">
-                <div class="loader-bar-fill"></div>
-            </div>
-            <div class="status">SİSTEMLER BAŞLATILIYOR...</div>
-        </div>
+  <div class="container" id="container">
+    <div class="logo">
+      <span class="logo-vexa">VEXA</span>
+      <span class="logo-client">CLIENT</span>
     </div>
 
-    <script>
-        // Wait for fonts to load, then reveal card
-        document.fonts.ready.then(() => {
-            document.querySelector('.card').classList.add('ready');
-        });
-        // Fallback: show after 1s max
-        setTimeout(() => {
-            document.querySelector('.card').classList.add('ready');
-        }, 1000);
-    </script>
+    <div class="progress-area">
+      <div class="bar">
+        <div class="bar-fill" id="barFill"></div>
+      </div>
+      <div class="status" id="status">YÜKLENİYOR</div>
+    </div>
+  </div>
+
+  <script>
+    const container = document.getElementById('container');
+    const barFill   = document.getElementById('barFill');
+    const status    = document.getElementById('status');
+
+    window.vexaClientReady = function () {
+      barFill.classList.add('finish');
+      status.textContent = 'HAZIR';
+      status.classList.add('done');
+      
+      // Akıcı bir çıkış efekti
+      setTimeout(() => {
+        container.classList.add('leaving');
+      }, 450);
+    };
+
+    window.addEventListener('message', (event) => {
+      if (event.data === 'ready') {
+        window.vexaClientReady();
+      }
+    });
+
+    window.setSplashStatus = function (data) {
+      if (!data) return;
+      if (typeof data === 'string') data = { status: data };
+      if (data.status) status.textContent = data.status;
+      
+      // Yalnızca indirme işlemi yapılırken çubuğu yüzdeye bağla
+      if (typeof data.percent === 'number' && data.percent > 0 && data.percent < 100) {
+        barFill.style.animation = 'none';
+        barFill.style.left = '0';
+        barFill.style.width = data.percent + '%';
+      }
+    };
+  </script>
 </body>
 </html>

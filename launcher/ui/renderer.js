@@ -1,4 +1,4 @@
-const API_URL = 'http://api.vexaclient.com/api';
+const API_URL = 'https://api.vexaclient.com/api';
 let currentUser = null;
 let friendsList = [];
 let pendingRequests = [];
@@ -125,6 +125,44 @@ async function apiCall(endpoint, method = 'GET', body = null) {
     return res.json();
 }
 
+function applyProfile(profile) {
+    if (!profile || !currentUser) return;
+
+    currentUser = { ...currentUser, ...profile };
+    const profileFields = ['bio', 'avatar', 'banner'];
+    profileFields.forEach((field) => {
+        if (typeof currentUser[field] !== 'string') return;
+        const storageKey = `vexa_${field}`;
+        if (currentUser[field]) localStorage.setItem(storageKey, currentUser[field]);
+        else localStorage.removeItem(storageKey);
+    });
+
+    if (currentUser.username) {
+        localStorage.setItem('vexa_username', currentUser.username);
+        const sidebarName = document.getElementById('sidebarProfileName');
+        if (sidebarName) sidebarName.textContent = currentUser.username;
+    }
+
+    updateOwnAvatar();
+    if (document.getElementById('page-profile')?.classList.contains('active')) {
+        updateProfileEditorUI();
+    }
+}
+
+async function refreshProfileFromApi() {
+    if (!currentUser || isGuest()) return null;
+    try {
+        const data = await apiCall(`/user/profile?userId=${encodeURIComponent(currentUser.id)}`);
+        const profile = data && data.success ? data.profile : null;
+        if (!profile) return null;
+        applyProfile(profile);
+        return profile;
+    } catch (error) {
+        console.warn('Profile refresh failed:', error);
+        return undefined;
+    }
+}
+
 // Instant synchronous auto-login from localStorage
 (function initAutoLogin() {
     const token = localStorage.getItem('vexa_token');
@@ -135,7 +173,10 @@ async function apiCall(endpoint, method = 'GET', body = null) {
             id: savedId,
             username: savedName || 'Oyuncu',
             dot: 'online',
-            activity: 'Idle'
+            activity: 'Idle',
+            bio: localStorage.getItem('vexa_bio') || '',
+            avatar: localStorage.getItem('vexa_avatar') || '',
+            banner: localStorage.getItem('vexa_banner') || ''
         };
         authScreen.classList.add('hide');
         updateGuestLocks();
@@ -145,20 +186,11 @@ async function apiCall(endpoint, method = 'GET', body = null) {
         if (sName) sName.textContent = currentUser.username;
         if (sStatus) sStatus.textContent = 'Çevrimiçi';
 
-        // Fetch fresh profile in background
-        apiCall('/auth/me').then(data => {
-            if (data && !data.error) {
-                currentUser = { ...currentUser, ...data };
-                if (currentUser.username) {
-                    localStorage.setItem('vexa_username', currentUser.username);
-                    if (sName) sName.textContent = currentUser.username;
-                    updateOwnAvatar();
-                }
-            } else {
-                // Invalid token
-                document.getElementById('logoutBtn')?.click();
-            }
-        }).catch(() => {});
+        // The profile endpoint is the source of truth for avatar, banner and bio.
+        refreshProfileFromApi();
+
+        // Hemen online yap — 3 saniye interval beklemeden
+        apiCall('/ping', 'POST', { userId: currentUser.id, activity: 'In Launcher', dot: 'online' }).catch(()=>{});
 
         loadFriends();
         loadNotifications();
@@ -227,6 +259,8 @@ document.getElementById('loginSubmit').addEventListener('click', async function(
             document.getElementById('sidebarProfileStatus').textContent = 'Çevrimiçi';
             authScreen.classList.add('hide');
             showToast(`${currentUser.username} olarak giriş yapıldı`);
+            // Hemen online yap, 3 saniye interval'i bekleme
+            apiCall('/ping', 'POST', { userId: currentUser.id, activity: 'In Launcher', dot: 'online' }).catch(()=>{});
             loadFriends();
         }
     } catch (e) {
@@ -860,6 +894,7 @@ function goToPage(pageId) {
 
     if (pageId === 'profile' && !isGuest() && currentUser) {
         updateProfileEditorUI();
+        refreshProfileFromApi();
     }
     updateGuestLocks();
 }
@@ -1045,9 +1080,14 @@ function formatPlayTime(totalSeconds) {
 // Save play time and set offline when user closes the window
 window.addEventListener('beforeunload', () => {
     savePlayTime();
-    // Electron'da sendBeacon çalışmaz — IPC ile main process'e bildir
-    if (!isGuest() && currentUser && window.api && window.api.setOffline) {
-        window.api.setOffline({ userId: currentUser.id, playTime: getPlayTimeSeconds() });
+    // Eğer oyunu başlatıyorsak (launching=true), launcher kapanacağı için offline durumunu gönderme.
+    // Offline bildirimi oyun (electron/main.js) kapanırken gönderilecek.
+    if (!launching && !isGuest() && currentUser && window.api && window.api.setOffline) {
+        window.api.setOffline({ 
+            userId: currentUser.id, 
+            playTime: getPlayTimeSeconds(),
+            token: localStorage.getItem('vexa_token')
+        });
     }
 });
 
@@ -1156,7 +1196,9 @@ playBtn?.addEventListener('click', () => {
     } else if (window.api && window.api.launchGame) {
         playLabel.innerHTML = 'BAŞLATILIYOR...';
         playBar.style.width = '100%';
-        window.api.launchGame();
+        const uid = (!isGuest() && currentUser) ? currentUser.id : null;
+        const token = localStorage.getItem('vexa_token');
+        window.api.launchGame({ userId: uid, token: token });
         startPlayTimeTracking();
         setTimeout(() => {
             playBar.style.width = '0%';
@@ -1524,60 +1566,45 @@ document.getElementById('removeBannerBtn')?.addEventListener('click', () => {
 document.getElementById('saveProfileBtn')?.addEventListener('click', async () => {
     if (isGuest()) return;
     const bioText = document.getElementById('editBioTextarea')?.value.trim() || '';
-    
-    if (tempAvatarData !== null) {
-        if (tempAvatarData) {
-            localStorage.setItem('vexa_avatar', tempAvatarData);
-            if (currentUser) currentUser.avatar = tempAvatarData;
-        } else {
-            localStorage.removeItem('vexa_avatar');
-            if (currentUser) delete currentUser.avatar;
-        }
-    }
+    const nextAvatar = tempAvatarData !== null
+        ? tempAvatarData
+        : (currentUser.avatar || localStorage.getItem('vexa_avatar') || '');
+    const nextBanner = tempBannerData !== null
+        ? tempBannerData
+        : (currentUser.banner || localStorage.getItem('vexa_banner') || '');
+    const saveButton = document.getElementById('saveProfileBtn');
+    const originalLabel = saveButton.textContent;
 
-    if (tempBannerData !== null) {
-        if (tempBannerData) {
-            localStorage.setItem('vexa_banner', tempBannerData);
-            if (currentUser) currentUser.banner = tempBannerData;
-        } else {
-            localStorage.removeItem('vexa_banner');
-            if (currentUser) delete currentUser.banner;
-        }
-    }
-
-    localStorage.setItem('vexa_bio', bioText);
-    if (currentUser) currentUser.bio = bioText;
-
-    tempAvatarData = null;
-    tempBannerData = null;
-
-    updateOwnAvatar();
-    updateProfileEditorUI();
+    saveButton.disabled = true;
+    saveButton.textContent = 'Kaydediliyor...';
+    saveButton.style.opacity = '0.7';
+    saveButton.style.pointerEvents = 'none';
 
     try {
         const result = await apiCall('/user/profile', 'POST', {
             userId: currentUser.id,
             updates: {
                 bio: bioText,
-                avatar: (currentUser && currentUser.avatar) || '',
-                banner: (currentUser && currentUser.banner) || ''
+                avatar: nextAvatar,
+                banner: nextBanner
             }
         });
-        
-        // Sync Cloudinary URLs back from server
-        if (result && result.success && result.profile) {
-            if (result.profile.avatar) {
-                localStorage.setItem('vexa_avatar', result.profile.avatar);
-                if (currentUser) currentUser.avatar = result.profile.avatar;
-            }
-            if (result.profile.banner) {
-                localStorage.setItem('vexa_banner', result.profile.banner);
-                if (currentUser) currentUser.banner = result.profile.banner;
-            }
-            updateOwnAvatar();
-            updateProfileEditorUI();
-        }
-    } catch(e) { console.error('Profile save error:', e); }
 
-    showToast('Profilin başarıyla güncellendi!');
+        if (!result || !result.success || !result.profile) {
+            throw new Error(result?.error || 'Profil kaydedilemedi.');
+        }
+
+        tempAvatarData = null;
+        tempBannerData = null;
+        applyProfile(result.profile);
+        showToast('Profilin başarıyla güncellendi!');
+    } catch (error) {
+        console.error('Profile save error:', error);
+        showToast(error.message || 'Profil kaydedilemedi. Lütfen tekrar dene.');
+    } finally {
+        saveButton.disabled = false;
+        saveButton.textContent = originalLabel;
+        saveButton.style.opacity = '';
+        saveButton.style.pointerEvents = '';
+    }
 });

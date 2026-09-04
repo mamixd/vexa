@@ -204,16 +204,20 @@
         }
     }
 
+    let cachedGameframeDoc = null;
     const listener = function(event) {
-        const gameframe = document.querySelector('iframe.gameframe') || document.querySelector('iframe');
-        if (!gameframe || !gameframe.contentWindow) return;
+        if (!cachedGameframeDoc || !cachedGameframeDoc.defaultView) {
+            const gameframe = document.querySelector('iframe.gameframe') || document.querySelector('iframe');
+            if (gameframe && gameframe.contentWindow) {
+                cachedGameframeDoc = gameframe.contentWindow.document;
+            } else {
+                return;
+            }
+        }
         
-        const doc = gameframe.contentWindow.document;
-        const activeTag = doc.activeElement ? doc.activeElement.tagName : '';
-        
+        const activeTag = cachedGameframeDoc.activeElement ? cachedGameframeDoc.activeElement.tagName : '';
         if (activeTag !== 'INPUT' && activeTag !== 'TEXTAREA' && activeTag !== 'SELECT') {
-            const key = event.key;
-            process(key);
+            process(event.key);
         }
     };
 
@@ -221,9 +225,9 @@
         const check = setInterval(() => {
             const gameframe = document.querySelector('iframe.gameframe') || document.querySelector('iframe');
             if (gameframe && gameframe.contentWindow) {
-                const doc = gameframe.contentWindow.document;
-                doc.body.removeEventListener("keydown", listener, true);
-                doc.body.addEventListener("keydown", listener, true);
+                cachedGameframeDoc = gameframe.contentWindow.document;
+                cachedGameframeDoc.body.removeEventListener("keydown", listener, true);
+                cachedGameframeDoc.body.addEventListener("keydown", listener, true);
                 clearInterval(check);
             }
         }, 1000);

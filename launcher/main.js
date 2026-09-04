@@ -260,7 +260,7 @@ ipcMain.handle('extract-and-install', async (event, version) => {
     }
 });
 
-ipcMain.handle('launch-game', async () => {
+ipcMain.handle('launch-game', async (event, authInfo) => {
     if (rpc) {
         try {
             await rpc.clearActivity();
@@ -271,20 +271,27 @@ ipcMain.handle('launch-game', async () => {
     await new Promise(resolve => setTimeout(resolve, 500));
 
     try {
-        const child = spawn(process.execPath, ['--client-mode'], {
+        const args = ['--client-mode'];
+        if (authInfo && authInfo.userId) {
+            args.push(`--user-id=${authInfo.userId}`);
+            if (authInfo.token) args.push(`--token=${authInfo.token}`);
+        }
+        
+        const child = spawn(process.execPath, args, {
             detached: true,
             stdio: 'ignore',
             cwd: path.dirname(process.execPath),
             windowsHide: false
         });
         child.unref();
-        if (mainWindow) mainWindow.minimize();
-        if (Notification.isSupported()) {
-            new Notification({
-                title: 'Vexa Başlatılıyor',
-                body: 'Oyun açılıyor, Launcher arka planda çalışmaya devam edecek.'
-            }).show();
+        if (mainWindow) {
+            mainWindow.hide(); // Ekrandan anında kaybolması için
         }
+        
+        // Launcher'ı tamamen kapatarak RAM kullanımını sıfırla
+        setTimeout(() => {
+            app.quit();
+        }, 100);
         return { success: true };
     } catch (error) {
         return { error: `Client baslatilamadi: ${error.message || error}` };
@@ -297,12 +304,19 @@ ipcMain.on('close-app', () => {
 
 ipcMain.on('set-offline', async (event, data) => {
     try {
-        await axios.post('http://api.vexaclient.com/api/ping', {
+        const headers = { 'Content-Type': 'application/json' };
+        if (data.token) {
+            headers['Authorization'] = `Bearer ${data.token}`;
+        }
+        await axios.post('https://api.vexaclient.com/api/ping', {
             userId: data.userId,
             activity: 'offline',
             dot: 'offline',
             playTime: data.playTime
-        }, { timeout: 3000 });
+        }, { 
+            headers,
+            timeout: 3000 
+        });
     } catch (err) {
         console.warn('Set offline failed:', err.message);
     }

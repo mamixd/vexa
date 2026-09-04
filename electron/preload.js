@@ -33,6 +33,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
     deleteCustomBackground: (fileUrl) => ipcRenderer.invoke('delete-custom-bg', fileUrl),
     windowControl: (action) => ipcRenderer.send('window-control', action),
     openReplayViewer: () => ipcRenderer.send('open-replay-viewer'),
-    getVersion: () => ipcRenderer.invoke('get-app-version')
+    getVersion: () => ipcRenderer.invoke('get-app-version'),
+    openExternal: (url) => ipcRenderer.send('open-external', url),
+    setRoomName: (name) => ipcRenderer.send('set-room-name', name),
+    onNowPlaying: (callback) => ipcRenderer.on('now-playing-update', (event, data) => callback(data)),
+    toggleNowPlaying: (state) => ipcRenderer.send('toggle-now-playing', state),
+    getNowPlaying: () => ipcRenderer.invoke('get-now-playing'),
+    mediaControl: (action) => ipcRenderer.send('media-control', action),
+    clearCache: () => ipcRenderer.invoke('clear-cache'),
+    factoryReset: () => ipcRenderer.invoke('factory-reset')
 });
 

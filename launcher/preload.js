@@ -5,7 +5,7 @@ contextBridge.exposeInMainWorld('api', {
     startDownload: (url) => ipcRenderer.invoke('start-download', url),
     startLauncherUpdate: (url) => ipcRenderer.invoke('start-launcher-update', url),
     extractAndInstall: (version) => ipcRenderer.invoke('extract-and-install', version),
-    launchGame: () => ipcRenderer.invoke('launch-game'),
+    launchGame: (userId) => ipcRenderer.invoke('launch-game', userId),
     onDownloadProgress: (callback) => ipcRenderer.on('download-progress', (event, progress) => callback(progress)),
     onInstallerStatus: (callback) => ipcRenderer.on('installer-status', (event, data) => callback(data)),
     close: () => ipcRenderer.send('close-app'),

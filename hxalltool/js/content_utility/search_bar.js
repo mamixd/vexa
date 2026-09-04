@@ -11,6 +11,15 @@ function createSearch(){
 		styleNode.innerHTML = "tr[data-vexa-hidden='true'] { display: none !important; }";
 		gameframe.contentWindow.document.head.appendChild(styleNode);
 		
+		var updateCountriesTimer = null;
+		function scheduleUpdateCountries() {
+			if (updateCountriesTimer) return;
+			updateCountriesTimer = setTimeout(function() {
+				updateCountriesTimer = null;
+				updateAvailableCountries();
+			}, 250);
+		}
+
 		var listObserver = new MutationObserver(function(mutations) {
 			let shouldUpdate = false;
 			for (let mut of mutations) {
@@ -29,11 +38,8 @@ function createSearch(){
 				}
 			}
 			if (shouldUpdate) {
-				clearTimeout(window.vexaSearchTimeout);
-				window.vexaSearchTimeout = setTimeout(() => {
-					searchForRoom();
-					updateAvailableCountries();
-				}, 10);
+				searchForRoom();
+				scheduleUpdateCountries();
 			}
 		});
 		listObserver.observe(roomListContainer, {childList: true, subtree: true, characterData: true, attributes: true});
@@ -43,9 +49,9 @@ function createSearch(){
 	var joinButtonObserver = new MutationObserver(function(mutations) {
 			mutations.forEach(function(mutation) {
 				if (!refreshButton.disabled) {
-					setTimeout(searchForRoom, 200);
-					setTimeout(updateAvailableCountries, 200);
-					}
+					searchForRoom();
+					scheduleUpdateCountries();
+				}
 			});
 		});
 	joinButtonObserver.observe(refreshButton, {attributes: true});
@@ -55,7 +61,6 @@ function createSearch(){
 	input.id = "searchRoom";
 	input.placeholder = "Term1 Term2+Term3/RoomMax - Search bar by Raamyy and xenon";
 	input.autocomplete = "off";
-	input.style.width = "75%";
 	
 	input.oninput = function(e) {
 		if(e.keyCode === 27) { input.value = ''; }
@@ -77,17 +82,19 @@ function createSearch(){
 	button.innerHTML = "Select Country";
 	button.id = "searchRoomByCountry"
 	button.className = "dropbtn dropdown";
-	button.style.width = "25%";
 	
 	chrome.storage.local.get({'haxRoomSearchTerm': '', 'haxRoomCountrySearchTerm': 'All'}, function(result) {
-		input.value = result.haxRoomSearchTerm;
-		button.value = result.haxRoomCountrySearchTerm;
-		if (result.haxRoomCountrySearchTerm !== 'All') {
+		input.value = result.haxRoomSearchTerm || '';
+		button.value = result.haxRoomCountrySearchTerm || 'All';
+		if (result.haxRoomCountrySearchTerm && result.haxRoomCountrySearchTerm !== 'All') {
 			setButtonText(button, result.haxRoomCountrySearchTerm);
 		} else {
 			setButtonText(button, "All");
 		}
+		searchForRoom(true);
 		refreshButton.click();
+		setTimeout(searchForRoom, 50);
+		setTimeout(searchForRoom, 150);
 	});
 
 	var style = document.createElement('link');
@@ -97,6 +104,7 @@ function createSearch(){
 	gameframe.contentWindow.document.head.appendChild(style);
 
 	var newDivWrapper = document.createElement('div');
+	newDivWrapper.id = 'vexa-search-wrapper';
 
 	var insertPos = dialog.querySelector('h1').nextElementSibling;
 	insertPos.parentNode.insertBefore(newDivWrapper, insertPos.nextElementSibling);

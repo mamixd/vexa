@@ -3,7 +3,8 @@
   "productName": "vexa-client",
   "asar": true,
   "asarUnpack": [
-    "hxalltool/**/*"
+    "hxalltool/**/*",
+    "**/node_modules/windows-media-sessions/**/*"
   ],
   "directories": {
     "output": "dist/client",
@@ -23,7 +24,15 @@
   },
   "copyright": "Copyright © 2026 Vexa Software",
   "win": {
-    "target": "dir",
+    "target": [
+      {
+        "target": "dir",
+        "arch": [
+          "x64",
+          "ia32"
+        ]
+      }
+    ],
     "icon": "build/icon.ico",
     "publisherName": "Vexa Software",
     "legalTrademarks": "Vexa",

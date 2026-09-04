@@ -1,108 +1,117 @@
 {
-    "name":  "vexa-haxball-client",
-    "version":  "1.4.4",
-    "description":  "Advanced Modular HaxBall Electron Client",
-    "author":  "Vexa",
-    "homepage":  "https://vexa.gg",
-    "repository":  {
-                       "type":  "git",
-                       "url":  "https://github.com/vexa-client/vexa.git"
-                   },
-    "main":  "launcher/main.js",
-    "scripts":  {
-                    "start":  "electron .",
-                    "start:client":  "electron electron/main.js",
-                    "build":  "electron-builder --win --publish never",
-                    "build:client":  "electron-builder --win --config electron-builder-client.json",
-                    "package:client":  "node package_client.js",
-                    "build:full":  "npm run build \u0026\u0026 npm run build:client \u0026\u0026 npm run package:client"
-                },
-    "dependencies":  {
-                         "adm-zip":  "^0.5.17",
-                         "axios":  "^1.6.8",
-                         "cors":  "^2.8.5",
-                         "discord-rpc":  "^4.0.1",
-                         "dotenv":  "^17.4.2",
-                         "express":  "^4.19.2",
-                         "extract-zip":  "^2.0.1",
-                         "fs-extra":  "^11.3.4",
-                         "haxball.js":  "^5.0.5",
-                         "socket.io":  "^4.7.5",
-                         "mongodb":  "^6.8.0"
-                     },
-    "devDependencies":  {
-                            "electron":  "18.2.0",
-                            "electron-builder":  "24.13.3",
-                            "sharp":  "^0.34.5"
-                        },
-    "build":  {
-                  "appId":  "com.vexa.launcher",
-                  "productName":  "Vexa Launcher",
-                  "copyright":  "Copyright Â© 2026 Vexa Software",
-                  "asar":  true,
-                  "asarUnpack": [
-                                    "hxalltool/**/*"
-                                ],
-                  "directories":  {
-                                      "output":  "dist",
-                                      "buildResources":  "build"
-                                  },
-                  "files":  [
-                                "launcher/**/*",
-                                "electron/**/*",
-                                "inject/**/*",
-                                "hxalltool/**/*",
-                                ".env",
-                                "node_modules/**/*",
-                                "package.json",
-                                "build/**/*"
-                            ],
-                  "extraMetadata":  {
-                                        "main":  "launcher/main.js"
-                                    },
-                  "win":  {
-                              "target":  [
-                                             {
-                                                 "target":  "nsis",
-                                                 "arch":  [
-                                                              "x64"
-                                                          ]
-                                             }
-                                         ],
-                              "icon":  "build/icon.ico",
-                              "publisherName":  "Vexa Software",
-                              "legalTrademarks":  "Vexa",
-                              "verifyUpdateCodeSignature":  false
-                          },
-                  "nsis":  {
-                               "oneClick":  false,
-                               "perMachine":  false,
-                               "allowToChangeInstallationDirectory":  true,
-                               "uninstallDisplayName":  "Vexa Launcher",
-                               "allowElevation":  false,
-                               "unicode":  true,
-                               "installerHeader":  "build/installer_header.bmp",
-                               "installerSidebar":  "build/installer_sidebar.bmp",
-                               "createDesktopShortcut":  true,
-                               "createStartMenuShortcut":  true,
-                               "shortcutName":  "Vexa Launcher",
-                               "artifactName":  "vexa-setup.${ext}",
-                               "runAfterFinish":  true,
-                               "deleteAppDataOnUninstall":  false
-                           },
-                  "fileAssociations":  [
-                                           {
-                                               "ext":  "hbr2",
-                                               "name":  "Haxball Replay",
-                                               "description":  "Vexa Haxball Client Replay File",
-                                               "role":  "Viewer"
-                                           }
-                                       ],
-                  "compression":  "maximum",
-                  "publish":  {
-                                  "provider":  "github",
-                                  "owner":  "vexa-client",
-                                  "repo":  "vexa"
-                              }
-              }
+    "name": "vexa-haxball-client",
+    "version": "1.4.5",
+    "description": "Advanced Modular HaxBall Electron Client",
+    "author": "Vexa",
+    "homepage": "https://vexaclient.com",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/vexa-client/vexa.git"
+    },
+    "main": "electron/main.js",
+    "scripts": {
+        "start": "electron .",
+        "start:client": "electron electron/main.js",
+        "build": "electron-builder --win --x64 --ia32 --publish never",
+        "build:x64": "electron-builder --win --x64 --publish never",
+        "build:ia32": "electron-builder --win --ia32 --publish never",
+        "build:x86": "electron-builder --win --ia32 --publish never",
+        "build:all": "electron-builder --win --x64 --ia32 --publish never",
+        "build:client": "electron-builder --win --x64 --ia32 --config electron-builder-client.json",
+        "build:client:x64": "electron-builder --win --x64 --config electron-builder-client.json",
+        "build:client:ia32": "electron-builder --win --ia32 --config electron-builder-client.json",
+        "package:client": "node package_client.js",
+        "build:full": "npm run build && npm run build:client && npm run package:client"
+    },
+    "dependencies": {
+        "adm-zip": "^0.5.17",
+        "axios": "^1.6.8",
+        "cors": "^2.8.5",
+        "discord-rpc": "^4.0.1",
+        "dotenv": "^17.4.2",
+        "express": "^4.19.2",
+        "extract-zip": "^2.0.1",
+        "fs-extra": "^11.3.4",
+        "haxball.js": "^5.0.5",
+        "mongodb": "^6.8.0",
+        "socket.io": "^4.7.5",
+        "windows-media-sessions": "^1.0.3"
+    },
+    "devDependencies": {
+        "electron": "18.2.0",
+        "electron-builder": "24.13.3",
+        "sharp": "^0.34.5"
+    },
+    "build": {
+        "appId": "com.vexa.client",
+        "productName": "Vexa Client",
+        "copyright": "Copyright Â© 2026 Vexa Software",
+        "asar": true,
+        "asarUnpack": [
+            "hxalltool/**/*",
+            "**/node_modules/windows-media-sessions/**/*"
+        ],
+        "directories": {
+            "output": "dist",
+            "buildResources": "build"
+        },
+        "files": [
+            "launcher/**/*",
+            "electron/**/*",
+            "inject/**/*",
+            "hxalltool/**/*",
+            ".env",
+            "node_modules/**/*",
+            "package.json",
+            "build/**/*"
+        ],
+        "extraMetadata": {
+            "main": "electron/main.js"
+        },
+        "win": {
+            "target": [
+                {
+                    "target": "nsis",
+                    "arch": [
+                        "x64",
+                        "ia32"
+                    ]
+                }
+            ],
+            "icon": "build/icon.ico",
+            "publisherName": "Vexa Software",
+            "legalTrademarks": "Vexa",
+            "verifyUpdateCodeSignature": false
+        },
+        "nsis": {
+            "oneClick": false,
+            "perMachine": false,
+            "allowToChangeInstallationDirectory": true,
+            "uninstallDisplayName": "Vexa Client",
+            "allowElevation": false,
+            "unicode": true,
+            "installerHeader": "build/installer_header.bmp",
+            "installerSidebar": "build/installer_sidebar.bmp",
+            "createDesktopShortcut": true,
+            "createStartMenuShortcut": true,
+            "shortcutName": "Vexa Client",
+            "artifactName": "vexa-setup-${arch}.${ext}",
+            "runAfterFinish": true,
+            "deleteAppDataOnUninstall": false
+        },
+        "fileAssociations": [
+            {
+                "ext": "hbr2",
+                "name": "Haxball Replay",
+                "description": "Vexa Haxball Client Replay File",
+                "role": "Viewer"
+            }
+        ],
+        "compression": "maximum",
+        "publish": {
+            "provider": "github",
+            "owner": "vexa-client",
+            "repo": "vexa"
+        }
+    }
 }

@@ -86,14 +86,25 @@ function addonSettingsPopup(currentView) {
 	if (currentView == 'choose-nickname-view') {
 		var nicknameView = el.contentWindow.document.getElementsByClassName('choose-nickname-view')[0];
 		
+		function getNickDialog() {
+			if (!nicknameView) return null;
+			var dialogs = nicknameView.getElementsByClassName('dialog');
+			for (var i = 0; i < dialogs.length; i++) {
+				if (!dialogs[i].classList.contains('settings-view')) return dialogs[i];
+			}
+			return nicknameView.childNodes[1] || null;
+		}
+
 		addonSettingsClose.onclick = function () {
 			addonSettings.style.display = 'none';
-			nicknameView.childNodes[1].style.display = 'flex';
+			var d = getNickDialog();
+			if (d) d.style.display = 'flex';
 		};
 		
 		addonSettingsOpen.onclick = function () { 
 			addonSettings.style.display = 'flex';
-			nicknameView.childNodes[1].style.display = 'none';
+			var d = getNickDialog();
+			if (d) d.style.display = 'none';
 		}
 		
 		nicknameView.appendChild(addonSettings);

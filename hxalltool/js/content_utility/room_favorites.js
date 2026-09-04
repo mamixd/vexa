@@ -127,28 +127,17 @@ function highlightFavoriteRooms() {
         var nameCell = row.childNodes[0];
         if (!nameCell) return;
         
-        var rawName = nameCell.innerText.replace('⭐ ', '').trim();
+        var rawName = nameCell.innerText.replace(/^[\*⭐]\s*/, '').trim();
         
         if (window.favoriteRooms.has(rawName)) {
             row.classList.remove('vexa-fav-hidden');
-            if (row.style.backgroundColor !== 'rgb(30, 36, 34)') row.style.backgroundColor = '#1e2422'; 
-            if (nameCell.style.color !== 'rgb(255, 215, 0)') nameCell.style.color = '#ffd700'; 
-            if (nameCell.style.fontWeight !== 'bold') nameCell.style.fontWeight = 'bold';
-            
-            if (!nameCell.innerText.includes('⭐')) {
-                nameCell.innerText = '⭐ ' + rawName;
-            }
+            if (!row.classList.contains('vexa-fav-row')) row.classList.add('vexa-fav-row');
         } else {
+            if (row.classList.contains('vexa-fav-row')) row.classList.remove('vexa-fav-row');
             if (window.showOnlyFavorites) {
                 row.classList.add('vexa-fav-hidden');
             } else {
                 row.classList.remove('vexa-fav-hidden');
-                if (row.style.backgroundColor !== '') row.style.backgroundColor = '';
-                if (row.style.fontWeight !== '') row.style.fontWeight = '';
-                if (nameCell.style.color !== '') nameCell.style.color = '';
-                if (nameCell.innerText.includes('⭐')) {
-                    nameCell.innerText = rawName;
-                }
             }
         }
     });

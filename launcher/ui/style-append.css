@@ -303,3 +303,69 @@ input:focus, textarea:focus {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(63, 227, 161, 0.45);
 }
+
+/* ===================== HOME REFINEMENT ===================== */
+/* Existing Vexa colours are intentionally retained; this only improves depth and rhythm. */
+.topbar {
+  background: linear-gradient(90deg, rgba(255,255,255,0.012), transparent 52%);
+}
+
+.content-row {
+  gap: 28px;
+}
+
+.hero {
+  position: relative;
+  padding-top: 30px;
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: -92px;
+  left: 50%;
+  width: 360px;
+  height: 210px;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse, rgba(63, 227, 161, 0.09), transparent 68%);
+  pointer-events: none;
+}
+
+.hero h1 {
+  font-size: 42px;
+  letter-spacing: -0.9px;
+}
+
+.hero-eyebrow {
+  color: rgba(244,244,244,0.5);
+  letter-spacing: 3.4px;
+}
+
+.status-card {
+  max-width: 448px;
+  padding: 14px 16px;
+}
+
+.news-section {
+  padding: 18px;
+  background: rgba(17,17,17,0.82);
+}
+
+.news-header {
+  margin-bottom: 14px;
+}
+
+.news-header h3,
+.friends-header h3 {
+  letter-spacing: -0.15px;
+}
+
+.friends-col {
+  background: linear-gradient(180deg, #101010 0%, #0d0d0d 100%) !important;
+}
+
+.play-btn {
+  min-width: 174px;
+  min-height: 48px;
+}

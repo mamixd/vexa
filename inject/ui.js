@@ -48,7 +48,9 @@
 
         const cleanName = (row) => {
             const cell = row?.children?.[0];
-            return cell ? cell.textContent.replace(/^\*\s*/, '').trim() : '';
+            if (!cell) return '';
+            // Strip star if present from legacy text edits
+            return cell.textContent.replace(/^[\*⭐]\s*/, '').trim();
         };
 
         let showOnlyFavorites = false;
@@ -58,16 +60,20 @@
             if (!doc) return;
 
             const favorites = new Set(readFavs());
-            doc.querySelectorAll('tbody tr').forEach((row) => {
-                const cell = row.children?.[0];
+            const rows = doc.querySelectorAll('tbody tr');
+            
+            rows.forEach((row) => {
                 const roomName = cleanName(row);
-                if (!cell || !roomName) return;
+                if (!roomName) return;
 
                 const isFavorite = favorites.has(roomName);
                 row.style.display = showOnlyFavorites && !isFavorite ? 'none' : '';
-                row.style.fontWeight = isFavorite ? '700' : '';
-                cell.style.color = isFavorite ? '#ffd166' : '';
-                cell.textContent = isFavorite ? `* ${roomName}` : roomName;
+                
+                if (isFavorite) {
+                    if (!row.classList.contains('vexa-fav-row')) row.classList.add('vexa-fav-row');
+                } else {
+                    if (row.classList.contains('vexa-fav-row')) row.classList.remove('vexa-fav-row');
+                }
             });
 
             const selectedRoom = cleanName(doc.querySelector('tr.selected'));
@@ -97,7 +103,10 @@
         const ensureButtons = () => {
             const doc = getDoc();
             if (!doc) return;
-            if (doc.querySelector('button[data-hook="favRoom"]') || doc.querySelector('button[data-hook="vexaFavRoom"]')) return;
+            if (doc.querySelector('button[data-hook="favRoom"]') || doc.querySelector('button[data-hook="vexaFavRoom"]')) {
+                decorateRooms();
+                return;
+            }
 
             let anchor = doc.querySelector('button[data-hook="autoJoin"]');
             if (!anchor) {
@@ -133,102 +142,28 @@
 
             const tbody = doc.querySelector('tbody');
             if (tbody) {
-                tbody.addEventListener('click', () => setTimeout(decorateRooms, 50));
-                new MutationObserver(decorateRooms).observe(tbody, { childList: true, subtree: true, characterData: true });
+                tbody.addEventListener('click', () => setTimeout(decorateRooms, 10));
             }
             decorateRooms();
         };
 
-        setInterval(() => {
+        // Instant observer + fast 100ms check loop
+        let observerAttached = false;
+        const startFastCheck = () => {
             ensureButtons();
-            decorateRooms();
-        }, 1000);
+            const doc = getDoc();
+            if (doc && doc.body && !observerAttached) {
+                observerAttached = true;
+                const observer = new MutationObserver(() => {
+                    ensureButtons();
+                });
+                observer.observe(doc.body, { childList: true, subtree: true });
+            }
+        };
+
+        setInterval(startFastCheck, 100);
+        startFastCheck();
     }
 
     installFavoriteFallback();
-
-    // =============================================
-    // Maç İçi Buton Gizle/Göster Toggle (Ok ile)
-    // =============================================
-    function installGameButtonsToggle() {
-        const getDoc = () => {
-            const frame = document.querySelector('iframe.gameframe') || document.querySelector('iframe');
-            try { return frame && frame.contentWindow ? frame.contentWindow.document : null; } catch (e) { return null; }
-        };
-
-        let buttonsHidden = false;
-
-        function injectToggle() {
-            const doc = getDoc();
-            if (!doc) return;
-
-            // Sadece maç içinde (.buttons div varsa) göster
-            const buttonsDiv = doc.querySelector('.buttons');
-            if (!buttonsDiv) {
-                // Maç dışındaysa varsa kaldır
-                const old = doc.getElementById('vexa-game-toggle');
-                if (old) old.remove();
-                buttonsHidden = false;
-                return;
-            }
-
-            // Zaten enjekte edildiyse tekrar ekleme
-            if (doc.getElementById('vexa-game-toggle')) return;
-
-            // Butonlar container'ına geçiş efekti ekle
-            buttonsDiv.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
-            buttonsDiv.style.transformOrigin = 'top right';
-
-            // Ok butonu - butonların hemen soluna yapışık küçük tab
-            const arrowBtn = doc.createElement('div');
-            arrowBtn.id = 'vexa-game-toggle';
-            arrowBtn.style.cssText = [
-                'position:fixed',
-                'top:0',
-                'right:0',
-                'width:18px',
-                'height:32px',
-                'background:rgba(0,0,0,0.5)',
-                'border:1px solid rgba(255,255,255,0.1)',
-                'border-top:none',
-                'border-right:none',
-                'border-radius:0 0 0 6px',
-                'display:flex',
-                'align-items:center',
-                'justify-content:center',
-                'cursor:pointer',
-                'z-index:999999',
-                'color:rgba(255,255,255,0.55)',
-                'font-size:10px',
-                'transition:background 0.2s, color 0.2s',
-                'user-select:none'
-            ].join(';');
-            arrowBtn.innerText = '◀';
-
-            arrowBtn.onmouseover = () => { arrowBtn.style.background = 'rgba(255,255,255,0.15)'; arrowBtn.style.color = '#fff'; };
-            arrowBtn.onmouseout = () => { arrowBtn.style.background = 'rgba(0,0,0,0.5)'; arrowBtn.style.color = 'rgba(255,255,255,0.55)'; };
-
-            arrowBtn.onclick = () => {
-                buttonsHidden = !buttonsHidden;
-                const btn = doc.getElementById('vexa-game-toggle');
-                if (buttonsHidden) {
-                    buttonsDiv.style.opacity = '0';
-                    buttonsDiv.style.transform = 'translateY(-100%)';
-                    buttonsDiv.style.pointerEvents = 'none';
-                    if (btn) btn.innerText = '▶';
-                } else {
-                    buttonsDiv.style.opacity = '1';
-                    buttonsDiv.style.transform = 'translateY(0)';
-                    buttonsDiv.style.pointerEvents = '';
-                    if (btn) btn.innerText = '◀';
-                }
-            };
-
-            doc.body.appendChild(arrowBtn);
-        }
-
-        setInterval(injectToggle, 1200);
-    }
-
-    installGameButtonsToggle();
 })();

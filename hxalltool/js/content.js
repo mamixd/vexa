@@ -456,9 +456,9 @@ moduleObserver = new MutationObserver(function(mutations) {
 				if (items.haxMuteConfig) {
 					const popupWait = waitForElement('div.dialog');
 					popupWait.then(function (popup) {
-						if (!popup || !popup.firstChild) return;
-						const name = popup.firstChild.innerText;
-						if (name === 'Add-on Settings' || name === 'Choose nickname' || name === 'Leave room?' || name === 'Settings' || name === 'Create Room' || popup.classList.contains('settings-view')) return;
+						const name = (popup.firstChild && popup.firstChild.innerText) ? popup.firstChild.innerText.trim() : '';
+						const nonPlayerTitles = ['Add-on Settings', 'Choose nickname', 'Leave room?', 'Settings', 'Create Room', 'Room link', 'Pick a stadium', 'Replays', 'Store replay', 'Load replay', 'Export stadium'];
+						if (nonPlayerTitles.includes(name) || popup.classList.contains('settings-view')) return;
 					
 					// Admin olmadığımızda "Give Admin" ve "Kick" butonlarını devre dışı bırak
 					const gameframe = document.documentElement.getElementsByClassName("gameframe")[0];

@@ -76,7 +76,7 @@ jobs:
           } else {
             Write-Warning "DISCORD_CLIENT_ID secret is not set; Discord RPC will be disabled in this build."
           }
-      - name: Build Launcher Setup
+      - name: Build Setup Installers (64-bit and 32-bit)
         run: npm run build
 
       - name: Upload Artifacts to Release
@@ -87,14 +87,19 @@ jobs:
           body: |
             ## Vexa Client ${{ env.RELEASE_TAG }}
 
-            Vexa'nin bu surumunu asagidaki dosyalardan indirebilirsiniz.
+            Vexa Client kurulum dosyaları (64-bit ve 32-bit):
 
-            ### Kurulum
-            1. `vexa-launcher-setup-*.exe` dosyasini indirin.
-            2. Kurulumu calistirin.
-            3. Launcher ve oyun tek setup ile kurulur.
+            ### Kurulum Dosyaları
+            - **64-bit Windows:** `vexa-setup-x64.exe`
+            - **32-bit Windows:** `vexa-setup-ia32.exe`
+
+            ### Kurulum Adımları
+            1. Bilgisayarınızın mimarisine uygun setup dosyasını indirin.
+            2. Kurulumu çalıştırın.
+            3. Kurulum tamamlandığında oyun otomatik olarak açılır.
 
             ### Not
-            Windows "Bilinmeyen Yayinci" uyarisi verebilir. Bu normaldir.
+            Windows "Bilinmeyen Yayıncı" uyarısı verirse "Ek Bilgi" -> "Yine de Çalıştır" diyerek devam edebilirsiniz.
           files: |
             dist/*.exe
+            dist/*.blockmap

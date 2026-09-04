@@ -1,6 +1,16 @@
-const { app, BrowserWindow, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, session } = require('electron');
 const path = require('path');
 const fs = require('fs');
+
+// Ultra-fast rendering & low-latency flags used by pro gaming Electron clients
+app.commandLine.appendSwitch('enable-gpu-rasterization');
+app.commandLine.appendSwitch('enable-zero-copy');
+app.commandLine.appendSwitch('ignore-gpu-blocklist');
+app.commandLine.appendSwitch('disable-background-timer-throttling');
+app.commandLine.appendSwitch('disable-renderer-backgrounding');
+app.commandLine.appendSwitch('enable-fast-unload');
+app.commandLine.appendSwitch('enable-native-gpu-memory-buffers');
+
 const { createWindow } = require('./window');
 const DiscordRPC = require('discord-rpc');
 const { loadSettings, saveSettings } = require('./settings');
@@ -23,13 +33,37 @@ if (!settings.clientId) {
 // --- Live Active Users Heartbeat ---
 const VERCEL_API_URL = process.env.VERCEL_API_URL || 'https://api.vexaclient.com';
 
+// Oyna (Play) butonuna basılırken aktarılan gerçek hesap ID'si (Eğer giriş yapılmışsa)
+let launcherUserId = null;
+let launcherToken = null;
+for (const arg of process.argv) {
+    if (arg.startsWith('--user-id=')) {
+        launcherUserId = arg.split('=')[1];
+    } else if (arg.startsWith('--token=')) {
+        launcherToken = arg.split('=')[1];
+    }
+}
+
 function sendHeartbeat() {
     const axios = require('axios');
+    
+    // Eğer hesaba giriş yapılmışsa (launcherUserId varsa), asıl backend pingini at
+    if (launcherUserId) {
+        const headers = { 'Content-Type': 'application/json' };
+        if (launcherToken) {
+            headers['Authorization'] = `Bearer ${launcherToken}`;
+        }
+        axios.post(`${VERCEL_API_URL}/api/ping`, {
+            userId: launcherUserId,
+            activity: 'In Game',
+            dot: 'online'
+        }, { headers }).catch(() => {});
+    }
+    
+    // Uygulama istatistikleri için anonim heartbeat'i de at
     axios.post(`${VERCEL_API_URL}/api/ping`, { userId: settings.clientId }, {
         headers: { 'Content-Type': 'application/json' }
-    }).catch(err => {
-        // Silently ignore ping errors so it doesn't spam the console if offline
-    });
+    }).catch(() => {});
 }
 
 // Send heartbeat immediately on startup, and then every 30 seconds
@@ -103,6 +137,41 @@ ipcMain.handle('set-setting', (event, key, value) => {
     return saveSettings({ [key]: value });
 });
 
+ipcMain.handle('clear-cache', async () => {
+    try {
+        if (session && session.defaultSession) {
+            await session.defaultSession.clearCache();
+        }
+        return { success: true };
+    } catch (err) {
+        console.error('Clear cache error:', err);
+        return { success: false, error: err.message };
+    }
+});
+
+ipcMain.handle('factory-reset', async () => {
+    try {
+        const settingsPath = path.join(app.getPath('userData'), 'config.json');
+        if (fs.existsSync(settingsPath)) {
+            try { fs.unlinkSync(settingsPath); } catch(e) {}
+        }
+        if (session && session.defaultSession) {
+            await session.defaultSession.clearStorageData({
+                storages: ['appcache', 'cookies', 'filesystem', 'indexdb', 'localstorage', 'shadercache', 'websql', 'serviceworkers', 'cachestorage']
+            });
+            await session.defaultSession.clearCache();
+        }
+        const bgDir = path.join(app.getPath('userData'), 'backgrounds');
+        if (fs.existsSync(bgDir)) {
+            try { fs.rmSync(bgDir, { recursive: true, force: true }); } catch(e) {}
+        }
+        return { success: true };
+    } catch (err) {
+        console.error('Factory reset error:', err);
+        return { success: false, error: err.message };
+    }
+});
+
 ipcMain.on('restart-app', () => {
     try {
         app.relaunch({ args: process.argv.slice(1).filter(arg => arg !== '--relaunch') });
@@ -115,6 +184,131 @@ ipcMain.on('restart-app', () => {
         }
     }
     app.exit(0);
+});
+
+ipcMain.on('open-external', (event, url) => {
+    shell.openExternal(url);
+});
+
+// --- Now Playing (Müzik Widget) ---
+const { execFile } = require('child_process');
+
+let nowPlayingData = { title: '', artist: '', thumbnail: '', appName: '', status: '' };
+let nowPlayingEnabled = true;
+let unsubSessions = null;
+
+function broadcastNowPlaying(data) {
+    BrowserWindow.getAllWindows().forEach(win => {
+        if (win && !win.isDestroyed()) {
+            win.webContents.send('now-playing-update', data);
+        }
+    });
+}
+
+function startNowPlayingService() {
+    if (unsubSessions) return;
+
+    try {
+        const { onSessionsChanged } = require('windows-media-sessions');
+
+        unsubSessions = onSessionsChanged((sessions) => {
+            if (!nowPlayingEnabled) return;
+
+            let active = sessions.find(s => s.playbackStatus === 'playing');
+            if (!active) active = sessions.find(s => s.playbackStatus === 'paused');
+
+            if (!active || !active.title) {
+                if (nowPlayingData.title) {
+                    nowPlayingData = { title: '', artist: '', thumbnail: '', appName: '', status: '' };
+                    broadcastNowPlaying(nowPlayingData);
+                }
+                return;
+            }
+
+            const newData = {
+                title:     active.title || '',
+                artist:    active.artist || '',
+                // Eğer yeni thumbnail yoksa eski thumbnail'i koru (bazı şarkılarda SMTC thumbnail göndermez)
+                thumbnail: active.thumbnail || nowPlayingData.thumbnail || '',
+                appName:   active.sourceAppDisplayName || '',
+                status:    active.playbackStatus || 'playing',
+            };
+
+            // title, artist, status veya thumbnail değiştiyse gönder
+            if (newData.title !== nowPlayingData.title 
+                || newData.artist !== nowPlayingData.artist 
+                || newData.status !== nowPlayingData.status
+                || newData.thumbnail !== nowPlayingData.thumbnail) {
+                nowPlayingData = newData;
+                broadcastNowPlaying(nowPlayingData);
+            }
+        });
+    } catch (e) {
+        console.error('Failed to start media sessions:', e);
+    }
+}
+
+function stopNowPlayingService() {
+    if (unsubSessions) {
+        unsubSessions();
+        unsubSessions = null;
+    }
+}
+
+// Başlangıç
+startNowPlayingService();
+
+ipcMain.on('toggle-now-playing', (event, state) => {
+    nowPlayingEnabled = state;
+    if (state) {
+        startNowPlayingService();
+    } else {
+        stopNowPlayingService();
+        nowPlayingData = { title: '', artist: '', thumbnail: '', appName: '', status: '' };
+        broadcastNowPlaying(nowPlayingData);
+    }
+});
+
+// Renderer açıldığında mevcut şarkı durumunu talep etsin
+ipcMain.handle('get-now-playing', async () => {
+    if (nowPlayingData.title) return nowPlayingData;
+    // Eğer henüz callback gelmediyse, anlık snapshot al
+    try {
+        const { getActiveSessions, getAllSessions } = require('windows-media-sessions');
+        let sessions = await getActiveSessions();
+        if (!sessions || sessions.length === 0) sessions = await getAllSessions();
+        const active = sessions.find(s => s.playbackStatus === 'playing') || sessions.find(s => s.playbackStatus === 'paused');
+        if (active && active.title) {
+            return {
+                title:     active.title || '',
+                artist:    active.artist || '',
+                thumbnail: active.thumbnail || '',
+                appName:   active.sourceAppDisplayName || '',
+                status:    active.playbackStatus || 'playing',
+            };
+        }
+    } catch(e) {}
+    return { title: '', artist: '', thumbnail: '', appName: '', status: '' };
+});
+
+// Medya kontrol tuşları (Play/Pause, Next, Prev)
+ipcMain.on('media-control', (event, action) => {
+    const keyMap = {
+        'play-pause': '(New-Object -ComObject WScript.Shell).SendKeys([char]179)',
+        'next':       '(New-Object -ComObject WScript.Shell).SendKeys([char]176)',
+        'prev':       '(New-Object -ComObject WScript.Shell).SendKeys([char]177)'
+    };
+    const cmd = keyMap[action];
+    if (!cmd) return;
+    require('child_process').spawn('powershell.exe', [
+        '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', cmd
+    ], { windowsHide: true });
+});
+
+let currentRoomName = '';
+ipcMain.on('set-room-name', (event, name) => {
+    // Dosya adı için geçersiz karakterleri temizle
+    currentRoomName = (name || '').replace(/[\\/:*?"<>|]/g, '').trim().slice(0, 60);
 });
 
 ipcMain.on('update-rpc', (event, data) => {
@@ -193,34 +387,19 @@ if (settings.pingBoosterEnabled) {
 app.commandLine.appendSwitch('ignore-certificate-errors');
 // -------------------
 
-function showLauncher() {
-    launcherWindow = new BrowserWindow({
-        width: 600,
-        height: 450,
-        frame: false,
-        center: true,
-        resizable: false,
-        backgroundColor: '#0f0f11',
-        webPreferences: {
-            preload: path.join(__dirname, 'preload.js'),
-            contextIsolation: true,
-            nodeIntegration: false
-        }
-    });
-
-    launcherWindow.loadFile(path.join(__dirname, 'launcher.html'));
-}
-
-function startGame(replayFilePath = null) {
+async function startGame(replayFilePath = null) {
     if (launcherWindow && !launcherWindow.isDestroyed()) {
-        launcherWindow.hide();
+        launcherWindow.close();
     }
+
     // 1. Splash (Yükleniyor) Ekranını Aç
     splashWindow = new BrowserWindow({
-        width: 420,
+        width: 460,
         height: 300,
+        useContentSize: true,
         frame: false,
-        backgroundColor: '#111318',
+        backgroundColor: '#070707',
+        show: false,
         alwaysOnTop: true,
         skipTaskbar: true,
         resizable: false,
@@ -231,7 +410,25 @@ function startGame(replayFilePath = null) {
     splashWindow.setAlwaysOnTop(true, 'screen-saver');
     splashWindow.loadFile(path.join(__dirname, 'splash.html'));
 
-    // 2. Ana Pencereyi Arka Planda Gizli Yükle
+    splashWindow.once('ready-to-show', () => {
+        if (splashWindow && !splashWindow.isDestroyed()) {
+            splashWindow.show();
+        }
+    });
+
+    // 2. Açılış Ekranında Otomatik Güncelleme Kontrolü & İndirme
+    try {
+        const updater = require('./updater');
+        const updateResult = await updater.checkAndApplyUpdate(splashWindow);
+        if (updateResult && updateResult.updated) {
+            // Güncelleme indirildi ve kurulum exe'si başlatıldı; bu süreç sonlandırılıyor.
+            return;
+        }
+    } catch (updateErr) {
+        console.warn('[Main] Güncelleme denetimi atlandı:', updateErr.message);
+    }
+
+    // 3. Güncelleme yoksa: Ana Pencereyi (HaxBall) Arka Planda Yükle
     mainWindow = createWindow({
         title: 'Vexa HaxBall Client',
         width: 1280,
@@ -240,25 +437,36 @@ function startGame(replayFilePath = null) {
         preload: path.join(__dirname, 'preload.js'),
         injectScripts: ['header.js', 'ui.js', 'client.js'],
         onReady: () => {
-            // 3. Her şey yüklenince: Splash'i kapat, Ana pencereyi göster
-            if (splashWindow && !splashWindow.isDestroyed()) {
-                splashWindow.close();
-            }
-            if (launcherWindow && !launcherWindow.isDestroyed()) {
-                launcherWindow.close();
-            }
-            if (mainWindow && !mainWindow.isDestroyed()) {
-                mainWindow.show();
-                if (replayFilePath) {
-                    setTimeout(() => {
-                        try {
-                            const fileData = fs.readFileSync(replayFilePath);
-                            mainWindow.webContents.send('load-replay', fileData, path.basename(replayFilePath));
-                        } catch (err) {
-                            console.error('Failed to read replay file:', err);
-                        }
-                    }, 1500);
+            const revealMainWindow = () => {
+                if (mainWindow && !mainWindow.isDestroyed()) {
+                    mainWindow.maximize();
+                    mainWindow.show();
+                    if (replayFilePath) {
+                        setTimeout(() => {
+                            try {
+                                const fileData = fs.readFileSync(replayFilePath);
+                                mainWindow.webContents.send('load-replay', fileData, path.basename(replayFilePath));
+                            } catch (err) {
+                                console.error('Failed to read replay file:', err);
+                            }
+                        }, 1500);
+                    }
                 }
+            };
+
+            if (splashWindow && !splashWindow.isDestroyed()) {
+                try {
+                    splashWindow.webContents.executeJavaScript("window.postMessage('ready','*');");
+                } catch (err) {}
+                
+                setTimeout(() => {
+                    if (splashWindow && !splashWindow.isDestroyed()) {
+                        splashWindow.close();
+                    }
+                    revealMainWindow();
+                }, 350);
+            } else {
+                revealMainWindow();
             }
         }
     });
@@ -294,8 +502,7 @@ if (!gotTheLock) {
                 mainWindow.close();
                 startGame(replayFile);
             }
-        } else if (launcherWindow && !launcherWindow.isDestroyed()) {
-            launcherWindow.focus();
+        } else {
             handleArgs(commandLine);
         }
     });
@@ -305,18 +512,21 @@ if (!gotTheLock) {
 
         // Load hxalltool natively as an extension. Electron cannot load unpacked
         // extensions from inside app.asar, so packaged builds use app.asar.unpacked.
+        // NOTE: do not await loading here so splash screen can appear faster.
         try {
             const extPath = app.isPackaged
                 ? path.join(process.resourcesPath, 'app.asar.unpacked', 'hxalltool')
                 : path.join(__dirname, '../hxalltool');
             if (fs.existsSync(extPath)) {
-                await session.defaultSession.loadExtension(extPath);
-                console.log("Loaded hxalltool extension natively.");
+                // Load extension asynchronously so it doesn't block UI startup
+                session.defaultSession.loadExtension(extPath)
+                    .then(() => console.log("Loaded hxalltool extension natively."))
+                    .catch(err => console.error('Failed to load hxalltool extension:', err));
             } else {
                 console.warn('hxalltool extension path not found:', extPath);
             }
         } catch (err) {
-            console.error('Failed to load hxalltool extension:', err);
+            console.error('Failed to check hxalltool extension path:', err);
         }
 
         // Reklam Engelleyici
@@ -331,11 +541,11 @@ if (!gotTheLock) {
         });
 
         if (!handleArgs(process.argv)) {
-            startGame(); // Eski launcher yerine doğrudan oyunu başlat
+            startGame(); // Doğrudan oyunu başlat
         }
 
         app.on('activate', () => {
-            if (BrowserWindow.getAllWindows().length === 0) showLauncher();
+            if (BrowserWindow.getAllWindows().length === 0) startGame();
         });
     });
 }
@@ -345,7 +555,23 @@ ipcMain.on('start-game', () => {
 });
 
 app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') app.quit();
+    // Kapanırken çevrimdışı yap ve temizce sonlandır
+    if (launcherUserId) {
+        const axios = require('axios');
+        const headers = { 'Content-Type': 'application/json' };
+        if (launcherToken) {
+            headers['Authorization'] = `Bearer ${launcherToken}`;
+        }
+        axios.post(`${VERCEL_API_URL}/api/ping`, {
+            userId: launcherUserId,
+            activity: 'offline',
+            dot: 'offline'
+        }, { headers }).catch(() => {}).finally(() => {
+            if (process.platform !== 'darwin') app.quit();
+        });
+    } else {
+        if (process.platform !== 'darwin') app.quit();
+    }
 });
 
 // IPC Communications
@@ -415,3 +641,5 @@ ipcMain.handle('delete-custom-bg', async (event, fileUrl) => {
     }
 });
 
+// window.js'nin erişebilmesi için currentRoomName'i export et
+module.exports = { get currentRoomName() { return currentRoomName; } };
