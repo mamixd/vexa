@@ -7,75 +7,94 @@
 <h1 align="center">Vexa HaxBall Client</h1>
 
 <p align="center">
-  <strong>Gelişmiş, Yüksek Performanslı ve Özelleştirilebilir HaxBall Masaüstü İstemcisi</strong><br />
-  <em>Advanced High-Performance Desktop Client for HaxBall (x64 & 32-bit)</em>
+  <strong>Gelişmiş Performans, Şeffaf Arayüz, 64-Bit & 32-Bit Desteği ve Zengin Araçlarla Donatılmış Modern HaxBall İstemcisi.</strong>
 </p>
 
 <p align="center">
   <a href="https://vexaclient.com/"><img src="https://img.shields.io/badge/Website-vexaclient.com-10b981?style=for-the-badge" alt="Website" /></a>
-  <a href="https://github.com/vexa-client/vexa/releases/latest"><img src="https://img.shields.io/github/v/release/vexa-client/vexa?style=for-the-badge&color=10b981&label=Latest%20Release" alt="Latest Release" /></a>
+  <a href="https://github.com/vexa-client/vexa/releases/latest"><img src="https://img.shields.io/github/v/release/vexa-client/vexa?style=for-the-badge&color=f59e0b&label=Latest%20Release" alt="Latest Release" /></a>
   <a href="https://github.com/vexa-client/vexa/actions/workflows/build-and-release.yml"><img src="https://img.shields.io/github/actions/workflow/status/vexa-client/vexa/build-and-release.yml?style=for-the-badge&label=Build" alt="Build Status" /></a>
-  <img src="https://img.shields.io/badge/Platform-Windows%20(64--bit%20%7C%2032--bit)-0284c7?style=for-the-badge" alt="Platform" />
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPLv3-blue?style=for-the-badge" alt="License" /></a>
+  <img src="https://img.shields.io/badge/Windows-64--Bit%20%7C%2032--Bit-blue?style=for-the-badge&logo=windows" alt="Arch Support" />
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPLv3-gray?style=for-the-badge" alt="License" /></a>
 </p>
 
 ---
 
-## 🌟 Genel Bakış (Overview)
+## 📌 Genel Bakış (Overview)
 
-**Vexa Client**, [HaxBall](https://www.haxball.com/) deneyimini masaüstüne taşıyan modern bir Electron istemcisidir. Doğrudan tek kurulum dosyası (`vexa-setup`) ile çalışır; ekstra launcher veya karmaşık kurulum adımları gerektirmez.
+**Vexa Client**, popüler çevrimiçi futbol oyunu [HaxBall](https://www.haxball.com/) için Electron tabanlı, yüksek performanslı ve modüler yeni nesil bir masaüstü istemcisidir.
 
-Oyunculara ultra düşük giriş gecikmesi, FPS kilit kaldırıcı, HaxBall'un nostaljik imza arayüz detayları (kırmızı başlık çizgisi), modern yarı saydam cam teması (Transparent mode), Discord Zengin Varlık (RPC) ve otomatik arka plan güncelleme sistemi sunar.
+Oyunun orijinal mekaniklerine ve özüne sadık kalarak; profesyonel oyuncuların ihtiyaç duyduğu **düşük gecikme (low-latency)**, **yüksek FPS**, **cam efektli şeffaf arayüz (Glassmorphism)**, **çoklu profil yönetimi**, **replay oynatıcı** ve **Discord Rich Presence** gibi özellikleri tek bir kurulum dosyasıyla sunar.
 
----
-
-## 📦 İndirme & Desteklenen Mimariler (Downloads)
-
-Vexa, hem modern **64-bit** hem de eski nesil **32-bit** Windows sistemlerini tam olarak destekler:
-
-| Dosya Adı | Mimari | Desteklenen Sistemler | İndirme |
-| :--- | :--- | :--- | :--- |
-| **`vexa-setup-x64.exe`** | 64-bit (`x64`) | Windows 10, Windows 11 (64-bit) | [İndir (x64)](https://github.com/vexa-client/vexa/releases/latest) |
-| **`vexa-setup-ia32.exe`** | 32-bit (`ia32 / x86`) | Windows 7, 8.1, 10, 11 (32-bit) | [İndir (32-bit)](https://github.com/vexa-client/vexa/releases/latest) |
-
-> **Kurulum:** Sistem mimarinize uygun setup dosyasını indirin ve çalıştırın. Kurulum bittiğinde istemci otomatik olarak açılır ve doğrudan HaxBall'a bağlanır.
+Hem **64-bit (`x64`)** hem de **32-bit (`ia32`)** Windows mimarileri için ayrı ayrı derlenmiş hafif paketlere sahiptir.
 
 ---
 
-## 🚀 Öne Çıkan Özellikler (Key Features)
+## ✨ Özellikler (Features)
 
-### ⚡ Performans & Ağ
-- **FPS Kilidi Kaldırma (FPS Unlocker):** Monitör yenileme hızına (144Hz, 240Hz, 360Hz+) tam uyum.
-- **Ultra Düşük Gecikme:** Özel Chromium bayrakları (`enable-gpu-rasterization`, `enable-zero-copy`, `disable-renderer-backgrounding`).
-- **Canlı Göstergeler:** Canlı FPS sayacı ve NetGraph ağ grafiği.
-
-### 🎨 Görsel Tasarım & Arayüz
-- **HaxBall İmza Kırmızı Başlık Çizgisi:** Takma ad ekranı, oda listesi ve oda başlıklarında klasik kırmızı HaxBall vurgusu.
-- **Şeffaf Mod (Transparent UI):** Tek tıkla arka plan duvar kağıdı ile bütünleşen cam efektli yarı saydam tema. Kırmızı çizgiler ve oyuncu panelleri şeffaflıkla dinamik olarak senkronize olur.
-- **Yenilenen Kristal Logo & Butonlar:** Şeffaf Vexa elmas logosu, yeşil artıklardan arındırılmış temiz cam butonlar ve fareyle üzerine gelindiğinde parlayan turuncu (`#f59e0b`) kenarlıklar.
-- **Arka Plan Yöneticisi:** Dahili yüksek kaliteli futbol ve Vexa duvar kağıtları arasında anında geçiş.
-
-### 🎧 Entegrasyonlar & Araçlar
-- **Discord Rich Presence (RPC):** Discord profilinizde *"Vexa Client Oynuyor"*, bulunulan oda adı ve oynama süresi gösterimi.
-- **Şimdi Çalıyor (Now Playing):** Windows Medya Oturumları ile Spotify vb. şarkı durumunu oda içine aktarma desteği.
-- **Replay Sistemi:** `.hbr2` uzantılı HaxBall tekrar dosyaları ile tam Windows ilişkilendirmesi; çift tıklayarak doğrudan istemci içinde izleme.
-- **HaxAllTool Entegre Eklentisi:** Oda filtreleri, otomatik katılma (autojoin), favori odalar ve gelişmiş arama çubuğu.
-
-### 🔄 Akıllı Otomatik Güncelleme (Auto-Updater)
-- İstemci açılışında VDS API üzerinden yeni sürümü kontrol eder.
-- Güncelleme varsa, şık splash ekranı üzerinden indirme yüzdesini, hızını ve boyutunu canlı olarak gösterir.
-- 64-bit ve 32-bit mimariyi otomatik algılar ve oyuncunun sistemine uygun kurulum paketini arka planda kurar.
+| Kategori | Özellikler |
+| :--- | :--- |
+| **🚀 Performans & Gecikme** | FPS Kilit Açıcı (Unlocked FPS), Ayarlanabilir FPS Limiti, NetGraph Ping & Frame Gecikme Grafiği, GPU Rasterization & Sıfır Kopyalama Bayrakları |
+| **🎨 Modern Arayüz & Tasarım** | Vexa Kristal Elmas Şeffaf Logo, HaxBall İkonik Kırmızı Başlık Çizgileri, Turuncu Kenarlık Hover Efekti, Şeffaf/Koyu Cam Teması, Scrollbar Düzeltmesi |
+| **🖥️ Mimari Desteği** | Windows 64-bit (`vexa-setup-x64.exe`) ve Windows 32-bit (`vexa-setup-ia32.exe`) için iki ayrı optimize kurulum dosyası |
+| **🖼️ Duvar Kağıtları & Efektler** | Dahili dinamik duvar kağıtları, özel görsel yükleme, arka plan opaklık ve bulanıklık kontrolleri |
+| **👤 Çoklu Profil Sistemi** | Tek tıkla takma ad (nick), avatar, auth anahtarları, ülke bayrağı ve oyun tercihlerini değiştirme |
+| **🎬 Replay Entegrasyonu** | `.hbr2` dosya ilişkilendirmesi — indirilen maç tekrarlarına çift tıklayarak doğrudan Vexa içinde izleme |
+| **🔍 Oda ve Oyun Araçları** | Hızlı oda arama, favori odalar listesi, otomatik katılma (AutoJoin), oda filtreleri ve dahili HaxAllTool eklenti desteği |
+| **🎧 Discord Rich Presence** | Discord profilinde oynanan odayı, takım durumunu ve maç süresini anlık olarak gösterme |
+| **🔄 Mimari Uyumlu Güncelleyici**| Kullanıcının sistem mimarisini otomatik algılayan ve doğrudan CDN/VDS üzerinden güncellenen akıllı güncelleme motoru |
 
 ---
 
-## 💻 Geliştirici Kurulumu (Development)
+## 📥 Kurulum (Installation)
+
+Sistem mimarinize uygun kurulum paketini GitHub Releases sayfasından indirebilirsiniz:
+
+👉 **[En Son Vexa Sürümünü İndir](https://github.com/vexa-client/vexa/releases/latest)**
+
+- **64-bit Windows Kullanıcıları İçin:** `vexa-setup-x64.exe`
+- **32-bit Windows Kullanıcıları İçin:** `vexa-setup-ia32.exe`
+
+> **Kurulum Notu:** Kurulumu çalıştırdığınızda Vexa Client otomatik olarak kurulur, masaüstünüze kısayol oluşturulur ve doğrudan açılır. Windows ilk açılışta *"Bilinmeyen Yayıncı"* uyarısı verirse *"Ek Bilgi"* ➔ *"Yine de Çalıştır"* seçeneğini tıklayabilirsiniz.
+
+---
+
+## 📂 Proje Mimarisi (Project Structure)
+
+```text
+vexa/
+├── electron/                 # İstemci Electron Ana Süreci
+│   ├── main.js               # Ana yaşam döngüsü, IPC köprüsü & Discord RPC
+│   ├── window.js             # Chromium pencere optimizasyonları ve script enjeksiyonu
+│   ├── updater.js            # Mimari algılayıcı (x64/ia32) otomatik güncelleme motoru
+│   ├── settings.js           # Yerel ayar ve profil kalıcılığı
+│   └── splash.html           # Başlangıç ve indirme durum ekranı
+├── inject/                   # HaxBall içine enjekte edilen istemci modülleri
+│   ├── client.js             # FPS kilit açıcı, oda listesi teması, NetGraph, kısayollar
+│   ├── header.js             # Üst çubuk, ayarlar penceresi, arka plan yöneticisi
+│   ├── roomlist_premium.css  # Şeffaf cam temalı lüks oda listesi tasarımı
+│   ├── profiles.js           # Oyuncu profilleri ve yetkilendirme yönetimi
+│   ├── avatar.js             # Hareketli & özel avatar yardımcıları
+│   ├── logo.png              # Şeffaf Vexa elmas logosu
+│   └── backgrounds/          # Dahili duvar kağıtları
+├── hxalltool/                # Gömülü HaxAllTool eklenti modülü
+├── build/                    # Simge (icon.ico) ve NSIS kurulum görsel kaynakları
+├── build.bat                 # PC üzerinden tek tıkla 64-bit ve 32-bit derleme aracı
+├── .github/workflows/        # Otomatik GitHub Actions derleme ve dağıtım iş akışı
+├── package.json              # Proje bağımlılıkları ve mimari derleme tanımları
+└── versions.json             # Güncel istemci sürüm takip dosyası
+```
+
+---
+
+## 🛠️ Geliştirici ve Derleme Kılavuzu (Development & Build)
 
 ### Gereksinimler
-- **İşletim Sistemi:** Windows 10 / 11
-- **Node.js:** v18 veya v20 LTS
-- **Paket Yöneticisi:** `npm`
+- **İşletim Sistemi:** Windows 10 / 11 (64-bit veya 32-bit)
+- **Node.js:** v18 veya v20+
+- **npm:** v9+
 
-### Projeyi Çalıştırma
+### Kurulum Adımları
 ```bash
 # Depoyu klonlayın
 git clone https://github.com/vexa-client/vexa.git
@@ -84,86 +103,33 @@ cd vexa
 # Bağımlılıkları yükleyin
 npm install
 
-# İstemciyi doğrudan geliştirme modunda başlatın
+# İstemciyi geliştirici modunda başlatın
 npm start
 ```
 
----
+### Derleme (Build) Komutları
 
-## 🛠️ Derleme Komutları (Build Commands)
+Proje ana dizininde bulunan **`build.bat`** dosyasını çift tıklayarak interaktif Türkçe menüden seçim yapabilir ya da aşağıdaki komutları terminalden çalıştırabilirsiniz:
 
-Projede hem komut satırı hem de tek tıkla çalışan Türkçe menülü derleme aracı bulunmaktadır:
-
-### 1. `build.bat` ile Tek Tıkla Derleme (Önerilen)
-Proje kök dizinindeki **`build.bat`** dosyasına çift tıklayarak menüden seçim yapabilirsiniz:
-- `[1]` Hem 64-bit hem 32-bit Setup Üret (x64 + ia32)
-- `[2]` Sadece 64-bit Setup Üret
-- `[3]` Sadece 32-bit Setup Üret
-
-### 2. NPM Komutları ile Derleme
 ```bash
-# Hem 64-bit hem 32-bit kurulum dosyalarını derler (dist/ altında üretilir)
+# Hem 64-bit hem 32-bit kurulum paketlerini aynı anda derler (dist/ altında üretilir)
 npm run build
 
-# Sadece 64-bit setup derler
+# Yalnızca 64-bit kurulum dosyası üretir (vexa-setup-x64.exe)
 npm run build:x64
 
-# Sadece 32-bit setup derler
+# Yalnızca 32-bit kurulum dosyası üretir (vexa-setup-ia32.exe)
 npm run build:ia32
 ```
 
-Oluşan kurulum dosyaları `dist/` klasöründe yer alır:
-- `dist/vexa-setup-x64.exe` (~133 MB)
-- `dist/vexa-setup-ia32.exe` (~130 MB)
+---
+
+## 📄 Lisans (License)
+
+Bu proje [GNU General Public License v3.0](LICENSE) kapsamında lisanslanmıştır.
 
 ---
 
-## 📁 Proje Dizin Yapısı (Project Structure)
-
-```text
-vexa/
-├── electron/                 # Electron ana süreci ve yerel servisler
-│   ├── main.js               # Ana yaşam döngüsü, pencere yönetimi, Discord RPC
-│   ├── window.js             # BrowserWindow yapılandırması ve script enjeksiyonu
-│   ├── updater.js            # Mimariye duyarlı otomatik güncelleme motoru
-│   ├── settings.js           # Kullanıcı ayarları kalıcılığı (config.json)
-│   └── splash.html           # Başlangıç ve indirme durumu yükleme ekranı
-├── inject/                   # HaxBall web sayfasına enjekte edilen modüller
-│   ├── client.js             # FPS araçları, oda listesi teması, NetGraph
-│   ├── header.js             # Üst menü barı, ayarlar modalı, duvar kağıdı seçici
-│   ├── roomlist_premium.css  # Premium cam oda listesi stilleri ve buton efektleri
-│   ├── avatar.js             # Avatar ve reaksiyon araçları
-│   ├── profiles.js           # Profil yönetimi
-│   ├── logo.png              # Şeffaf kristal Vexa logosu
-│   └── backgrounds/          # Dahili duvar kağıtları
-├── hxalltool/                # Gömülü HaxAllTool eklenti varlıkları
-├── build/                    # İkonlar, bannerlar ve NSIS kurulum kaynakları
-├── build.bat                 # Yerel Windows derleme yöneticisi
-├── .github/workflows/        # Otomatik GitHub Actions Release iş akışı
-├── package.json              # Proje bağımlılıkları ve electron-builder ayarları
-└── versions.json             # Güncel istemci sürüm tanımı
-```
-
----
-
-## 🔐 Güvenlik & Gizlilik Notları
-
-- Vexa Client, resmi HaxBall web uygulamasını güvenli bir Chromium kapsayıcısında çalıştırır ve yalnızca arayüz/performans scriptlerini enjekte eder.
-- `.env` ve sunucu tarafı kodları (`vds-backend/`) Git takibinden muaftır ve depoya yüklenmez.
-- Discord RPC için bot jetonu gerekmez; yalnızca standart istemci kimliği kullanılır.
-- Tüm güncellemeler yalnızca resmi GitHub deposundan (`vexa-client/vexa`) indirilir.
-
----
-
-## 🔗 Bağlantılar & Topluluk
-
-- **Resmi Web Sitesi:** [https://vexaclient.com/](https://vexaclient.com/)
-- **Son Sürüm İndirmeleri:** [GitHub Releases](https://github.com/vexa-client/vexa/releases)
-- **Hata Bildirimi & İstekler:** [GitHub Issues](https://github.com/vexa-client/vexa/issues)
-- **HaxBall Resmi Sayfası:** [https://www.haxball.com/](https://www.haxball.com/)
-
----
-
-## 📄 Lisans
-
-Bu proje **GNU General Public License v3.0 (GPLv3)** lisansı altında geliştirilmektedir. Detaylar için [LICENSE](LICENSE) dosyasına göz atabilirsiniz.
+<p align="center">
+  <sub>Developed with ❤️ for the HaxBall Community by <b>Vexa Software</b>.</sub>
+</p>

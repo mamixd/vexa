@@ -18,6 +18,8 @@ bot-dashboard/
 bot-dashboard.zip
 package-lock.json
 .env
+
+# Server & VDS Backend (Private to VDS - Never upload to GitHub)
 vds-backend/
 
 # Gereksiz dosyalar
