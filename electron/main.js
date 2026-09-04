@@ -130,6 +130,7 @@ let rpcConnecting = false;
 const appStartTime = Date.now();
 let rpcEnabled = settings.rpcEnabled !== false;
 let lastRpcActivity = { state: 'Ana Menüde', details: 'Vexa Client', nick: '' };
+let nowPlayingData = { title: '', artist: '', thumbnail: '', appName: '', status: '' };
 
 function setActivity(state, details, nick) {
     if (state !== undefined) lastRpcActivity.state = state;
@@ -143,9 +144,22 @@ function setActivity(state, details, nick) {
         return;
     }
     
+    let currentDetails = lastRpcActivity.details || 'Vexa Client';
+    let currentState = lastRpcActivity.state || 'Ana Menüde';
+
+    // Eğer arka planda müzik/medya çalıyorsa Discord RPC'ye yansıt
+    if (nowPlayingData && nowPlayingData.title && nowPlayingData.status === 'playing') {
+        const songStr = `🎵 ${nowPlayingData.title}${nowPlayingData.artist ? ' - ' + nowPlayingData.artist : ''}`.slice(0, 120);
+        if (!currentState || currentState === 'Ana Menüde') {
+            currentState = songStr;
+        } else {
+            currentDetails = songStr;
+        }
+    }
+
     rpc.setActivity({
-        details: lastRpcActivity.details || 'Vexa Client',
-        state: lastRpcActivity.state || 'Ana Menüde',
+        details: currentDetails,
+        state: currentState,
         startTimestamp: appStartTime,
         largeImageKey: 'logo', 
         largeImageText: 'Vexa Client',
@@ -270,12 +284,31 @@ ipcMain.on('open-external', (event, url) => {
     shell.openExternal(url);
 });
 
-// --- Now Playing (Müzik Widget) ---
+// --- Now Playing (Müzik Widget & Media Activity) ---
 const { execFile } = require('child_process');
 
-let nowPlayingData = { title: '', artist: '', thumbnail: '', appName: '', status: '' };
+function resolveMediaBackend() {
+    if (process.env.WINDOWS_MEDIA_SESSIONS_BACKEND && fs.existsSync(process.env.WINDOWS_MEDIA_SESSIONS_BACKEND)) {
+        return process.env.WINDOWS_MEDIA_SESSIONS_BACKEND;
+    }
+    const candidates = [
+        process.resourcesPath ? path.join(process.resourcesPath, 'app.asar.unpacked', 'node_modules', 'windows-media-sessions', 'bin', 'win-x64', 'windows-media-sessions-backend.exe') : null,
+        path.join(__dirname, '..', 'node_modules', 'windows-media-sessions', 'bin', 'win-x64', 'windows-media-sessions-backend.exe'),
+        path.join(app.getAppPath().replace(/app\.asar$/, 'app.asar.unpacked'), 'node_modules', 'windows-media-sessions', 'bin', 'win-x64', 'windows-media-sessions-backend.exe')
+    ];
+    for (const c of candidates) {
+        if (c && fs.existsSync(c)) {
+            process.env.WINDOWS_MEDIA_SESSIONS_BACKEND = c;
+            console.log('[Media] Resolved media session backend:', c);
+            return c;
+        }
+    }
+    return null;
+}
+
 let nowPlayingEnabled = true;
 let unsubSessions = null;
+let mediaPollTimer = null;
 
 function broadcastNowPlaying(data) {
     BrowserWindow.getAllWindows().forEach(win => {
@@ -285,90 +318,133 @@ function broadcastNowPlaying(data) {
     });
 }
 
-function startNowPlayingService() {
-    if (unsubSessions) return;
-
+async function syncMediaState() {
     try {
-        const { onSessionsChanged } = require('windows-media-sessions');
+        resolveMediaBackend();
+        const { getActiveSessions, getAllSessions } = require('windows-media-sessions');
+        let sessions = await getActiveSessions().catch(() => []);
+        if (!sessions || sessions.length === 0) {
+            sessions = await getAllSessions().catch(() => []);
+        }
 
-        unsubSessions = onSessionsChanged((sessions) => {
-            if (!nowPlayingEnabled) return;
+        let active = sessions && sessions.find(s => s.playbackStatus === 'playing');
+        if (!active && sessions) {
+            active = sessions.find(s => s.playbackStatus === 'paused');
+        }
 
-            let active = sessions.find(s => s.playbackStatus === 'playing');
-            if (!active) active = sessions.find(s => s.playbackStatus === 'paused');
-
-            if (!active || !active.title) {
-                if (nowPlayingData.title) {
-                    nowPlayingData = { title: '', artist: '', thumbnail: '', appName: '', status: '' };
-                    broadcastNowPlaying(nowPlayingData);
-                }
-                return;
-            }
-
-            const newData = {
-                title:     active.title || '',
-                artist:    active.artist || '',
-                // Eğer yeni thumbnail yoksa eski thumbnail'i koru (bazı şarkılarda SMTC thumbnail göndermez)
-                thumbnail: active.thumbnail || nowPlayingData.thumbnail || '',
-                appName:   active.sourceAppDisplayName || '',
-                status:    active.playbackStatus || 'playing',
-            };
-
-            // title, artist, status veya thumbnail değiştiyse gönder
-            if (newData.title !== nowPlayingData.title 
-                || newData.artist !== nowPlayingData.artist 
-                || newData.status !== nowPlayingData.status
-                || newData.thumbnail !== nowPlayingData.thumbnail) {
-                nowPlayingData = newData;
+        if (!active || !active.title) {
+            if (nowPlayingData.title) {
+                nowPlayingData = { title: '', artist: '', thumbnail: '', appName: '', status: '' };
                 broadcastNowPlaying(nowPlayingData);
+                setActivity();
             }
-        });
+            return nowPlayingData;
+        }
+
+        const newData = {
+            title:     active.title || '',
+            artist:    active.artist || '',
+            thumbnail: active.thumbnail || nowPlayingData.thumbnail || '',
+            appName:   active.sourceAppDisplayName || '',
+            status:    active.playbackStatus || 'playing',
+        };
+
+        if (newData.title !== nowPlayingData.title 
+            || newData.artist !== nowPlayingData.artist 
+            || newData.status !== nowPlayingData.status
+            || (newData.thumbnail && newData.thumbnail !== nowPlayingData.thumbnail)) {
+            nowPlayingData = newData;
+            broadcastNowPlaying(nowPlayingData);
+            setActivity();
+        }
+        return nowPlayingData;
     } catch (e) {
-        console.error('Failed to start media sessions:', e);
+        return nowPlayingData;
+    }
+}
+
+function startNowPlayingService() {
+    resolveMediaBackend();
+
+    if (!unsubSessions) {
+        try {
+            const { onSessionsChanged } = require('windows-media-sessions');
+
+            unsubSessions = onSessionsChanged((sessions) => {
+                let active = sessions.find(s => s.playbackStatus === 'playing');
+                if (!active) active = sessions.find(s => s.playbackStatus === 'paused');
+
+                if (!active || !active.title) {
+                    if (nowPlayingData.title) {
+                        nowPlayingData = { title: '', artist: '', thumbnail: '', appName: '', status: '' };
+                        broadcastNowPlaying(nowPlayingData);
+                        setActivity();
+                    }
+                    return;
+                }
+
+                const newData = {
+                    title:     active.title || '',
+                    artist:    active.artist || '',
+                    thumbnail: active.thumbnail || nowPlayingData.thumbnail || '',
+                    appName:   active.sourceAppDisplayName || '',
+                    status:    active.playbackStatus || 'playing',
+                };
+
+                if (newData.title !== nowPlayingData.title 
+                    || newData.artist !== nowPlayingData.artist 
+                    || newData.status !== nowPlayingData.status
+                    || (newData.thumbnail && newData.thumbnail !== nowPlayingData.thumbnail)) {
+                    nowPlayingData = newData;
+                    broadcastNowPlaying(nowPlayingData);
+                    setActivity();
+                }
+            });
+        } catch (e) {
+            console.error('Failed to start media sessions listener:', e);
+        }
+    }
+
+    // Anlık sorgula
+    syncMediaState();
+
+    // SMTC kaçırmalarına karşı her 2.5 saniyede bir senkronize et
+    if (!mediaPollTimer) {
+        mediaPollTimer = setInterval(syncMediaState, 2500);
     }
 }
 
 function stopNowPlayingService() {
     if (unsubSessions) {
-        unsubSessions();
+        try { unsubSessions(); } catch (e) {}
         unsubSessions = null;
+    }
+    if (mediaPollTimer) {
+        clearInterval(mediaPollTimer);
+        mediaPollTimer = null;
     }
 }
 
-// Başlangıç
+// Başlangıçta servisi başlat
 startNowPlayingService();
 
-ipcMain.on('toggle-now-playing', (event, state) => {
-    nowPlayingEnabled = state;
-    if (state) {
+ipcMain.on('toggle-now-playing', async (event, state) => {
+    nowPlayingEnabled = !!state;
+    if (nowPlayingEnabled) {
         startNowPlayingService();
+        await syncMediaState();
     } else {
         stopNowPlayingService();
         nowPlayingData = { title: '', artist: '', thumbnail: '', appName: '', status: '' };
         broadcastNowPlaying(nowPlayingData);
+        setActivity();
     }
 });
 
-// Renderer açıldığında mevcut şarkı durumunu talep etsin
+// Renderer açıldığında veya widget aktifleştiğinde mevcut şarkı durumunu döndür
 ipcMain.handle('get-now-playing', async () => {
     if (nowPlayingData.title) return nowPlayingData;
-    // Eğer henüz callback gelmediyse, anlık snapshot al
-    try {
-        const { getActiveSessions, getAllSessions } = require('windows-media-sessions');
-        let sessions = await getActiveSessions();
-        if (!sessions || sessions.length === 0) sessions = await getAllSessions();
-        const active = sessions.find(s => s.playbackStatus === 'playing') || sessions.find(s => s.playbackStatus === 'paused');
-        if (active && active.title) {
-            return {
-                title:     active.title || '',
-                artist:    active.artist || '',
-                thumbnail: active.thumbnail || '',
-                appName:   active.sourceAppDisplayName || '',
-                status:    active.playbackStatus || 'playing',
-            };
-        }
-    } catch(e) {}
-    return { title: '', artist: '', thumbnail: '', appName: '', status: '' };
+    return await syncMediaState();
 });
 
 // Medya kontrol tuşları (Play/Pause, Next, Prev)

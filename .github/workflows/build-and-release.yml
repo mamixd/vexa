@@ -109,10 +109,15 @@ jobs:
               - Tüm butonların üzerine fareyle gelindiğinde kenarlıklar şık turuncu çerçeve (`#f59e0b`) ile vurgulanır.
             - 🧹 **Filtreler Altındaki Yatay Scrollbar Kaldırıldı:**
               - Filtre kutularının altında oluşan çirkin Windows yatay kaydırma çubuğu tamamen kaldırıldı.
-            - 🎧 **Discord RPC Entegrasyonu:**
-              - Discord Zengin Varlık (Rich Presence) altyapısı optimize edildi.
-            - 🏎️ **Derin Kod ve Dosya Temizliği:**
-              - Projeden 2.5 GB'lık eski test kalıntıları ve atıl dosyalar temizlenerek istemci hafifletildi.
+            - 🎵 **Medya Aktivitesi & Müzik Widget (Media Sessions):**
+              - Paketlenmiş istemcilerde Windows Media Sessions arka plan ikili yürütücüsü düzeltildi.
+              - Şarkı bilgisi (Spotify, YouTube vb.) anlık olarak algılanır ve Discord Rich Presence ile Müzik Widget'ına senkronize edilir.
+            - 🎧 **Discord RPC İyileştirmeleri:**
+              - Dinlenen müzik ve aktif oyun durumu Discord durumuna gerçek zamanlı yansıtılır.
+            - 🔄 **Akıllı Otomatik Güncelleyici:**
+              - 64-bit ve 32-bit mimari algılayıcı güncelleyici, çakışmaları önleyen süreç sonlandırma desteği ile sorunsuz çalışır.
+            - 🏎️ **Derin Kod ve Performans Temizliği:**
+              - Hafifletilmiş istemci ve optimize edilmiş bellek kullanımı.
 
             ---
 

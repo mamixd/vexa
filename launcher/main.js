@@ -90,7 +90,7 @@ function createFallbackUpdateInfo(error, installState) {
 
 const DiscordRPC = require('discord-rpc');
 require('dotenv').config();
-const clientId = process.env.DISCORD_CLIENT_ID;
+const clientId = process.env.DISCORD_CLIENT_ID || '1472302829392629924';
 const rpc = new DiscordRPC.Client({ transport: 'ipc' });
 const appStartTime = Date.now();
 

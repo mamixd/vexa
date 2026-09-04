@@ -107,9 +107,22 @@
 
         let nowPlayingWidget = null;
         let currentData = {};
+        let lastKnownData = null;
         let marqueeText = null;
         let marqueePos = 0;
         let marqueeTimer = null;
+
+        // Başlangıçta mevcut şarkıyı sorgula ve önbellekle
+        if (window.electronAPI && window.electronAPI.getNowPlaying) {
+            window.electronAPI.getNowPlaying().then(data => {
+                if (data && data.title) {
+                    lastKnownData = data;
+                    if (localStorage.getItem('hax_music_widget') === 'true') {
+                        updateWidget(data);
+                    }
+                }
+            }).catch(() => {});
+        }
 
         function getAccent() {
             return localStorage.getItem('hax_theme_color') || '#10b981';
@@ -294,6 +307,10 @@
         }
 
         function updateWidget(data) {
+            if (data && data.title) {
+                lastKnownData = data;
+            }
+
             // Ayarlardan kapalıysa widget'ı tamamen sil ve veri gelmesini yoksay
             if (localStorage.getItem('hax_music_widget') !== 'true') {
                 if (nowPlayingWidget) { nowPlayingWidget.remove(); nowPlayingWidget = null; }
@@ -353,15 +370,31 @@
         // Ayarlar değiştiğinde widget'ı yenile
         window.addEventListener('storage', (e) => {
             if (e.key === 'hax_music_widget') {
-                if (localStorage.getItem('hax_music_widget') !== 'true') {
+                const isEnabled = localStorage.getItem('hax_music_widget') === 'true';
+                if (!isEnabled) {
                     if (nowPlayingWidget) { nowPlayingWidget.remove(); nowPlayingWidget = null; }
                     if (marqueeTimer) { clearInterval(marqueeTimer); marqueeTimer = null; }
-                } else if (currentData && currentData.title) {
-                    updateWidget(currentData);
+                    currentData = {};
+                } else {
+                    if (window.electronAPI && window.electronAPI.toggleNowPlaying) {
+                        window.electronAPI.toggleNowPlaying(true);
+                    }
+                    if (lastKnownData && lastKnownData.title) {
+                        updateWidget(lastKnownData);
+                    }
+                    if (window.electronAPI && window.electronAPI.getNowPlaying) {
+                        window.electronAPI.getNowPlaying().then(data => {
+                            if (data && data.title) {
+                                lastKnownData = data;
+                                updateWidget(data);
+                            }
+                        }).catch(() => {});
+                    }
                 }
             } else if (e.key === 'hax_music_style') {
-                if (currentData && currentData.title) {
-                    createWidget(currentData);
+                const dataToUse = (currentData && currentData.title) ? currentData : lastKnownData;
+                if (dataToUse && dataToUse.title) {
+                    createWidget(dataToUse);
                     void nowPlayingWidget.offsetWidth;
                     setTimeout(() => {
                         if (nowPlayingWidget) {
