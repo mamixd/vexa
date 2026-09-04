@@ -563,10 +563,14 @@ async function startGame(replayFilePath = null) {
         skipTaskbar: true,
         resizable: false,
         center: true,
-        focusable: false,
-        webPreferences: { contextIsolation: true }
+        focusable: true,
+        webPreferences: {
+            preload: path.join(__dirname, 'splash-preload.js'),
+            contextIsolation: true,
+            nodeIntegration: false
+        }
     });
-    splashWindow.setAlwaysOnTop(true, 'screen-saver');
+    splashWindow.setAlwaysOnTop(true);
     splashWindow.loadFile(path.join(__dirname, 'splash.html'));
 
     splashWindow.once('ready-to-show', () => {

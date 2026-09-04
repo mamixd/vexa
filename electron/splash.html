@@ -117,6 +117,67 @@
     transition: all 0.35s ease;
   }
 
+  .update-area {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    width: 320px;
+    animation: fadeIn 0.4s ease forwards;
+  }
+
+  .update-title {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 4px;
+    color: #a0a0a0;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+
+  .update-btn {
+    width: 100%;
+    max-width: 240px;
+    background: #ffffff;
+    color: #070707;
+    border: 1px solid #ffffff;
+    border-radius: 6px;
+    padding: 10px 18px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.15);
+    outline: none;
+  }
+
+  .update-btn:hover {
+    background: #e8e8e8;
+    box-shadow: 0 6px 26px rgba(255, 255, 255, 0.35);
+    transform: translateY(-1px);
+  }
+
+  .update-btn:active {
+    transform: translateY(0);
+  }
+
+  .skip-btn {
+    margin-top: 12px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: #555555;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color 0.2s ease;
+  }
+
+  .skip-btn:hover {
+    color: #999999;
+  }
+
   @keyframes fadeIn {
     to { opacity: 1; }
   }
@@ -130,18 +191,29 @@
       <span class="logo-client">CLIENT</span>
     </div>
 
-    <div class="progress-area">
+    <div class="progress-area" id="progressArea">
       <div class="bar">
         <div class="bar-fill" id="barFill"></div>
       </div>
       <div class="status" id="status">YÜKLENİYOR</div>
     </div>
+
+    <div class="update-area" id="updateArea">
+      <div class="update-title" id="updateTitle">YENİ GÜNCELLEME MEVCUT</div>
+      <button class="update-btn" id="updateBtn">GÜNCELLEMEYİ İNDİR</button>
+      <div class="skip-btn" id="skipBtn">ŞİMDİ DEĞİL (OYUNA GEÇ)</div>
+    </div>
   </div>
 
   <script>
-    const container = document.getElementById('container');
-    const barFill   = document.getElementById('barFill');
-    const status    = document.getElementById('status');
+    const container    = document.getElementById('container');
+    const barFill      = document.getElementById('barFill');
+    const status       = document.getElementById('status');
+    const progressArea = document.getElementById('progressArea');
+    const updateArea   = document.getElementById('updateArea');
+    const updateTitle  = document.getElementById('updateTitle');
+    const updateBtn    = document.getElementById('updateBtn');
+    const skipBtn      = document.getElementById('skipBtn');
 
     window.vexaClientReady = function () {
       barFill.classList.add('finish');
@@ -172,6 +244,41 @@
         barFill.style.width = data.percent + '%';
       }
     };
+
+    window.showUpdatePrompt = function (data) {
+      if (data && data.version) {
+        updateTitle.textContent = `YENİ SÜRÜM: v${data.version}`;
+      }
+      progressArea.style.display = 'none';
+      updateArea.style.display = 'flex';
+    };
+
+    updateBtn.onclick = function () {
+      updateArea.style.display = 'none';
+      progressArea.style.display = 'flex';
+      status.textContent = 'İNDİRME BAŞLATILIYOR...';
+      if (window.splashAPI && window.splashAPI.startDownload) {
+        window.splashAPI.startDownload();
+      }
+    };
+
+    skipBtn.onclick = function () {
+      updateArea.style.display = 'none';
+      progressArea.style.display = 'flex';
+      status.textContent = 'YÜKLENİYOR';
+      if (window.splashAPI && window.splashAPI.skipUpdate) {
+        window.splashAPI.skipUpdate();
+      }
+    };
+
+    if (window.splashAPI) {
+      window.splashAPI.onSplashUpdate((data) => {
+        window.setSplashStatus(data);
+      });
+      window.splashAPI.onShowUpdatePrompt((data) => {
+        window.showUpdatePrompt(data);
+      });
+    }
   </script>
 </body>
 </html>

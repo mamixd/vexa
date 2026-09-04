@@ -1,4 +1,4 @@
-const { app } = require('electron');
+const { app, ipcMain } = require('electron');
 const path = require('path');
 const os = require('os');
 const fs = require('fs-extra');
@@ -91,8 +91,61 @@ async function checkAndApplyUpdate(splashWin) {
         return { updated: false };
     }
 
-    console.log(`[Updater] Yeni sürüm bulundu: v${remoteVersion} (Mevcut: v${localVersion}). İndirme başlıyor...`);
-    sendSplashUpdate(splashWin, `GÜNCELLEME BULUNDU: v${remoteVersion}`, 0, 'İndirme hazırlanıyor...');
+    console.log(`[Updater] Yeni sürüm bulundu: v${remoteVersion} (Mevcut: v${localVersion}). Kullanıcı onayı bekleniyor...`);
+
+    // Splash ekranına "GÜNCELLEMEYİ İNDİR" butonunu göster
+    if (splashWin && !splashWin.isDestroyed()) {
+        try {
+            splashWin.webContents.send('show-update-prompt', {
+                version: remoteVersion,
+                currentVersion: localVersion
+            });
+            splashWin.webContents.executeJavaScript(`
+                if (typeof window.showUpdatePrompt === 'function') {
+                    window.showUpdatePrompt(${JSON.stringify({ version: remoteVersion, currentVersion: localVersion })});
+                }
+            `).catch(() => {});
+        } catch (e) {}
+    }
+
+    // Kullanıcının "GÜNCELLEMEYİ İNDİR" butonuna basmasını bekle (otomatik indirmeye doğrudan başlama)
+    const userChoice = await new Promise((resolve) => {
+        const onDownload = () => {
+            cleanup();
+            resolve('download');
+        };
+        const onSkip = () => {
+            cleanup();
+            resolve('skip');
+        };
+        const onClose = () => {
+            cleanup();
+            resolve('skip');
+        };
+
+        const cleanup = () => {
+            ipcMain.removeListener('start-update-download', onDownload);
+            ipcMain.removeListener('skip-update', onSkip);
+            if (splashWin && !splashWin.isDestroyed()) {
+                splashWin.removeListener('closed', onClose);
+            }
+        };
+
+        ipcMain.once('start-update-download', onDownload);
+        ipcMain.once('skip-update', onSkip);
+        if (splashWin && !splashWin.isDestroyed()) {
+            splashWin.once('closed', onClose);
+        }
+    });
+
+    if (userChoice !== 'download') {
+        console.log('[Updater] Kullanıcı güncellemeyi atladı veya pencere kapandı. Oyuna geçiliyor.');
+        sendSplashUpdate(splashWin, 'YÜKLENİYOR', null);
+        return { updated: false };
+    }
+
+    console.log('[Updater] Kullanıcı onayladı. İndirme başlıyor...');
+    sendSplashUpdate(splashWin, `GÜNCELLEME İNDİRİLİYOR: v${remoteVersion}`, 0, 'İndirme hazırlanıyor...');
 
     const tempDir = os.tmpdir();
     const setupFilePath = path.join(tempDir, `vexa-setup-${Date.now()}.exe`);
