@@ -102,7 +102,7 @@
 
         // Başlangıçta ayara göre main process'i bilgilendir
         if (window.electronAPI.toggleNowPlaying) {
-            window.electronAPI.toggleNowPlaying(localStorage.getItem('hax_music_widget') !== 'false');
+            window.electronAPI.toggleNowPlaying(localStorage.getItem('hax_music_widget') === 'true');
         }
 
         let nowPlayingWidget = null;
@@ -295,7 +295,7 @@
 
         function updateWidget(data) {
             // Ayarlardan kapalıysa widget'ı tamamen sil ve veri gelmesini yoksay
-            if (localStorage.getItem('hax_music_widget') === 'false') {
+            if (localStorage.getItem('hax_music_widget') !== 'true') {
                 if (nowPlayingWidget) { nowPlayingWidget.remove(); nowPlayingWidget = null; }
                 if (marqueeTimer) { clearInterval(marqueeTimer); marqueeTimer = null; }
                 currentData = {};
@@ -353,7 +353,7 @@
         // Ayarlar değiştiğinde widget'ı yenile
         window.addEventListener('storage', (e) => {
             if (e.key === 'hax_music_widget') {
-                if (localStorage.getItem('hax_music_widget') === 'false') {
+                if (localStorage.getItem('hax_music_widget') !== 'true') {
                     if (nowPlayingWidget) { nowPlayingWidget.remove(); nowPlayingWidget = null; }
                     if (marqueeTimer) { clearInterval(marqueeTimer); marqueeTimer = null; }
                 } else if (currentData && currentData.title) {
@@ -2025,7 +2025,7 @@
         let _autoRecCheckCount = 0;      // rec butonu görünene kadar deneme sayacı
 
         setInterval(() => {
-            const isAutoRec = localStorage.getItem('hax_auto_rec') !== 'false';
+            const isAutoRec = localStorage.getItem('hax_auto_rec') === 'true';
             const iframe = document.querySelector('.gameframe');
             if (!iframe || !iframe.contentDocument) {
                 _autoRecInRoom = false;
@@ -2147,7 +2147,13 @@
 
         function syncCustomBackgroundForDoc(doc, forcedGameActive) {
             if (!doc || !doc.body) return;
-            const currentBgPath = localStorage.getItem('hax_custom_bg');
+            let currentBgPath = localStorage.getItem('hax_custom_bg');
+            if (!currentBgPath || currentBgPath === 'null' || currentBgPath === 'undefined') {
+                const defaultBg = window.VEXA_DEFAULT_BG || (window.VEXA_INJECT_BASE_URL ? (window.VEXA_INJECT_BASE_URL.replace(/\/$/, '') + '/backgrounds/vexa-default.png') : 'backgrounds/vexa-default.png');
+                currentBgPath = defaultBg;
+                localStorage.setItem('hax_custom_bg', defaultBg);
+                localStorage.setItem('hax_custom_bg_name', 'Vexa Default');
+            }
             const gameActive = syncGameRenderMode(doc, forcedGameActive);
 
             if (currentBgPath) {
@@ -2198,6 +2204,15 @@
                     } else {
                         const img = doc.createElement('img');
                         img.src = currentBgPath;
+                        img.onerror = () => {
+                            const fallbackBg = window.VEXA_DEFAULT_BG;
+                            if (fallbackBg && img.src !== fallbackBg) {
+                                img.src = fallbackBg;
+                                container.dataset.bgPath = fallbackBg;
+                                localStorage.setItem('hax_custom_bg', fallbackBg);
+                                localStorage.setItem('hax_custom_bg_name', 'Vexa Default');
+                            }
+                        };
                         Object.assign(img.style, {
                             width: '100%',
                             height: '100%',
@@ -2644,7 +2659,7 @@
         }
 
         function syncNativeStatsVisibility() {
-            const fpsShow = localStorage.getItem('hax_fps_show') !== 'false';
+            const fpsShow = localStorage.getItem('hax_fps_show') === 'true';
             const iframe = document.querySelector(".gameframe") || document.querySelector("iframe");
             const docs = [document];
             if (iframe && iframe.contentDocument) docs.push(iframe.contentDocument);
@@ -2685,7 +2700,7 @@
             const hudOpacity = localStorage.getItem('hax_fps_opacity') || '1';
             const hudScale = localStorage.getItem('hax_fps_scale') || '1';
 
-            const fpsShow = localStorage.getItem('hax_fps_show') !== 'false';
+            const fpsShow = localStorage.getItem('hax_fps_show') === 'true';
 
             if (existingCounter) {
                 existingCounter.style.display = fpsShow ? 'flex' : 'none';
@@ -3409,7 +3424,7 @@
 
         function createKeystrokes() {
             if (keystrokeWidget) { keystrokeWidget.remove(); keystrokeWidget = null; }
-            if (localStorage.getItem('hax_keystrokes_widget') === 'false') return;
+            if (localStorage.getItem('hax_keystrokes_widget') !== 'true') return;
 
             // Inject Style if not exists
             if (!document.getElementById('vexa-keystroke-css')) {
@@ -3520,7 +3535,7 @@
 
         function handleKeyDown(e) {
             if (e.code === 'F6' || e.key === 'F6') {
-                const current = localStorage.getItem('hax_keystrokes_widget') !== 'false';
+                const current = localStorage.getItem('hax_keystrokes_widget') === 'true';
                 const nextState = (!current).toString();
                 localStorage.setItem('hax_keystrokes_widget', nextState);
                 window.dispatchEvent(new StorageEvent('storage', { key: 'hax_keystrokes_widget', newValue: nextState }));

@@ -8,13 +8,15 @@ function getSettingsPath() {
 
 const defaultSettings = {
     fpsEnabled: true,
-    fpsShow: true,
+    fpsShow: false,
     rpcEnabled: true,
     pingBoosterEnabled: false,
     lowGraphicsEnabled: false,
     perfBgEnabled: false,
     thinLinesEnabled: false,
-    autoRecEnabled: true,
+    autoRecEnabled: false,
+    nowPlayingEnabled: false,
+    keyOverlayEnabled: false,
     animatedAvatar: {
         enabled: false,
         defaultAvatar: 'VX',

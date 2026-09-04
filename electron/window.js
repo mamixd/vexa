@@ -64,9 +64,15 @@ function createWindow(options) {
             const { screen } = require('electron');
             const hz = screen.getPrimaryDisplay().displayFrequency || 60;
 
+            const userBgDir = path.join(app.getPath('userData'), 'backgrounds').replace(/\\/g, '/');
+            const defaultBgUrl = 'file:///' + path.join(app.getPath('userData'), 'backgrounds', 'vexa-default.png').replace(/\\/g, '/');
+            const bgDirUrl = 'file:///' + userBgDir;
+
             const payload = `
                 window.ELECTRON_SCREEN_HZ = ${hz};
                 window.VEXA_INJECT_BASE_URL = ${JSON.stringify(INJECT_BASE_URL)};
+                window.VEXA_BG_DIR_URL = ${JSON.stringify(bgDirUrl)};
+                window.VEXA_DEFAULT_BG = ${JSON.stringify(defaultBgUrl)};
                 (function() {
                     if (window.__vexaBundleInjected) return;
                     window.__vexaBundleInjected = true;

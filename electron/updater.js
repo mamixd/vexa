@@ -135,7 +135,11 @@ async function checkAndApplyUpdate(splashWin) {
         response.data.pipe(writer);
 
         await new Promise((resolve, reject) => {
-            writer.on('finish', resolve);
+            writer.on('close', resolve);
+            writer.on('finish', () => {
+                // Ensure writer closes if close doesn't fire automatically
+                writer.close();
+            });
             writer.on('error', reject);
             response.data.on('error', reject);
         });
@@ -143,18 +147,34 @@ async function checkAndApplyUpdate(splashWin) {
         console.log('[Updater] İndirme tamamlandı. Kurulum başlatılıyor...');
         sendSplashUpdate(splashWin, 'KURULUM BAŞLATILIYOR...', 100, 'Lütfen bekleyin, yeni sürüm açılıyor...');
 
-        await new Promise(r => setTimeout(r, 800));
+        await new Promise(r => setTimeout(r, 1200));
 
-        // Kurulum exe'sini başlat ve bu süreci sonlandır
-        const installerProcess = spawn(setupFilePath, [], {
-            detached: true,
-            stdio: 'ignore'
-        });
-        installerProcess.unref();
+        // Kurulum exe'sini bağımsız Windows süreci olarak başlat
+        let launched = false;
+        try {
+            const { shell } = require('electron');
+            const err = await shell.openPath(setupFilePath);
+            if (!err) {
+                launched = true;
+            } else {
+                console.warn('[Updater] shell.openPath hatası:', err);
+            }
+        } catch (launchErr) {
+            console.warn('[Updater] shell.openPath istisnası:', launchErr);
+        }
+
+        if (!launched) {
+            console.log('[Updater] cmd.exe /c start ile başlatılıyor...');
+            const cmdProcess = spawn('cmd.exe', ['/c', 'start', '""', setupFilePath], {
+                detached: true,
+                stdio: 'ignore'
+            });
+            cmdProcess.unref();
+        }
 
         setTimeout(() => {
             app.exit(0);
-        }, 300);
+        }, 1200);
 
         return { updated: true };
     } catch (downloadErr) {

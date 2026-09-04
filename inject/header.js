@@ -1,13 +1,13 @@
 // OEM HaxBall Designed Header + LocalStorage Settings
 (() => {
     let isFpsEnabled = localStorage.getItem('hax_fps_limit') !== 'false';
-    let isFpsShow = localStorage.getItem('hax_fps_show') !== 'false';
+    let isFpsShow = localStorage.getItem('hax_fps_show') === 'true';
     let isRpcEnabled = localStorage.getItem('hax_discord_rpc') !== 'false';
     let isPingBoosterEnabled = localStorage.getItem('hax_ping_booster') === 'true';
     let isLowGraphicsEnabled = localStorage.getItem('hax_low_graphics') === 'true';
     let isPerfBgEnabled = localStorage.getItem('hax_perf_bg') === 'true';
     let isThinLinesEnabled = localStorage.getItem('hax_thin_lines') === 'true';
-    let isAutoRecEnabled = localStorage.getItem('hax_auto_rec') !== 'false';
+    let isAutoRecEnabled = localStorage.getItem('hax_auto_rec') === 'true';
 
     // --- ACCENT COLOR SYSTEM ---
     let ACCENT = localStorage.getItem('hax_accent_color') || '#10b981';
@@ -494,12 +494,12 @@
                             <div style="color:#6b7280; font-size:11px; line-height:1.4;">Şu an çalan müziği ve kontrolleri göster.</div>
                         </div>
                         <div style="position:relative; width:42px; height:22px; flex-shrink:0; cursor:pointer;" id="toggle-music-wrapper">
-                            <div id="music-slider" style="position:absolute; top:0; left:0; right:0; bottom:0; background-color:${localStorage.getItem('hax_music_widget') !== 'false' ? ACCENT : '#2a2d33'}; border-radius:24px; transition:0.3s;"></div>
-                            <div id="music-knob" style="position:absolute; height:16px; width:16px; left:3px; bottom:3px; background-color:white; border-radius:50%; transition:0.3s; transform:${localStorage.getItem('hax_music_widget') !== 'false' ? 'translateX(20px)' : 'translateX(0)'}; box-shadow:0 1px 3px rgba(0,0,0,0.4);"></div>
+                            <div id="music-slider" style="position:absolute; top:0; left:0; right:0; bottom:0; background-color:${localStorage.getItem('hax_music_widget') === 'true' ? ACCENT : '#2a2d33'}; border-radius:24px; transition:0.3s;"></div>
+                            <div id="music-knob" style="position:absolute; height:16px; width:16px; left:3px; bottom:3px; background-color:white; border-radius:50%; transition:0.3s; transform:${localStorage.getItem('hax_music_widget') === 'true' ? 'translateX(20px)' : 'translateX(0)'}; box-shadow:0 1px 3px rgba(0,0,0,0.4);"></div>
                         </div>
                     </div>
                     
-                    <div id="music-options-container" style="margin-top:12px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.05); display:${localStorage.getItem('hax_music_widget') !== 'false' ? 'block' : 'none'};">
+                    <div id="music-options-container" style="margin-top:12px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.05); display:${localStorage.getItem('hax_music_widget') === 'true' ? 'block' : 'none'};">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
                             <span style="color:#9ca3af; font-size:11px; font-weight:600;">Görünüm Stili</span>
                             <select id="inp-music-style" style="width:150px;">
@@ -517,8 +517,8 @@
                             <div style="color:#6b7280; font-size:11px; line-height:1.4;">Ekranda WASD+Space (veya yön tuşları) durumunu gösterir.</div>
                         </div>
                         <div style="position:relative; width:42px; height:22px; flex-shrink:0; cursor:pointer;" id="toggle-keys-wrapper">
-                            <div id="keys-slider" style="position:absolute; top:0; left:0; right:0; bottom:0; background-color:${localStorage.getItem('hax_keystrokes_widget') !== 'false' ? ACCENT : '#2a2d33'}; border-radius:24px; transition:0.3s;"></div>
-                            <div id="keys-knob" style="position:absolute; height:16px; width:16px; left:3px; bottom:3px; background-color:white; border-radius:50%; transition:0.3s; transform:${localStorage.getItem('hax_keystrokes_widget') !== 'false' ? 'translateX(20px)' : 'translateX(0)'}; box-shadow:0 1px 3px rgba(0,0,0,0.4);"></div>
+                            <div id="keys-slider" style="position:absolute; top:0; left:0; right:0; bottom:0; background-color:${localStorage.getItem('hax_keystrokes_widget') === 'true' ? ACCENT : '#2a2d33'}; border-radius:24px; transition:0.3s;"></div>
+                            <div id="keys-knob" style="position:absolute; height:16px; width:16px; left:3px; bottom:3px; background-color:white; border-radius:50%; transition:0.3s; transform:${localStorage.getItem('hax_keystrokes_widget') === 'true' ? 'translateX(20px)' : 'translateX(0)'}; box-shadow:0 1px 3px rgba(0,0,0,0.4);"></div>
                         </div>
                     </div>
                 </div>
@@ -566,8 +566,8 @@
                         <div style="color:#6b7280; font-size:11px; line-height:1.4;">Ekranda anlık FPS ve Ping sayacını göster.</div>
                     </div>
                     <div style="position:relative; width:42px; height:22px; flex-shrink:0; cursor:pointer;" id="toggle-fps-show-wrapper">
-                        <div id="fps-show-slider" style="position:absolute; top:0; left:0; right:0; bottom:0; background-color:${localStorage.getItem('hax_fps_show') !== 'false' ? ACCENT : '#2a2d33'}; border-radius:24px; transition:0.3s;"></div>
-                        <div id="fps-show-knob" style="position:absolute; height:16px; width:16px; left:3px; bottom:3px; background-color:white; border-radius:50%; transition:0.3s; transform:${localStorage.getItem('hax_fps_show') !== 'false' ? 'translateX(20px)' : 'translateX(0)'}; box-shadow:0 1px 3px rgba(0,0,0,0.4);"></div>
+                        <div id="fps-show-slider" style="position:absolute; top:0; left:0; right:0; bottom:0; background-color:${localStorage.getItem('hax_fps_show') === 'true' ? ACCENT : '#2a2d33'}; border-radius:24px; transition:0.3s;"></div>
+                        <div id="fps-show-knob" style="position:absolute; height:16px; width:16px; left:3px; bottom:3px; background-color:white; border-radius:50%; transition:0.3s; transform:${localStorage.getItem('hax_fps_show') === 'true' ? 'translateX(20px)' : 'translateX(0)'}; box-shadow:0 1px 3px rgba(0,0,0,0.4);"></div>
                     </div>
                 </div>
 
@@ -600,8 +600,8 @@
                         <div style="color:#4b5563; font-size:10px; margin-top:3px;">İndirilenler / Vexa Recordings</div>
                     </div>
                     <div style="position:relative; width:42px; height:22px; flex-shrink:0; cursor:pointer;" id="toggle-auto-rec-wrapper">
-                        <div id="auto-rec-slider" style="position:absolute; top:0; left:0; right:0; bottom:0; background-color:${localStorage.getItem('hax_auto_rec') !== 'false' ? ACCENT : '#2a2d33'}; border-radius:24px; transition:0.3s;"></div>
-                        <div id="auto-rec-knob" style="position:absolute; height:16px; width:16px; left:3px; bottom:3px; background-color:white; border-radius:50%; transition:0.3s; transform:${localStorage.getItem('hax_auto_rec') !== 'false' ? 'translateX(20px)' : 'translateX(0)'}; box-shadow:0 1px 3px rgba(0,0,0,0.4);"></div>
+                        <div id="auto-rec-slider" style="position:absolute; top:0; left:0; right:0; bottom:0; background-color:${localStorage.getItem('hax_auto_rec') === 'true' ? ACCENT : '#2a2d33'}; border-radius:24px; transition:0.3s;"></div>
+                        <div id="auto-rec-knob" style="position:absolute; height:16px; width:16px; left:3px; bottom:3px; background-color:white; border-radius:50%; transition:0.3s; transform:${localStorage.getItem('hax_auto_rec') === 'true' ? 'translateX(20px)' : 'translateX(0)'}; box-shadow:0 1px 3px rgba(0,0,0,0.4);"></div>
                     </div>
                 </div>
             </div>
@@ -995,13 +995,13 @@
         document.getElementById('close-modal-btn').onclick = closeModal;
         
         let switchFps = localStorage.getItem('hax_fps_limit') !== 'false';
-        let switchFpsShow = localStorage.getItem('hax_fps_show') !== 'false';
+        let switchFpsShow = localStorage.getItem('hax_fps_show') === 'true';
         let switchRpc = localStorage.getItem('hax_discord_rpc') !== 'false';
         let switchPing = localStorage.getItem('hax_ping_booster') === 'true';
         let switchLowGraphics = localStorage.getItem('hax_low_graphics') === 'true';
         let switchPerfBg = localStorage.getItem('hax_perf_bg') === 'true';
         let switchThinLines = localStorage.getItem('hax_thin_lines') === 'true';
-        let switchAutoRec = localStorage.getItem('hax_auto_rec') !== 'false';
+        let switchAutoRec = localStorage.getItem('hax_auto_rec') === 'true';
         let switchAnim = animConfig.enabled;
 
         // Tab selection logic
@@ -1189,7 +1189,7 @@
         };
 
         // Müzik Widget Toggle
-        let switchMusicWidget = localStorage.getItem('hax_music_widget') !== 'false';
+        let switchMusicWidget = localStorage.getItem('hax_music_widget') === 'true';
         const musicSlider = document.getElementById('music-slider');
         const musicKnob = document.getElementById('music-knob');
         const musicOptionsContainer = document.getElementById('music-options-container');
@@ -1230,7 +1230,7 @@
         }
 
         // Tuş Göstergesi Toggle
-        let switchKeys = localStorage.getItem('hax_keystrokes_widget') !== 'false';
+        let switchKeys = localStorage.getItem('hax_keystrokes_widget') === 'true';
         const keysSlider = document.getElementById('keys-slider');
         const keysKnob = document.getElementById('keys-knob');
         document.getElementById('toggle-keys-wrapper').onclick = () => {
@@ -1266,7 +1266,7 @@
             if (bgSlider) bgSlider.style.backgroundColor = bgVal ? ACCENT : '#2d3035';
             if (bgKnob) bgKnob.style.transform = bgVal ? 'translateX(22px)' : 'translateX(0)';
             // Auto REC (F7)
-            const recVal = localStorage.getItem('hax_auto_rec') !== 'false';
+            const recVal = localStorage.getItem('hax_auto_rec') === 'true';
             switchAutoRec = recVal;
             if (autoRecSlider) autoRecSlider.style.backgroundColor = recVal ? ACCENT : '#2d3035';
             if (autoRecKnob) autoRecKnob.style.transform = recVal ? 'translateX(22px)' : 'translateX(0)';
@@ -1305,7 +1305,7 @@
             
             // Eğer daha önce seçilmemişse, Vexa Default (index 0) olsun
             let activeBg = localStorage.getItem('hax_custom_bg');
-            if (activeBg === null) {
+            if (!activeBg || activeBg === 'null' || activeBg === 'undefined') {
                 activeBg = systemBackgrounds[0].path;
                 localStorage.setItem('hax_custom_bg', activeBg);
                 localStorage.setItem('hax_custom_bg_name', systemBackgrounds[0].name);
@@ -1581,13 +1581,13 @@
 
         bgTabResetBtn.onclick = async (e) => {
             e.preventDefault();
-            const activeBg = localStorage.getItem('hax_custom_bg');
-            localStorage.removeItem('hax_custom_bg');
-            localStorage.removeItem('hax_custom_bg_name');
+            const defBg = systemBackgrounds[0].path;
+            localStorage.setItem('hax_custom_bg', defBg);
+            localStorage.setItem('hax_custom_bg_name', systemBackgrounds[0].name);
             updateBgTabStatus();
             renderBgSystemPresets();
             renderBgHistory();
-            window.dispatchEvent(new CustomEvent('hax-custom-bg-changed', { detail: { path: null } }));
+            window.dispatchEvent(new CustomEvent('hax-custom-bg-changed', { detail: { path: defBg } }));
         };
 
         renderBgSystemPresets();

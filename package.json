@@ -49,6 +49,7 @@
         "asar": true,
         "asarUnpack": [
             "hxalltool/**/*",
+            "inject/backgrounds/**/*",
             "**/node_modules/windows-media-sessions/**/*"
         ],
         "directories": {

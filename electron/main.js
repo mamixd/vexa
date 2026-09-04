@@ -30,6 +30,36 @@ if (!settings.clientId) {
     saveSettings({ clientId: settings.clientId });
 }
 
+// --- Bundled Backgrounds Initialization ---
+function initBundledBackgrounds() {
+    try {
+        const userDataBgDir = path.join(app.getPath('userData'), 'backgrounds');
+        if (!fs.existsSync(userDataBgDir)) {
+            fs.mkdirSync(userDataBgDir, { recursive: true });
+        }
+        const sourceBgDir = path.join(__dirname, '../inject/backgrounds');
+        if (fs.existsSync(sourceBgDir)) {
+            const bgFiles = ['vexa-default.png', 'vexa-football-v1.png', 'vexa-football-v2.jpg'];
+            for (const file of bgFiles) {
+                const src = path.join(sourceBgDir, file);
+                const dest = path.join(userDataBgDir, file);
+                if (fs.existsSync(src)) {
+                    if (!fs.existsSync(dest) || fs.statSync(src).size !== fs.statSync(dest).size) {
+                        try {
+                            fs.copyFileSync(src, dest);
+                        } catch (e) {
+                            console.warn('Could not copy background file:', file, e);
+                        }
+                    }
+                }
+            }
+        }
+    } catch (err) {
+        console.warn('Background initialization warning:', err);
+    }
+}
+initBundledBackgrounds();
+
 // --- Live Active Users Heartbeat ---
 const VERCEL_API_URL = process.env.VERCEL_API_URL || 'https://api.vexaclient.com';
 
@@ -87,54 +117,90 @@ if (!process.env.DISCORD_CLIENT_ID) {
 }
 
 // --- Discord RPC ---
-const clientId = process.env.DISCORD_CLIENT_ID;
+const clientId = process.env.DISCORD_CLIENT_ID || '1472302829392629924';
 if (clientId) {
-    DiscordRPC.register(clientId);
+    try {
+        DiscordRPC.register(clientId);
+    } catch (e) {}
 }
-const rpc = new DiscordRPC.Client({ transport: 'ipc' });
+
+let rpc = null;
+let rpcConnected = false;
+let rpcConnecting = false;
 const appStartTime = Date.now();
-let rpcEnabled = settings.rpcEnabled;
+let rpcEnabled = settings.rpcEnabled !== false;
+let lastRpcActivity = { state: 'Ana Menüde', details: 'Vexa Client', nick: '' };
 
 function setActivity(state, details, nick) {
-    if (!rpc || !rpcEnabled) {
-        if (rpc && !rpcEnabled) {
+    if (state !== undefined) lastRpcActivity.state = state;
+    if (details !== undefined) lastRpcActivity.details = details;
+    if (nick !== undefined) lastRpcActivity.nick = nick;
+
+    if (!rpc || !rpcConnected || !rpcEnabled) {
+        if (rpc && rpcConnected && !rpcEnabled) {
             rpc.clearActivity().catch(() => {});
         }
         return;
     }
     
     rpc.setActivity({
-        details: details || 'Vexa Client',
-        state: state || 'Ana Menüde',
+        details: lastRpcActivity.details || 'Vexa Client',
+        state: lastRpcActivity.state || 'Ana Menüde',
         startTimestamp: appStartTime,
         largeImageKey: 'logo', 
         largeImageText: 'Vexa Client',
-        smallImageKey: (nick && nick.length >= 2) ? 'logo' : undefined,
-        smallImageText: (nick && nick.length >= 2) ? `${nick}` : undefined,
+        smallImageKey: (lastRpcActivity.nick && lastRpcActivity.nick.length >= 2) ? 'logo' : undefined,
+        smallImageText: (lastRpcActivity.nick && lastRpcActivity.nick.length >= 2) ? `${lastRpcActivity.nick}` : undefined,
         instance: false,
         buttons: [
             { label: 'İndir', url: 'https://vexaclient.com' },
             { label: 'GitHub', url: 'https://github.com/vexa-client/vexa' }
         ]
-    }).catch(err => console.error('Discord RPC Error:', err));
+    }).catch(err => {
+        // Silently catch transient RPC send errors
+    });
 }
 
-rpc.on('ready', () => {
-    if (rpcEnabled) {
-        setActivity();
-    }
-});
-
-if (rpcEnabled) {
-    // Discord'un Launcher bağlantısını tam olarak kopardığından emin olmak için 1.5 saniye bekleyip bağlanıyoruz
-    setTimeout(() => {
-        if (clientId) {
-            rpc.login({ clientId }).catch(err => {
-                console.warn('Could not connect to Discord RPC:', err.message);
+function connectDiscordRPC() {
+    if (!rpcEnabled || rpcConnected || rpcConnecting) return;
+    rpcConnecting = true;
+    try {
+        if (!rpc) {
+            rpc = new DiscordRPC.Client({ transport: 'ipc' });
+            rpc.on('ready', () => {
+                rpcConnected = true;
+                rpcConnecting = false;
+                setActivity();
+            });
+            rpc.on('disconnected', () => {
+                rpcConnected = false;
+                rpcConnecting = false;
             });
         }
-    }, 1500);
+        rpc.login({ clientId }).then(() => {
+            rpcConnected = true;
+            rpcConnecting = false;
+            setActivity();
+        }).catch(err => {
+            rpcConnected = false;
+            rpcConnecting = false;
+        });
+    } catch (err) {
+        rpcConnected = false;
+        rpcConnecting = false;
+    }
 }
+
+if (rpcEnabled) {
+    setTimeout(connectDiscordRPC, 1500);
+}
+
+// Discord sonradan açılırsa veya bağlantı koparsa düzenli aralıklarla bağlanmayı dene
+setInterval(() => {
+    if (rpcEnabled && !rpcConnected && !rpcConnecting) {
+        connectDiscordRPC();
+    }
+}, 15000);
 
 // --- Settings IPC ---
 ipcRenderer = null; // Just for context, we are in main.js
@@ -330,15 +396,18 @@ ipcMain.on('update-rpc', (event, data) => {
 });
 
 ipcMain.on('toggle-discord-rpc', (event, state) => {
-    rpcEnabled = state;
+    rpcEnabled = !!state;
     saveSettings({ rpcEnabled });
-    if (!rpcEnabled && rpc) {
-        rpc.clearActivity().catch(() => {});
-    } else if (rpcEnabled && rpc) {
-        if (!rpc.transport.socket) { // If not logged in yet
-             if (clientId) { rpc.login({ clientId }).catch(() => {}); }
+    if (!rpcEnabled) {
+        if (rpc && rpcConnected) {
+            rpc.clearActivity().catch(() => {});
         }
-        setActivity(); 
+    } else {
+        if (!rpcConnected) {
+            connectDiscordRPC();
+        } else {
+            setActivity();
+        }
     }
 });
 
