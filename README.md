@@ -21,128 +21,76 @@
 
 ## Overview
 
-Vexa is a desktop client for [HaxBall](https://www.haxball.com/) built with Electron. It keeps the original HaxBall experience intact while adding a launcher, update system, custom interface, performance controls, profile management, background customization, and Discord Rich Presence.
-
-The project is split into two applications:
-
-- `Vexa Launcher`: installs, updates, and starts the game client.
-- `Vexa Client`: opens HaxBall and injects the Vexa interface and gameplay tools.
+Vexa is a high-performance desktop client for [HaxBall](https://www.haxball.com/) built with Electron. It delivers a fast, low-latency gameplay experience with an integrated splash/updater, custom glassmorphic UI, performance tools, profile management, background customization, and Discord Rich Presence.
 
 Website: [https://vexaclient.com/](https://vexaclient.com/)
+
+---
+
+## 🚀 Yenilikler / Sürüm Notları (v1.4.5)
+
+- **⚡ 64-Bit ve 32-Bit Ayrı Kurulum Paketleri:**
+  - Hem 64-bit (`vexa-setup-x64.exe`) hem de 32-bit (`vexa-setup-ia32.exe`) Windows sistemler için özel optimize edilmiş bağımsız kurulum dosyaları.
+- **💎 Yeni Şeffaf Kristal Logo:**
+  - Başlık barındaki ve oyun içi rozetlerdeki logo arka plansız, temiz şeffaf kristal tasarım ile yenilendi; eski yeşil gölge/parlama artıkları tamamen temizlendi.
+- **🎨 HaxBall İkonik Kırmızı Başlık Çizgisi:**
+  - Takma ad ekranı, oda listesi ve oda içi başlıklarına HaxBall'un imza kırmızı alt çizgisi eklendi. Transparent modu açıldığında çizgi cam temasına uyumlu yarı saydam kırmızıya (`rgba(225, 60, 60, 0.45)`) otomatik olarak geçiş yapar.
+- **🖱️ Geliştirilmiş Butonlar & Turuncu Hover Efekti:**
+  - `Join Room` butonundaki yeşil renk kaldırıldı; tüm butonlar koyu şeffaf cam zeminine kavuşturuldu.
+  - Butonların üzerine fareyle gelindiğinde kenarlıklar şık turuncu çerçeve (`#f59e0b`) ile vurgulanır.
+- **🧹 Filtreler Altındaki Yatay Scrollbar Kaldırıldı:**
+  - Oda listesi filtre kutularının altında oluşan çirkin Windows yatay kaydırma çubuğu tamamen kaldırıldı.
+- **🔄 Transparent Butonu Kalıcılığı & Oda İçi Senkronizasyon:**
+  - Ayarlar veya Oda Kur ekranlarına girip geri dönüldüğünde Transparent butonunun kaybolması sorunu çözüldü.
+  - Oda içerisindeki oyuncu/izleyici panelleri Transparent moduyla uyumlu cam efektine kavuşturuldu.
+- **🎧 Discord RPC & Medya:**
+  - Discord Rich Presence ve Windows Media Sessions arka plan entegrasyonu optimize edildi.
+- **🏎️ Kod & Depo Temizliği:**
+  - Projeden 2.5 GB'lık eski test kalıntıları ve atıl dosyalar temizlenerek istemci hafifletildi.
+
+---
 
 ## Features
 
 | Area | Feature |
 | --- | --- |
+| Architecture | Dedicated 64-bit and 32-bit Windows installers (`vexa-setup-x64.exe`, `vexa-setup-ia32.exe`) |
 | Performance | FPS unlocker, configurable FPS cap, FPS overlay, optional latency-focused Chromium switches |
 | Network | Ping display, NetGraph overlay, WebRTC/stat scraping helpers |
-| Interface | Custom Vexa header, room browser styling, transparent UI mode, settings modal |
+| Interface | Custom Vexa header, transparent UI mode, signature HaxBall red lines, orange hover highlights |
 | Profiles | Multiple local profiles for nicknames, avatars, auth keys, country overrides, and preferences |
 | Avatars | Static and animated avatar presets, custom frames, hotkey/reaction avatar support |
 | Backgrounds | Built-in and custom backgrounds, upload history, video/image support |
-| Discord | Launcher and in-game Discord Rich Presence support |
+| Discord | In-game Discord Rich Presence and media session display |
 | Rooms | Room search, favorites, autojoin helpers, filter controls, HaxAllTool integration |
 | Replays | `.hbr2` file association and replay loader support |
-| Updates | GitHub Release based launcher/client update flow |
-
-## Screenshots
-
-Screenshots and download links are available on the project website:
-
-[https://vexaclient.com/](https://vexaclient.com/)
-
-## Project Structure
-
-```text
-vexa/
-|-- launcher/                 # Launcher app: updater, installer, UI bootstrap
-|   |-- main.js               # Launcher Electron main process
-|   |-- installer.js          # Download, extraction, install, update handling
-|   |-- preload.js            # Safe launcher IPC bridge
-|   `-- ui/                   # Launcher HTML/CSS/renderer files
-|-- electron/                 # Game client app
-|   |-- main.js               # Client Electron main process and RPC
-|   |-- window.js             # BrowserWindow creation and script injection
-|   |-- preload.js            # Client IPC bridge
-|   |-- settings.js           # Local config persistence
-|   `-- splash.html           # Startup splash screen
-|-- inject/                   # Scripts injected into the HaxBall page
-|   |-- client.js             # FPS tools, room browser UI, NetGraph, background sync
-|   |-- header.js             # Top bar, settings modal, background/profile tabs
-|   |-- avatar.js             # Avatar helpers
-|   |-- profiles.js           # Profile management
-|   `-- ui.js                 # UI command bridge helpers
-|-- hxalltool/                # Embedded HaxAllTool extension assets
-|-- build/                    # Icons and installer resources
-|-- .github/workflows/        # Automated release workflow
-|-- electron-builder-client.json
-|-- package.json
-`-- versions.json
-```
+| Updates | Automatic in-app update check and background download engine |
 
 ## Installation
 
-### Recommended
+Download the latest installer matching your Windows architecture from GitHub Releases:
 
-Download the latest installer from GitHub Releases:
+🔗 **[Latest Vexa Release (v1.4.5)](https://github.com/vexa-client/vexa/releases/latest)**
 
-[Latest Vexa Release](https://github.com/vexa-client/vexa/releases/latest)
+- **64-bit Windows:** `vexa-setup-x64.exe`
+- **32-bit Windows:** `vexa-setup-ia32.exe`
 
-Run `vexa-launcher-setup-*.exe`, then open the launcher. The launcher checks the published client version, downloads `app.zip` when needed, installs it locally, and starts `vexa-client.exe` when you press Play.
-
-### Development Setup
-
-Requirements:
-
-- Windows 10/11 x64
-- Node.js 20+
-- Git
-
-```bash
-git clone https://github.com/vexa-client/vexa.git
-cd vexa
-npm install
-npm start
-```
-
-Run the client directly during development:
-
-```bash
-npm run start:client
-```
+Kurulum dosyasını çalıştırın; kurulum tamamlandığında istemci otomatik olarak açılır ve doğrudan oyuna bağlanır.
 
 ## Build Commands
 
 ```bash
-# Build launcher installer into dist/
+# Hem 64-bit hem 32-bit kurulum dosyalarını derle (dist/ klasörüne):
 npm run build
 
-# Build portable client into dist/client/win-unpacked/
-npm run build:client
+# Sadece 64-bit kurulum dosyasını derle:
+npm run build:x64
 
-# Build launcher, client, and app.zip
-npm run build:full
+# Sadece 32-bit kurulum dosyasını derle:
+npm run build:ia32
 
-# Package dist/client/win-unpacked as app.zip
-npm run package:client
+# Veya proje ana dizinindeki 'build.bat' dosyasına çift tıklayarak menüden seçim yapın.
 ```
-
-Build outputs:
-
-- `dist/vexa-launcher-setup-<version>.exe`
-- `dist/client/win-unpacked/vexa-client.exe`
-- `app.zip`
-
-## Release Flow
-
-Releases are built by GitHub Actions from version tags.
-
-1. Update `package.json`.
-2. Update `versions.json`.
-3. Commit the release changes.
-4. Create and push a tag such as `v1.2.2`.
-5. GitHub Actions builds the launcher installer and `app.zip`.
-6. The workflow publishes both files to the GitHub Release.
 
 ```bash
 git add package.json versions.json
@@ -201,10 +149,6 @@ Custom backgrounds are copied into the app user data directory and referenced th
 - The updater downloads release assets from the official repository: `vexa-client/vexa`.
 
 ## Troubleshooting
-
-### The launcher opens but Play does not start the client
-
-Make sure the client is installed under the launcher's local `game/` folder. If it is missing, use the launcher update/download flow again or publish a fresh `app.zip` in the latest release.
 
 ### Discord RPC does not show
 
