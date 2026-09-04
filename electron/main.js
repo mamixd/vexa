@@ -70,7 +70,21 @@ function sendHeartbeat() {
 sendHeartbeat();
 setInterval(sendHeartbeat, 30000);
 
-require('dotenv').config();
+const candidateEnvPaths = [
+    path.join(__dirname, '..', '.env'),
+    path.join(process.resourcesPath || '', '.env'),
+    path.join(app.getAppPath(), '.env'),
+    path.join(process.cwd(), '.env')
+];
+for (const p of candidateEnvPaths) {
+    if (fs.existsSync(p)) {
+        require('dotenv').config({ path: p });
+        break;
+    }
+}
+if (!process.env.DISCORD_CLIENT_ID) {
+    require('dotenv').config();
+}
 
 // --- Discord RPC ---
 const clientId = process.env.DISCORD_CLIENT_ID;

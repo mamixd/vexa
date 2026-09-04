@@ -71,13 +71,18 @@ jobs:
         env:
           DISCORD_CLIENT_ID: ${{ secrets.DISCORD_CLIENT_ID }}
         run: |
-          if (-not [string]::IsNullOrWhiteSpace($env:DISCORD_CLIENT_ID)) {
-            "DISCORD_CLIENT_ID=$env:DISCORD_CLIENT_ID" | Set-Content -Path .env -Encoding ascii
-          } else {
-            Write-Warning "DISCORD_CLIENT_ID secret is not set; Discord RPC will be disabled in this build."
-          }
+          $clientId = if (-not [string]::IsNullOrWhiteSpace($env:DISCORD_CLIENT_ID)) { $env:DISCORD_CLIENT_ID } else { "1472302829392629924" }
+          "DISCORD_CLIENT_ID=$clientId" | Set-Content -Path .env -Encoding utf8
+
       - name: Build Setup Installers (64-bit and 32-bit)
         run: npm run build
+
+      - name: Clean Unwanted Artifacts
+        shell: pwsh
+        run: |
+          Remove-Item -Force dist/vexa-setup.exe -ErrorAction SilentlyContinue
+          Remove-Item -Force dist/*.blockmap -ErrorAction SilentlyContinue
+          Get-ChildItem dist/
 
       - name: Upload Artifacts to Release
         uses: softprops/action-gh-release@v2
@@ -87,19 +92,40 @@ jobs:
           body: |
             ## Vexa Client ${{ env.RELEASE_TAG }}
 
-            Vexa Client kurulum dosyaları (64-bit ve 32-bit):
+            Vexa HaxBall İstemcisi **${{ env.RELEASE_TAG }}** sürümü yayında! Bu sürüm ile birlikte istemci hem 64-bit hem 32-bit sistemler için optimize edilmiş, arayüz baştan aşağı yenilenmiş ve performans iyileştirmeleri yapılmıştır.
 
-            ### Kurulum Dosyaları
-            - **64-bit Windows:** `vexa-setup-x64.exe`
-            - **32-bit Windows:** `vexa-setup-ia32.exe`
+            ---
 
-            ### Kurulum Adımları
+            ### 🚀 Yenilikler ve İyileştirmeler
+
+            - ⚡ **64-Bit ve 32-Bit Ayrı Kurulum Desteği:**
+              - Artık hem 64-bit hem de 32-bit Windows sistemler için ayrı ayrı optimize edilmiş iki hafif kurulum paketi sunulmaktadır (`vexa-setup-x64.exe` ve `vexa-setup-ia32.exe`).
+            - 💎 **Yeni Şeffaf Kristal Logo:**
+              - Başlık barındaki ve oyun içi rozetlerdeki logo arka plansız şeffaf kristal tasarım ile yenilendi; eski yeşil gölge/parlama artıkları temizlendi.
+            - 🎨 **HaxBall İkonik Kırmızı Başlık Çizgisi:**
+              - Takma ad seçimi, oda listesi ve oda görünümü başlıklarının altına HaxBall'un imza kırmızı çizgisi eklendi. Transparent modunda cam efektiyle uyumlu şeffaf kırmızıya (`rgba(225, 60, 60, 0.45)`) otomatik olarak geçiş yapar.
+            - 🖱️ **Geliştirilmiş Butonlar & Turuncu Kenarlık Efekti:**
+              - `Join Room` butonundaki yeşil renk kaldırıldı; diğer butonlarla uyumlu şeffaf cam zeminine kavuşturuldu.
+              - Tüm butonların üzerine fareyle gelindiğinde kenarlıklar şık turuncu çerçeve (`#f59e0b`) ile vurgulanır.
+            - 🧹 **Filtreler Altındaki Yatay Scrollbar Kaldırıldı:**
+              - Filtre kutularının altında oluşan çirkin Windows yatay kaydırma çubuğu tamamen kaldırıldı.
+            - 🎧 **Discord RPC Entegrasyonu:**
+              - Discord Zengin Varlık (Rich Presence) altyapısı optimize edildi.
+            - 🏎️ **Derin Kod ve Dosya Temizliği:**
+              - Projeden 2.5 GB'lık eski test kalıntıları ve atıl dosyalar temizlenerek istemci hafifletildi.
+
+            ---
+
+            ### 📦 Kurulum Dosyaları
+            - **64-bit Windows:** `vexa-setup-x64.exe` (~133 MB)
+            - **32-bit Windows:** `vexa-setup-ia32.exe` (~130 MB)
+
+            ### 📌 Kurulum Adımları
             1. Bilgisayarınızın mimarisine uygun setup dosyasını indirin.
-            2. Kurulumu çalıştırın.
-            3. Kurulum tamamlandığında oyun otomatik olarak açılır.
+            2. Kurulum dosyasını çalıştırın.
+            3. Kurulum tamamlandığında oyun otomatik olarak açılacaktır.
 
-            ### Not
-            Windows "Bilinmeyen Yayıncı" uyarısı verirse "Ek Bilgi" -> "Yine de Çalıştır" diyerek devam edebilirsiniz.
+            > **Not:** Windows ilk açılışta *"Bilinmeyen Yayıncı"* uyarısı verirse **"Ek Bilgi"** -> **"Yine de Çalıştır"** diyerek devam edebilirsiniz.
           files: |
-            dist/*.exe
-            dist/*.blockmap
+            dist/vexa-setup-x64.exe
+            dist/vexa-setup-ia32.exe
