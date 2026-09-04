@@ -19,6 +19,9 @@ bot-dashboard.zip
 package-lock.json
 .env
 
+# Server Backend
+vds-backend/
+
 # Gereksiz dosyalar
 temp_extract/
 temp_extract2/
@@ -37,7 +40,6 @@ sample.jsonl
 fix.js
 split.js
 best_view.txt
-vds-backend/
 frontend-old/
 temp_github_site/
 vexa-client.github.io/
