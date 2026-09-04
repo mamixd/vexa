@@ -56,22 +56,33 @@ function sendSplashUpdate(splashWin, status, percent = null, details = null) {
 
 async function checkAndApplyUpdate(splashWin) {
     const localVersion = normalizeVersion(app.getVersion());
-    console.log(`[Updater] Yerel Sürüm: ${localVersion}. Güncellemeler kontrol ediliyor...`);
+    const arch = process.arch === 'ia32' ? 'ia32' : 'x64';
+    console.log(`[Updater] Yerel Sürüm: ${localVersion} (${arch}). Güncellemeler kontrol ediliyor...`);
 
     sendSplashUpdate(splashWin, 'GÜNCELLEMELER KONTROL EDİLİYOR...', null, 'Sürüm sorgulanıyor...');
 
     let remoteVersion = null;
-    let downloadUrl = FALLBACK_SETUP_URL;
+    let downloadUrl = null;
 
     try {
         const resp = await axios.get(VERSIONS_URL, {
             timeout: 3500,
-            headers: { 'User-Agent': 'VexaClient-AutoUpdater', 'Cache-Control': 'no-cache' }
+            headers: { 'User-Agent': `VexaClient-AutoUpdater/${localVersion} (${arch})`, 'Cache-Control': 'no-cache' }
         });
 
         if (resp.data) {
             remoteVersion = resp.data.client || resp.data.launcher || null;
-            if (resp.data.downloadUrl) {
+
+            // 1. Öncelik: Mimariye özel URL (downloadUrls.x64 / downloadUrls.ia32)
+            if (resp.data.downloadUrls && resp.data.downloadUrls[arch]) {
+                downloadUrl = resp.data.downloadUrls[arch];
+            } 
+            // 2. Öncelik: downloadUrl içinde ${arch} değişkeni varsa
+            else if (typeof resp.data.downloadUrl === 'string' && resp.data.downloadUrl.includes('${arch}')) {
+                downloadUrl = resp.data.downloadUrl.replace(/\$\{arch\}/g, arch);
+            }
+            // 3. Öncelik: Doğrudan downloadUrl verilmişse
+            else if (resp.data.downloadUrl) {
                 downloadUrl = resp.data.downloadUrl;
             }
         }
@@ -86,7 +97,12 @@ async function checkAndApplyUpdate(splashWin) {
         return { updated: false };
     }
 
-    console.log(`[Updater] Yeni sürüm bulundu: v${remoteVersion} (Mevcut: v${localVersion}). İndirme başlıyor...`);
+    // Eğer indirme linki API'den gelmediyse GitHub Releases fallback bağlantısını oluştur
+    if (!downloadUrl) {
+        downloadUrl = `https://github.com/vexa-client/vexa/releases/download/v${remoteVersion}/vexa-setup-${arch}.exe`;
+    }
+
+    console.log(`[Updater] Yeni sürüm bulundu: v${remoteVersion} (${arch}) (Mevcut: v${localVersion}). İndirme başlıyor... [${downloadUrl}]`);
     sendSplashUpdate(splashWin, `GÜNCELLEME BULUNDU: v${remoteVersion}`, 0, 'İndirme hazırlanıyor...');
 
     const tempDir = os.tmpdir();

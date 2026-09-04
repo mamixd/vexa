@@ -18,6 +18,7 @@ bot-dashboard/
 bot-dashboard.zip
 package-lock.json
 .env
+vds-backend/
 
 # Gereksiz dosyalar
 temp_extract/

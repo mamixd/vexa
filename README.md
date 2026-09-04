@@ -1,176 +1,169 @@
 <p align="center">
   <a href="https://vexaclient.com/">
-    <img src="build/icon.png" alt="Vexa Client" width="118" />
+    <img src="inject/logo.png" alt="Vexa Client" width="130" />
   </a>
 </p>
 
 <h1 align="center">Vexa HaxBall Client</h1>
 
 <p align="center">
-  <strong>A modern Electron desktop client for HaxBall with performance tools, profiles, custom UI, and Discord Rich Presence.</strong>
+  <strong>Gelişmiş, Yüksek Performanslı ve Özelleştirilebilir HaxBall Masaüstü İstemcisi</strong><br />
+  <em>Advanced High-Performance Desktop Client for HaxBall (x64 & 32-bit)</em>
 </p>
 
 <p align="center">
-  <a href="https://vexaclient.com/"><img src="https://img.shields.io/badge/Website-vexaclient.com-00c853?style=for-the-badge" alt="Website" /></a>
-  <a href="https://github.com/vexa-client/vexa/releases/latest"><img src="https://img.shields.io/github/v/release/vexa-client/vexa?style=for-the-badge&color=00c853&label=Latest%20Release" alt="Latest Release" /></a>
+  <a href="https://vexaclient.com/"><img src="https://img.shields.io/badge/Website-vexaclient.com-10b981?style=for-the-badge" alt="Website" /></a>
+  <a href="https://github.com/vexa-client/vexa/releases/latest"><img src="https://img.shields.io/github/v/release/vexa-client/vexa?style=for-the-badge&color=10b981&label=Latest%20Release" alt="Latest Release" /></a>
   <a href="https://github.com/vexa-client/vexa/actions/workflows/build-and-release.yml"><img src="https://img.shields.io/github/actions/workflow/status/vexa-client/vexa/build-and-release.yml?style=for-the-badge&label=Build" alt="Build Status" /></a>
+  <img src="https://img.shields.io/badge/Platform-Windows%20(64--bit%20%7C%2032--bit)-0284c7?style=for-the-badge" alt="Platform" />
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPLv3-blue?style=for-the-badge" alt="License" /></a>
 </p>
 
 ---
 
-## Overview
+## 🌟 Genel Bakış (Overview)
 
-Vexa is a high-performance desktop client for [HaxBall](https://www.haxball.com/) built with Electron. It delivers a fast, low-latency gameplay experience with an integrated splash/updater, custom glassmorphic UI, performance tools, profile management, background customization, and Discord Rich Presence.
+**Vexa Client**, [HaxBall](https://www.haxball.com/) deneyimini masaüstüne taşıyan modern bir Electron istemcisidir. Doğrudan tek kurulum dosyası (`vexa-setup`) ile çalışır; ekstra launcher veya karmaşık kurulum adımları gerektirmez.
 
-Website: [https://vexaclient.com/](https://vexaclient.com/)
-
----
-
-## 🚀 Yenilikler / Sürüm Notları (v1.4.5)
-
-- **⚡ 64-Bit ve 32-Bit Ayrı Kurulum Paketleri:**
-  - Hem 64-bit (`vexa-setup-x64.exe`) hem de 32-bit (`vexa-setup-ia32.exe`) Windows sistemler için özel optimize edilmiş bağımsız kurulum dosyaları.
-- **💎 Yeni Şeffaf Kristal Logo:**
-  - Başlık barındaki ve oyun içi rozetlerdeki logo arka plansız, temiz şeffaf kristal tasarım ile yenilendi; eski yeşil gölge/parlama artıkları tamamen temizlendi.
-- **🎨 HaxBall İkonik Kırmızı Başlık Çizgisi:**
-  - Takma ad ekranı, oda listesi ve oda içi başlıklarına HaxBall'un imza kırmızı alt çizgisi eklendi. Transparent modu açıldığında çizgi cam temasına uyumlu yarı saydam kırmızıya (`rgba(225, 60, 60, 0.45)`) otomatik olarak geçiş yapar.
-- **🖱️ Geliştirilmiş Butonlar & Turuncu Hover Efekti:**
-  - `Join Room` butonundaki yeşil renk kaldırıldı; tüm butonlar koyu şeffaf cam zeminine kavuşturuldu.
-  - Butonların üzerine fareyle gelindiğinde kenarlıklar şık turuncu çerçeve (`#f59e0b`) ile vurgulanır.
-- **🧹 Filtreler Altındaki Yatay Scrollbar Kaldırıldı:**
-  - Oda listesi filtre kutularının altında oluşan çirkin Windows yatay kaydırma çubuğu tamamen kaldırıldı.
-- **🔄 Transparent Butonu Kalıcılığı & Oda İçi Senkronizasyon:**
-  - Ayarlar veya Oda Kur ekranlarına girip geri dönüldüğünde Transparent butonunun kaybolması sorunu çözüldü.
-  - Oda içerisindeki oyuncu/izleyici panelleri Transparent moduyla uyumlu cam efektine kavuşturuldu.
-- **🎧 Discord RPC & Medya:**
-  - Discord Rich Presence ve Windows Media Sessions arka plan entegrasyonu optimize edildi.
-- **🏎️ Kod & Depo Temizliği:**
-  - Projeden 2.5 GB'lık eski test kalıntıları ve atıl dosyalar temizlenerek istemci hafifletildi.
+Oyunculara ultra düşük giriş gecikmesi, FPS kilit kaldırıcı, HaxBall'un nostaljik imza arayüz detayları (kırmızı başlık çizgisi), modern yarı saydam cam teması (Transparent mode), Discord Zengin Varlık (RPC) ve otomatik arka plan güncelleme sistemi sunar.
 
 ---
 
-## Features
+## 📦 İndirme & Desteklenen Mimariler (Downloads)
 
-| Area | Feature |
-| --- | --- |
-| Architecture | Dedicated 64-bit and 32-bit Windows installers (`vexa-setup-x64.exe`, `vexa-setup-ia32.exe`) |
-| Performance | FPS unlocker, configurable FPS cap, FPS overlay, optional latency-focused Chromium switches |
-| Network | Ping display, NetGraph overlay, WebRTC/stat scraping helpers |
-| Interface | Custom Vexa header, transparent UI mode, signature HaxBall red lines, orange hover highlights |
-| Profiles | Multiple local profiles for nicknames, avatars, auth keys, country overrides, and preferences |
-| Avatars | Static and animated avatar presets, custom frames, hotkey/reaction avatar support |
-| Backgrounds | Built-in and custom backgrounds, upload history, video/image support |
-| Discord | In-game Discord Rich Presence and media session display |
-| Rooms | Room search, favorites, autojoin helpers, filter controls, HaxAllTool integration |
-| Replays | `.hbr2` file association and replay loader support |
-| Updates | Automatic in-app update check and background download engine |
+Vexa, hem modern **64-bit** hem de eski nesil **32-bit** Windows sistemlerini tam olarak destekler:
 
-## Installation
+| Dosya Adı | Mimari | Desteklenen Sistemler | İndirme |
+| :--- | :--- | :--- | :--- |
+| **`vexa-setup-x64.exe`** | 64-bit (`x64`) | Windows 10, Windows 11 (64-bit) | [İndir (x64)](https://github.com/vexa-client/vexa/releases/latest) |
+| **`vexa-setup-ia32.exe`** | 32-bit (`ia32 / x86`) | Windows 7, 8.1, 10, 11 (32-bit) | [İndir (32-bit)](https://github.com/vexa-client/vexa/releases/latest) |
 
-Download the latest installer matching your Windows architecture from GitHub Releases:
+> **Kurulum:** Sistem mimarinize uygun setup dosyasını indirin ve çalıştırın. Kurulum bittiğinde istemci otomatik olarak açılır ve doğrudan HaxBall'a bağlanır.
 
-🔗 **[Latest Vexa Release (v1.4.5)](https://github.com/vexa-client/vexa/releases/latest)**
+---
 
-- **64-bit Windows:** `vexa-setup-x64.exe`
-- **32-bit Windows:** `vexa-setup-ia32.exe`
+## 🚀 Öne Çıkan Özellikler (Key Features)
 
-Kurulum dosyasını çalıştırın; kurulum tamamlandığında istemci otomatik olarak açılır ve doğrudan oyuna bağlanır.
+### ⚡ Performans & Ağ
+- **FPS Kilidi Kaldırma (FPS Unlocker):** Monitör yenileme hızına (144Hz, 240Hz, 360Hz+) tam uyum.
+- **Ultra Düşük Gecikme:** Özel Chromium bayrakları (`enable-gpu-rasterization`, `enable-zero-copy`, `disable-renderer-backgrounding`).
+- **Canlı Göstergeler:** Canlı FPS sayacı ve NetGraph ağ grafiği.
 
-## Build Commands
+### 🎨 Görsel Tasarım & Arayüz
+- **HaxBall İmza Kırmızı Başlık Çizgisi:** Takma ad ekranı, oda listesi ve oda başlıklarında klasik kırmızı HaxBall vurgusu.
+- **Şeffaf Mod (Transparent UI):** Tek tıkla arka plan duvar kağıdı ile bütünleşen cam efektli yarı saydam tema. Kırmızı çizgiler ve oyuncu panelleri şeffaflıkla dinamik olarak senkronize olur.
+- **Yenilenen Kristal Logo & Butonlar:** Şeffaf Vexa elmas logosu, yeşil artıklardan arındırılmış temiz cam butonlar ve fareyle üzerine gelindiğinde parlayan turuncu (`#f59e0b`) kenarlıklar.
+- **Arka Plan Yöneticisi:** Dahili yüksek kaliteli futbol ve Vexa duvar kağıtları arasında anında geçiş.
 
+### 🎧 Entegrasyonlar & Araçlar
+- **Discord Rich Presence (RPC):** Discord profilinizde *"Vexa Client Oynuyor"*, bulunulan oda adı ve oynama süresi gösterimi.
+- **Şimdi Çalıyor (Now Playing):** Windows Medya Oturumları ile Spotify vb. şarkı durumunu oda içine aktarma desteği.
+- **Replay Sistemi:** `.hbr2` uzantılı HaxBall tekrar dosyaları ile tam Windows ilişkilendirmesi; çift tıklayarak doğrudan istemci içinde izleme.
+- **HaxAllTool Entegre Eklentisi:** Oda filtreleri, otomatik katılma (autojoin), favori odalar ve gelişmiş arama çubuğu.
+
+### 🔄 Akıllı Otomatik Güncelleme (Auto-Updater)
+- İstemci açılışında VDS API üzerinden yeni sürümü kontrol eder.
+- Güncelleme varsa, şık splash ekranı üzerinden indirme yüzdesini, hızını ve boyutunu canlı olarak gösterir.
+- 64-bit ve 32-bit mimariyi otomatik algılar ve oyuncunun sistemine uygun kurulum paketini arka planda kurar.
+
+---
+
+## 💻 Geliştirici Kurulumu (Development)
+
+### Gereksinimler
+- **İşletim Sistemi:** Windows 10 / 11
+- **Node.js:** v18 veya v20 LTS
+- **Paket Yöneticisi:** `npm`
+
+### Projeyi Çalıştırma
 ```bash
-# Hem 64-bit hem 32-bit kurulum dosyalarını derle (dist/ klasörüne):
+# Depoyu klonlayın
+git clone https://github.com/vexa-client/vexa.git
+cd vexa
+
+# Bağımlılıkları yükleyin
+npm install
+
+# İstemciyi doğrudan geliştirme modunda başlatın
+npm start
+```
+
+---
+
+## 🛠️ Derleme Komutları (Build Commands)
+
+Projede hem komut satırı hem de tek tıkla çalışan Türkçe menülü derleme aracı bulunmaktadır:
+
+### 1. `build.bat` ile Tek Tıkla Derleme (Önerilen)
+Proje kök dizinindeki **`build.bat`** dosyasına çift tıklayarak menüden seçim yapabilirsiniz:
+- `[1]` Hem 64-bit hem 32-bit Setup Üret (x64 + ia32)
+- `[2]` Sadece 64-bit Setup Üret
+- `[3]` Sadece 32-bit Setup Üret
+
+### 2. NPM Komutları ile Derleme
+```bash
+# Hem 64-bit hem 32-bit kurulum dosyalarını derler (dist/ altında üretilir)
 npm run build
 
-# Sadece 64-bit kurulum dosyasını derle:
+# Sadece 64-bit setup derler
 npm run build:x64
 
-# Sadece 32-bit kurulum dosyasını derle:
+# Sadece 32-bit setup derler
 npm run build:ia32
-
-# Veya proje ana dizinindeki 'build.bat' dosyasına çift tıklayarak menüden seçim yapın.
 ```
 
-```bash
-git add package.json versions.json
-git commit -m "Prepare 1.2.2 release"
-git tag v1.2.2
-git push origin main
-git push origin v1.2.2
-```
+Oluşan kurulum dosyaları `dist/` klasöründe yer alır:
+- `dist/vexa-setup-x64.exe` (~133 MB)
+- `dist/vexa-setup-ia32.exe` (~130 MB)
 
-## Discord Rich Presence
+---
 
-Discord RPC uses `DISCORD_CLIENT_ID` from the runtime environment.
-
-For local builds, create a `.env` file in the project root:
-
-```env
-DISCORD_CLIENT_ID=your_discord_application_client_id
-```
-
-`.env` is ignored by Git and should not be committed.
-
-For GitHub Actions releases, add this repository secret:
+## 📁 Proje Dizin Yapısı (Project Structure)
 
 ```text
-DISCORD_CLIENT_ID
+vexa/
+├── electron/                 # Electron ana süreci ve yerel servisler
+│   ├── main.js               # Ana yaşam döngüsü, pencere yönetimi, Discord RPC
+│   ├── window.js             # BrowserWindow yapılandırması ve script enjeksiyonu
+│   ├── updater.js            # Mimariye duyarlı otomatik güncelleme motoru
+│   ├── settings.js           # Kullanıcı ayarları kalıcılığı (config.json)
+│   └── splash.html           # Başlangıç ve indirme durumu yükleme ekranı
+├── inject/                   # HaxBall web sayfasına enjekte edilen modüller
+│   ├── client.js             # FPS araçları, oda listesi teması, NetGraph
+│   ├── header.js             # Üst menü barı, ayarlar modalı, duvar kağıdı seçici
+│   ├── roomlist_premium.css  # Premium cam oda listesi stilleri ve buton efektleri
+│   ├── avatar.js             # Avatar ve reaksiyon araçları
+│   ├── profiles.js           # Profil yönetimi
+│   ├── logo.png              # Şeffaf kristal Vexa logosu
+│   └── backgrounds/          # Dahili duvar kağıtları
+├── hxalltool/                # Gömülü HaxAllTool eklenti varlıkları
+├── build/                    # İkonlar, bannerlar ve NSIS kurulum kaynakları
+├── build.bat                 # Yerel Windows derleme yöneticisi
+├── .github/workflows/        # Otomatik GitHub Actions Release iş akışı
+├── package.json              # Proje bağımlılıkları ve electron-builder ayarları
+└── versions.json             # Güncel istemci sürüm tanımı
 ```
 
-During the release workflow, the secret is written into a temporary `.env` file before building so the packaged app can read it at runtime.
+---
 
-Note: Discord Client ID is a public application identifier, not a bot token or password. Still, this project keeps it out of source control to avoid exposing project-specific metadata in the repository.
+## 🔐 Güvenlik & Gizlilik Notları
 
-## Configuration
+- Vexa Client, resmi HaxBall web uygulamasını güvenli bir Chromium kapsayıcısında çalıştırır ve yalnızca arayüz/performans scriptlerini enjekte eder.
+- `.env` ve sunucu tarafı kodları (`vds-backend/`) Git takibinden muaftır ve depoya yüklenmez.
+- Discord RPC için bot jetonu gerekmez; yalnızca standart istemci kimliği kullanılır.
+- Tüm güncellemeler yalnızca resmi GitHub deposundan (`vexa-client/vexa`) indirilir.
 
-Client settings are stored in Electron's user data directory as `config.json`. The exact path depends on how Electron resolves `app.getPath('userData')` on the user's machine.
+---
 
-Common settings include:
+## 🔗 Bağlantılar & Topluluk
 
-| Setting | Purpose |
-| --- | --- |
-| `fpsEnabled` | Enables FPS unlock behavior |
-| `fpsShow` | Shows or hides the FPS counter |
-| `rpcEnabled` | Enables Discord Rich Presence |
-| `pingBoosterEnabled` | Enables latency-focused Chromium switches |
-| `netGraphEnabled` | Shows or hides the network graph |
-| `profiles` | Stores local profile data |
-| `animatedAvatar` | Stores animated avatar configuration |
+- **Resmi Web Sitesi:** [https://vexaclient.com/](https://vexaclient.com/)
+- **Son Sürüm İndirmeleri:** [GitHub Releases](https://github.com/vexa-client/vexa/releases)
+- **Hata Bildirimi & İstekler:** [GitHub Issues](https://github.com/vexa-client/vexa/issues)
+- **HaxBall Resmi Sayfası:** [https://www.haxball.com/](https://www.haxball.com/)
 
-Custom backgrounds are copied into the app user data directory and referenced through local file URLs.
+---
 
-## Security Notes
+## 📄 Lisans
 
-- The client wraps the official HaxBall web app and injects UI scripts into that page.
-- No Discord bot token is required or stored.
-- `.env` is ignored by Git.
-- Release builds should use GitHub repository secrets for environment-specific values.
-- The updater downloads release assets from the official repository: `vexa-client/vexa`.
-
-## Troubleshooting
-
-### Discord RPC does not show
-
-Check these points:
-
-- Discord desktop app is running.
-- `rpcEnabled` is true in Vexa settings.
-- Local `.env` or GitHub Actions `DISCORD_CLIENT_ID` secret exists.
-- The packaged build includes `.env` through the Electron builder `files` list.
-
-### GitHub Actions release has no RPC
-
-Add the repository secret `DISCORD_CLIENT_ID`, then rerun the release workflow or push a new version tag.
-
-## Useful Links
-
-- Website: [https://vexaclient.com/](https://vexaclient.com/)
-- Releases: [https://github.com/vexa-client/vexa/releases](https://github.com/vexa-client/vexa/releases)
-- Actions: [https://github.com/vexa-client/vexa/actions](https://github.com/vexa-client/vexa/actions)
-- Issues: [https://github.com/vexa-client/vexa/issues](https://github.com/vexa-client/vexa/issues)
-- HaxBall: [https://www.haxball.com/](https://www.haxball.com/)
-
-## License
-
-This project is licensed under the GNU General Public License v3.0. See [LICENSE](LICENSE) for details.
+Bu proje **GNU General Public License v3.0 (GPLv3)** lisansı altında geliştirilmektedir. Detaylar için [LICENSE](LICENSE) dosyasına göz atabilirsiniz.
