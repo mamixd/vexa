@@ -18,6 +18,8 @@ haxball-bot/
 haxball/
 sniper-bot/
 *sniper*.js
+haxball*.js
+bot*.js
 bot-dashboard/
 bot-dashboard.zip
 package-lock.json
