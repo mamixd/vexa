@@ -89,48 +89,7 @@ jobs:
         with:
           tag_name: ${{ env.RELEASE_TAG }}
           name: "Vexa Client ${{ env.RELEASE_TAG }}"
-          body: |
-            ## Vexa Client ${{ env.RELEASE_TAG }}
-
-            Vexa HaxBall İstemcisi **${{ env.RELEASE_TAG }}** sürümü yayında! Bu sürüm ile birlikte istemci hem 64-bit hem 32-bit sistemler için optimize edilmiş, arayüz baştan aşağı yenilenmiş ve performans iyileştirmeleri yapılmıştır.
-
-            ---
-
-            ### 🚀 Yenilikler ve İyileştirmeler
-
-            - ⚡ **64-Bit ve 32-Bit Ayrı Kurulum Desteği:**
-              - Artık hem 64-bit hem de 32-bit Windows sistemler için ayrı ayrı optimize edilmiş iki hafif kurulum paketi sunulmaktadır (`vexa-setup-x64.exe` ve `vexa-setup-ia32.exe`).
-            - 💎 **Yeni Şeffaf Kristal Logo:**
-              - Başlık barındaki ve oyun içi rozetlerdeki logo arka plansız şeffaf kristal tasarım ile yenilendi; eski yeşil gölge/parlama artıkları temizlendi.
-            - 🎨 **HaxBall İkonik Kırmızı Başlık Çizgisi:**
-              - Takma ad seçimi, oda listesi ve oda görünümü başlıklarının altına HaxBall'un imza kırmızı çizgisi eklendi. Transparent modunda cam efektiyle uyumlu şeffaf kırmızıya (`rgba(225, 60, 60, 0.45)`) otomatik olarak geçiş yapar.
-            - 🖱️ **Geliştirilmiş Butonlar & Turuncu Kenarlık Efekti:**
-              - `Join Room` butonundaki yeşil renk kaldırıldı; diğer butonlarla uyumlu şeffaf cam zeminine kavuşturuldu.
-              - Tüm butonların üzerine fareyle gelindiğinde kenarlıklar şık turuncu çerçeve (`#f59e0b`) ile vurgulanır.
-            - 🧹 **Filtreler Altındaki Yatay Scrollbar Kaldırıldı:**
-              - Filtre kutularının altında oluşan çirkin Windows yatay kaydırma çubuğu tamamen kaldırıldı.
-            - 🎵 **Medya Aktivitesi & Müzik Widget (Media Sessions):**
-              - Paketlenmiş istemcilerde Windows Media Sessions arka plan ikili yürütücüsü düzeltildi.
-              - Şarkı bilgisi (Spotify, YouTube vb.) anlık olarak algılanır ve Discord Rich Presence ile Müzik Widget'ına senkronize edilir.
-            - 🎧 **Discord RPC İyileştirmeleri:**
-              - Dinlenen müzik ve aktif oyun durumu Discord durumuna gerçek zamanlı yansıtılır.
-            - 🔄 **Akıllı Otomatik Güncelleyici:**
-              - 64-bit ve 32-bit mimari algılayıcı güncelleyici, çakışmaları önleyen süreç sonlandırma desteği ile sorunsuz çalışır.
-            - 🏎️ **Derin Kod ve Performans Temizliği:**
-              - Hafifletilmiş istemci ve optimize edilmiş bellek kullanımı.
-
-            ---
-
-            ### 📦 Kurulum Dosyaları
-            - **64-bit Windows:** `vexa-setup-x64.exe` (~133 MB)
-            - **32-bit Windows:** `vexa-setup-ia32.exe` (~130 MB)
-
-            ### 📌 Kurulum Adımları
-            1. Bilgisayarınızın mimarisine uygun setup dosyasını indirin.
-            2. Kurulum dosyasını çalıştırın.
-            3. Kurulum tamamlandığında oyun otomatik olarak açılacaktır.
-
-            > **Not:** Windows ilk açılışta *"Bilinmeyen Yayıncı"* uyarısı verirse **"Ek Bilgi"** -> **"Yine de Çalıştır"** diyerek devam edebilirsiniz.
+          body_path: launcher/patch-notes.md
           files: |
             dist/vexa-setup-x64.exe
             dist/vexa-setup-ia32.exe
