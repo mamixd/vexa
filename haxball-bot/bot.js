@@ -1,13 +1,12 @@
 /**
  * 🎯 VEXA HAXBALL SNIPER BOT [3-0 BAN & VIP SYSTEM]
  * -------------------------------------------------------------
- * Features:
- * - 1v1 Sniper Matchmaking with Winner-Stays logic
- * - 3-0 Temporary Ban System (5-10 min auto-ban upon 3-0 sweep)
- * - Vexa Client Auto-Detection & VIP Queue Priority ([VEXA] Tag)
- * - Account & Stats Tracking for Registered Users (!kayit / !giris)
- * - Anti-AFK & Anti-Spam / Flood Protection
- * - Periodic Promotion Broadcasts & Rich Commands
+ * Gelişmiş 1v1 Sniper Haritası & Kazanan Kalır Sistemi
+ * 3-0 Skorla Yenilen Oyuncuya Otomatik 5-10 Dk Geçici Ban
+ * Vexa Client Kullanıcılarına Otomatik VIP Sıra & Özel Tag
+ * Sadece Kayıtlı Oyuncular İçin İstatistik & Sıralama Sistemi
+ * AFK & Anti-Spam (Flood) Koruma Motoru
+ * Otomatik Tanıtım ve Reklam Broadcast Motoru
  * -------------------------------------------------------------
  */
 
@@ -36,6 +35,9 @@
     };
 
     const stadiumData = window.__BOT_STADIUM__ || null;
+
+    // Zero-width character signature injected by Vexa Client
+    const VEXA_INVISIBLE_TAG = '\u200B\u200C\u200D';
 
     // 2. DATA STORAGE (Bridge to Node.js or LocalStorage)
     let users = window.__INITIAL_USERS__ || {};
@@ -113,10 +115,30 @@
     room.setTeamsLock(true);
 
     // 5. HELPER FUNCTIONS
+    function cleanPlayerName(name) {
+        if (!name) return 'Bilinmeyen';
+        return name
+            .replace(/[\u200B\u200C\u200D\uFEFF]/g, '')
+            .replace(/\[VEXA\]/gi, '')
+            .trim();
+    }
+
+    function isVexaPlayer(player) {
+        if (!player) return false;
+        if (vexaUsers.has(player.id)) return true;
+        if (player.name) {
+            if (player.name.includes(VEXA_INVISIBLE_TAG) || player.name.toUpperCase().includes('[VEXA]')) {
+                vexaUsers.add(player.id);
+                return true;
+            }
+        }
+        return false;
+    }
+
     function getPlayerNameWithTag(player) {
         if (!player) return 'Bilinmeyen';
-        const isVexa = vexaUsers.has(player.id) || (player.name && player.name.includes('[VEXA]'));
-        return (isVexa ? '⭐[VEXA] ' : '') + player.name;
+        const clean = cleanPlayerName(player.name);
+        return (isVexaPlayer(player) ? '⭐[VEXA] ' : '') + clean;
     }
 
     function simpleHash(str) {
@@ -184,24 +206,25 @@
             return;
         }
 
-        const isVexa = vexaUsers.has(player.id) || (player.name && player.name.includes('[VEXA]'));
+        const cleanName = cleanPlayerName(player.name);
 
-        if (isVexa) {
-            // VIP Priority: Place ahead of regular players
+        if (isVexaPlayer(player)) {
+            // VIP Priority: Insert in front of all non-Vexa players
             let insertIdx = queue.length;
             for (let i = 0; i < queue.length; i++) {
-                if (!vexaUsers.has(queue[i])) {
+                const queuedPlayer = room.getPlayer(queue[i]);
+                if (!isVexaPlayer(queuedPlayer)) {
                     insertIdx = i;
                     break;
                 }
             }
             queue.splice(insertIdx, 0, player.id);
             const pos = insertIdx + 1;
-            room.sendAnnouncement('⭐ [VEXA VIP] ' + player.name + ' VIP öncelikle sıraya girdi! (Sıra: #' + pos + ')', null, 0xFFD700, 'bold', 1);
+            room.sendAnnouncement('⭐ [VEXA VIP] ' + cleanName + ' VIP öncelikle sıraya girdi! (Sıra: #' + pos + ')', null, 0xFFD700, 'bold', 1);
         } else {
             queue.push(player.id);
             const pos = queue.length;
-            room.sendAnnouncement('🎯 ' + player.name + ' sıraya girdi. (Sıra: #' + pos + '). VIP öncelik için: !client', null, 0x00E5FF, 'normal', 0);
+            room.sendAnnouncement('🎯 ' + cleanName + ' sıraya girdi. (Sıra: #' + pos + '). VIP öncelik için: !client', null, 0x00E5FF, 'normal', 0);
         }
 
         checkAndStartNextGame();
@@ -219,40 +242,43 @@
     function checkAndStartNextGame() {
         if (nextMatchTimeout) return;
 
-        const { red, blue } = checkActivePlayers();
+        let { red, blue } = checkActivePlayers();
         const scores = room.getScores();
 
-        // If both slots full and game active, do nothing
+        // If both slots are full and match is running, wait for it to finish
         if (red && blue && scores !== null) {
             return;
         }
 
         // Fill Red if empty
-        if (!red && queue.length > 0) {
+        while (!red && queue.length > 0) {
             const nextRedId = queue.shift();
             const p = room.getPlayer(nextRedId);
             if (p) {
                 room.setPlayerTeam(nextRedId, 1);
                 room.sendAnnouncement('🔴 ' + getPlayerNameWithTag(p) + ' Kırmızı tarafa geçti!', null, 0xFF4444, 'bold', 0);
+                red = p;
+                break;
             }
         }
 
         // Fill Blue if empty
-        const currentActive = checkActivePlayers();
-        if (!currentActive.blue && queue.length > 0) {
+        while (!blue && queue.length > 0) {
             const nextBlueId = queue.shift();
             const p = room.getPlayer(nextBlueId);
             if (p) {
                 room.setPlayerTeam(nextBlueId, 2);
                 room.sendAnnouncement('🔵 ' + getPlayerNameWithTag(p) + ' Mavi tarafa geçti!', null, 0x4488FF, 'bold', 0);
+                blue = p;
+                break;
             }
         }
 
-        // Ready to start match
-        const readyActive = checkActivePlayers();
-        if (readyActive.red && readyActive.blue) {
-            room.sendAnnouncement('⚔️ 1v1 MAÇ BAŞLIYOR: ' + getPlayerNameWithTag(readyActive.red) + ' VS ' + getPlayerNameWithTag(readyActive.blue) + '!', null, 0xFFFF00, 'bold', 1);
-            room.sendAnnouncement('⚠️ Skor 3-0 biterse kaybeden 10 DAKİKA BANLANIR! Başarılar!', null, 0xFF5555, 'small-bold', 0);
+        // Ready to start match if both teams have a player
+        if (red && blue) {
+            room.sendAnnouncement('⚔️ 1v1 MAÇ BAŞLIYOR: ' + getPlayerNameWithTag(red) + ' VS ' + getPlayerNameWithTag(blue) + '!', null, 0xFFFF00, 'bold', 1);
+            const banMins = config.banDurationMinutes || 10;
+            room.sendAnnouncement('⚠️ Skor 3-0 biterse kaybeden ' + banMins + ' DAKİKA BANLANIR! Başarılar!', null, 0xFF5555, 'small-bold', 0);
 
             nextMatchTimeout = setTimeout(() => {
                 nextMatchTimeout = null;
@@ -260,6 +286,9 @@
                     room.stopGame();
                     room.startGame();
                     matchInProgress = true;
+                    const now = Date.now();
+                    if (red) lastActivity[red.id] = now;
+                    if (blue) lastActivity[blue.id] = now;
                 } catch (e) {
                     console.error('Error starting game:', e);
                 }
@@ -282,15 +311,14 @@
         if (ban) {
             const remainingMins = Math.max(1, Math.ceil((ban.expireAt - Date.now()) / 60000));
             logMsg('🚫 Banlı giriş engellendi: ' + player.name + ' (Kalan: ' + remainingMins + ' dk)');
-            room.kickPlayer(player.id, '🎯 3-0 Ban! Kalan: ' + remainingMins + ' dk. (' + ban.reason + ')', false);
-            room.sendAnnouncement('🚫 ' + player.name + ' (3-0 Banlı) odaya alınmadı! Kalan süre: ' + remainingMins + ' dk', null, 0xFF4444, 'small', 0);
+            room.kickPlayer(player.id, '🎯 3-0 Ban! Kalan süre: ' + remainingMins + ' dk. (' + ban.reason + ')', false);
+            room.sendAnnouncement('🚫 ' + cleanPlayerName(player.name) + ' (3-0 Banlı) içeri alınmadı! Kalan süre: ' + remainingMins + ' dk', null, 0xFF4444, 'small', 0);
             return;
         }
 
-        // Check Vexa Tag
-        if (player.name && (player.name.includes('[VEXA]') || player.name.includes('[vexa]'))) {
-            vexaUsers.add(player.id);
-            room.sendAnnouncement('⭐ Vexa Client kullanıcısı ' + player.name + ' odaya katıldı!', null, 0xFFD700, 'bold', 1);
+        // Detect Vexa Client
+        if (isVexaPlayer(player)) {
+            room.sendAnnouncement('⭐ Vexa Client kullanıcısı ' + cleanPlayerName(player.name) + ' odaya katıldı!', null, 0xFFD700, 'bold', 1);
         }
 
         // Auto-Login via Auth
@@ -300,7 +328,7 @@
                     loggedInUsers[player.id] = key;
                     if (acc.isVexaUser) vexaUsers.add(player.id);
                     setTimeout(() => {
-                        room.sendChat('🔑 Otomatik giriş yapıldı! Hoş geldin ' + acc.username + ' | ' + calculateRank(acc) + ' (W: ' + acc.wins + ' / L: ' + acc.losses + ')', player.id);
+                        room.sendChat('🔑 Otomatik giriş yapıldı! Hoş geldin ' + acc.username + ' | ' + calculateRank(acc) + ' (W: ' + (acc.wins || 0) + ' / L: ' + (acc.losses || 0) + ')', player.id);
                     }, 1000);
                     break;
                 }
@@ -329,7 +357,7 @@
             if (player.team === 1 || player.team === 2) {
                 const winnerTeam = player.team === 1 ? 2 : 1;
                 const winnerPlayer = winnerTeam === 1 ? active.red : active.blue;
-                room.sendAnnouncement('⚠️ ' + player.name + ' maç sırasında oyundan kaçtı!', null, 0xFF5555, 'bold', 1);
+                room.sendAnnouncement('⚠️ ' + cleanPlayerName(player.name) + ' maç sırasında oyundan kaçtı!', null, 0xFF5555, 'bold', 1);
 
                 if (winnerPlayer) {
                     room.sendAnnouncement('🏆 ' + getPlayerNameWithTag(winnerPlayer) + ' hükmen kazandı!', null, 0x00FF88, 'bold', 1);
@@ -355,6 +383,18 @@
         afkWarned.delete(player.id);
     };
 
+    room.onPlayerBallKick = function(player) {
+        lastActivity[player.id] = Date.now();
+        afkWarned.delete(player.id);
+    };
+
+    room.onPositionsReset = function() {
+        const now = Date.now();
+        const active = checkActivePlayers();
+        if (active.red) lastActivity[active.red.id] = now;
+        if (active.blue) lastActivity[active.blue.id] = now;
+    };
+
     // 8. VICTORY & 3-0 BAN CALCULATION
     room.onTeamVictory = function(scores) {
         matchInProgress = false;
@@ -375,7 +415,7 @@
 
         const isThreeZero = winnerScore === 3 && loserScore === 0;
 
-        // Update stats only if player has an account
+        // Update stats ONLY if player has an account
         const winnerAccKey = loggedInUsers[winnerPlayer.id];
         const loserAccKey = loggedInUsers[loserPlayer.id];
 
@@ -407,7 +447,7 @@
             const banKey = loserPlayer.auth || ('conn_' + loserPlayer.conn) || loserPlayer.name;
 
             bans[banKey] = {
-                name: loserPlayer.name,
+                name: cleanPlayerName(loserPlayer.name),
                 auth: loserPlayer.auth || '',
                 conn: loserPlayer.conn || '',
                 bannedAt: Date.now(),
@@ -418,18 +458,18 @@
             saveBans();
 
             room.sendAnnouncement('💥 3-0 SWEEP! ' + getPlayerNameWithTag(winnerPlayer) + ' rakibini 3-0 mağlup etti!', null, 0xFF2222, 'bold', 2);
-            room.sendAnnouncement('🚫 ' + loserPlayer.name + ' 3-0 YENİLDİĞİ İÇİN ' + banMins + ' DAKİKA BANLANDI! 🎯', null, 0xFF0000, 'bold', 2);
+            room.sendAnnouncement('🚫 ' + cleanPlayerName(loserPlayer.name) + ' 3-0 YENİLDİĞİ İÇİN ' + banMins + ' DAKİKA BANLANDI! 🎯', null, 0xFF0000, 'bold', 2);
 
             logMsg('🚫 3-0 Ban uygulandı: ' + loserPlayer.name + ' (' + banMins + ' dakika)');
             room.kickPlayer(loserPlayer.id, '🎯 3-0 Yenildin! ' + banMins + ' Dakika Boyunca Odaya Girişin Yasaklandı.', false);
         } else {
-            // Standard outcome: loser to spectator, winner stays!
+            // Standard outcome: loser to spectator, winner stays on field!
             room.sendAnnouncement('🏆 ' + getPlayerNameWithTag(winnerPlayer) + ' maçı kazandı! (' + winnerScore + ' - ' + loserScore + ')', null, 0x00FF88, 'bold', 1);
             room.setPlayerTeam(loserPlayer.id, 0);
             room.sendChat('ℹ️ Maçı kaybettin. Tekrar sıraya girmek için: !q', loserPlayer.id);
         }
 
-        // Winner stays on field. Pull next opponent!
+        // Winner stays on field. Pull next challenger!
         setTimeout(checkAndStartNextGame, 2500);
     };
 
@@ -439,15 +479,15 @@
         afkWarned.delete(player.id);
         message = (message || '').trim();
 
-        // Vexa Silent Handshake
+        // Silent Vexa Client Handshake
         if (message === '!vexa_auth' || message === '!vexa_handshake') {
             vexaUsers.add(player.id);
-            room.sendAnnouncement('⭐ Vexa Client kullanıcısı ' + player.name + ' odaya katıldı!', null, 0xFFD700, 'bold', 1);
+            room.sendAnnouncement('⭐ Vexa Client kullanıcısı ' + cleanPlayerName(player.name) + ' odaya katıldı!', null, 0xFFD700, 'bold', 1);
             room.sendChat('👑 Hoş geldin! Vexa Client VIP ayrıcalıkların (Öncelikli Sıra & [VEXA] Tagı) aktif.', player.id);
-            return false; // Suppress handshake from chat
+            return false;
         }
 
-        // Anti-Spam
+        // Anti-Spam (Flood protection)
         const now = Date.now();
         if (mutedPlayers[player.id] && now < mutedPlayers[player.id]) {
             const rem = Math.ceil((mutedPlayers[player.id] - now) / 1000);
@@ -467,7 +507,15 @@
         // COMMAND PROCESSOR
         if (message.startsWith('!')) {
             const parts = message.slice(1).split(' ');
-            const cmd = parts[0].toLowerCase();
+            const rawCmd = parts[0].toLowerCase();
+            // Turkish lowercase normalization
+            const cmd = rawCmd
+                .replace(/ı/g, 'i')
+                .replace(/ğ/g, 'g')
+                .replace(/ü/g, 'u')
+                .replace(/ş/g, 's')
+                .replace(/ö/g, 'o')
+                .replace(/ç/g, 'c');
             const args = parts.slice(1);
 
             switch (cmd) {
@@ -475,12 +523,13 @@
                 case 'q':
                 case 'sirayagir':
                 case 'siraal':
+                case 'gir':
                     addPlayerToQueue(player);
                     return false;
 
-                case 'cık':
                 case 'cik':
                 case 'ayril':
+                case 'birak':
                     if (removePlayerFromQueue(player.id)) {
                         room.sendChat('ℹ️ Sıradan çıktın.', player.id);
                     } else {
@@ -490,26 +539,27 @@
 
                 case 'sira':
                 case 'queue':
+                case 'liste':
                     if (queue.length === 0) {
                         room.sendChat('ℹ️ Sıra şu an boş. Sıraya girmek için: !q', player.id);
                     } else {
                         const queueNames = queue.map((id, i) => {
                             const p = room.getPlayer(id);
-                            const tag = p && vexaUsers.has(p.id) ? '⭐' : '';
-                            return '#' + (i + 1) + ' ' + tag + (p ? p.name : 'Ayrıldı');
+                            const tag = p && isVexaPlayer(p) ? '⭐' : '';
+                            return '#' + (i + 1) + ' ' + tag + (p ? cleanPlayerName(p.name) : 'Ayrıldı');
                         }).join(', ');
                         room.sendChat('📋 Bekleme Sırası (' + queue.length + ' kişi): ' + queueNames, player.id);
                     }
                     return false;
 
-                // Account & Stats
+                // Account & Stats (ONLY registered users get saved)
                 case 'kayit':
                 case 'register':
                     if (args.length < 1 || args[0].length < 3) {
                         room.sendChat('❌ Hatalı kullanım! Şifre en az 3 karakter olmalı: !kayit <şifre>', player.id);
                         return false;
                     }
-                    const cleanUsername = player.name.replace(/\[VEXA\]/g, '').trim().toLowerCase();
+                    const cleanUsername = cleanPlayerName(player.name).toLowerCase();
                     if (!cleanUsername) {
                         room.sendChat('❌ Geçerli bir kullanıcı adın yok.', player.id);
                         return false;
@@ -519,7 +569,7 @@
                         return false;
                     }
                     users[cleanUsername] = {
-                        username: player.name,
+                        username: cleanPlayerName(player.name),
                         passwordHash: simpleHash(args[0]),
                         authList: player.auth ? [player.auth] : [],
                         wins: 0,
@@ -529,12 +579,12 @@
                         goals: 0,
                         winStreak: 0,
                         bestStreak: 0,
-                        isVexaUser: vexaUsers.has(player.id),
+                        isVexaUser: isVexaPlayer(player),
                         createdAt: Date.now()
                     };
                     saveUsers();
                     loggedInUsers[player.id] = cleanUsername;
-                    room.sendChat('✅ Tebrikler ' + player.name + '! Hesabın oluşturuldu. İstatistiklerin artık kaydedilecek!', player.id);
+                    room.sendChat('✅ Tebrikler ' + cleanPlayerName(player.name) + '! Hesabın oluşturuldu. İstatistiklerin artık kaydedilecek!', player.id);
                     return false;
 
                 case 'giris':
@@ -544,7 +594,7 @@
                         return false;
                     }
                     const enteredPass = simpleHash(args[0]);
-                    const loginUsername = player.name.replace(/\[VEXA\]/g, '').trim().toLowerCase();
+                    const loginUsername = cleanPlayerName(player.name).toLowerCase();
                     const acc = users[loginUsername];
 
                     if (!acc || acc.passwordHash !== enteredPass) {
@@ -589,13 +639,13 @@
                     } else {
                         room.sendChat('🏆 --- EN İYİ 5 SNIPER --- 🏆', player.id);
                         sorted.forEach((item, idx) => {
-                            const star = item.isVexaUser ? '⭐' : '';
+                            const star = item.isVexaUser ? '⭐[VEXA] ' : '';
                             room.sendChat('#' + (idx + 1) + ' ' + star + item.username + ' -> ' + item.wins + ' Galibiyet (' + item.threeZeroWins + ' defa 3-0)', player.id);
                         });
                     }
                     return false;
 
-                // Promotion & Info
+                // Promotion & Info Commands
                 case 'client':
                 case 'indir':
                 case 'vexa':
@@ -610,9 +660,10 @@
 
                 case 'kurallar':
                 case 'kural':
+                    const bM = config.banDurationMinutes || 10;
                     room.sendChat('🎯 SNIPER 3-0 BAN KURALLARI:', player.id);
                     room.sendChat('1. Maçlar 1v1 şeklinde ve 3 golde biter.', player.id);
-                    room.sendChat('2. 3-0 YENİLEN OYUNCU 10 DAKİKA GEÇİCİ BANLANIR!', player.id);
+                    room.sendChat('2. 3-0 YENİLEN OYUNCU ' + bM + ' DAKİKA GEÇİCİ BANLANIR!', player.id);
                     room.sendChat('3. Kazanan sahada kalır, sıradaki meydan okuyucu gelir.', player.id);
                     room.sendChat('4. 20 saniye hareketsiz duran AFK spectatore atılır.', player.id);
                     return false;
@@ -620,7 +671,7 @@
                 case 'yardim':
                 case 'help':
                 case 'komutlar':
-                    room.sendChat('📌 Komutlar: !q, !cık, !sira, !stats, !top, !kayit <şifre>, !giris <şifre>, !kurallar, !client, !discord', player.id);
+                    room.sendChat('📌 Komutlar: !q, !cik, !sira, !stats, !top, !kayit <şifre>, !giris <şifre>, !kurallar, !client, !discord', player.id);
                     return false;
 
                 // Admin commands
@@ -630,6 +681,16 @@
                         room.sendChat('🔑 Yönetici yetkisi verildi!', player.id);
                     } else {
                         room.sendChat('❌ Hatalı admin şifresi!', player.id);
+                    }
+                    return false;
+
+                case 'bansure':
+                    if (player.admin && args.length > 0) {
+                        const newMins = parseInt(args[0], 10);
+                        if (!isNaN(newMins) && newMins > 0) {
+                            config.banDurationMinutes = newMins;
+                            room.sendAnnouncement('⚙️ 3-0 Ban süresi ' + newMins + ' dakika olarak güncellendi.', null, 0x00FF88, 'bold', 1);
+                        }
                     }
                     return false;
 
@@ -674,7 +735,7 @@
         return true;
     };
 
-    // 10. AFK CHECKER (Every 5 seconds)
+    // 10. AFK CHECKER (Runs every 5 seconds)
     setInterval(() => {
         const now = Date.now();
         const active = checkActivePlayers();
@@ -686,9 +747,9 @@
 
             if (idleSec >= timeout - 5 && idleSec < timeout && !afkWarned.has(p.id)) {
                 afkWarned.add(p.id);
-                room.sendAnnouncement('⚠️ ' + p.name + ' AFK Uyarısı! 5 saniye içinde hareket etmezsen spectatore atılacaksın.', p.id, 0xFFAA00, 'bold', 1);
+                room.sendAnnouncement('⚠️ ' + cleanPlayerName(p.name) + ' AFK Uyarısı! 5 saniye içinde hareket etmezsen spectatore atılacaksın.', p.id, 0xFFAA00, 'bold', 1);
             } else if (idleSec >= timeout) {
-                room.sendAnnouncement('💤 ' + p.name + ' ' + timeout + ' saniye AFK kaldığı için spectatore alındı!', null, 0xFF4444, 'normal', 0);
+                room.sendAnnouncement('💤 ' + cleanPlayerName(p.name) + ' ' + timeout + ' saniye AFK kaldığı için spectatore alındı!', null, 0xFF4444, 'normal', 0);
                 room.setPlayerTeam(p.id, 0);
                 afkWarned.delete(p.id);
                 checkAndStartNextGame();
@@ -696,7 +757,7 @@
         });
     }, 5000);
 
-    // 11. PERIODIC PROMOTION BROADCASTS (Every 3 minutes)
+    // 11. PERIODIC PROMOTION BROADCASTS (Configurable interval)
     let broadcastIdx = 0;
     const broadcastIntervalMs = (config.broadcastIntervalMinutes || 3) * 60 * 1000;
 
