@@ -1,5 +1,11 @@
 // OEM HaxBall Designed Header + LocalStorage Settings
 (() => {
+    // Eski sürümlerden kalma hatalı açık auto_rec durumunu temizle (varsayılan: kesinlikle kapalı)
+    if (localStorage.getItem('hax_auto_rec_v146') !== 'true') {
+        localStorage.setItem('hax_auto_rec', 'false');
+        localStorage.setItem('hax_auto_rec_v146', 'true');
+    }
+
     let isFpsEnabled = localStorage.getItem('hax_fps_limit') !== 'false';
     let isFpsShow = localStorage.getItem('hax_fps_show') === 'true';
     let isRpcEnabled = localStorage.getItem('hax_discord_rpc') !== 'false';
@@ -111,14 +117,14 @@
     if (window.launcherAPI) {
         window.launcherAPI.getSettings().then(settings => {
             if (settings) {
-                isFpsEnabled = settings.fpsEnabled;
-                isFpsShow = settings.fpsShow !== false;
-                isRpcEnabled = settings.rpcEnabled;
+                isFpsEnabled = settings.fpsEnabled !== false;
+                isFpsShow = settings.fpsShow === true;
+                isRpcEnabled = settings.rpcEnabled !== false;
                 isPingBoosterEnabled = settings.pingBoosterEnabled === true;
                 isLowGraphicsEnabled = settings.lowGraphicsEnabled === true;
                 isPerfBgEnabled = settings.perfBgEnabled === true;
                 isThinLinesEnabled = settings.thinLinesEnabled === true;
-                isAutoRecEnabled = settings.autoRecEnabled !== false;
+                isAutoRecEnabled = settings.autoRecEnabled === true;
                 localStorage.setItem('hax_fps_limit', isFpsEnabled);
                 localStorage.setItem('hax_fps_show', isFpsShow);
                 localStorage.setItem('hax_discord_rpc', isRpcEnabled);
@@ -1186,6 +1192,9 @@
             autoRecSlider.style.backgroundColor = switchAutoRec ? ACCENT : '#2d3035';
             autoRecKnob.style.transform = switchAutoRec ? 'translateX(22px)' : 'translateX(0)';
             localStorage.setItem('hax_auto_rec', switchAutoRec);
+            if (window.launcherAPI && window.launcherAPI.saveSettings) {
+                window.launcherAPI.saveSettings({ autoRecEnabled: switchAutoRec });
+            }
         };
 
         // Müzik Widget Toggle

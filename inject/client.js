@@ -2059,6 +2059,11 @@
 
         setInterval(() => {
             const isAutoRec = localStorage.getItem('hax_auto_rec') === 'true';
+            if (!isAutoRec) {
+                _autoRecInRoom = false;
+                _autoRecStarted = false;
+                return;
+            }
             const iframe = document.querySelector('.gameframe');
             if (!iframe || !iframe.contentDocument) {
                 _autoRecInRoom = false;
