@@ -131,7 +131,17 @@
     letter-spacing: 4px;
     color: #a0a0a0;
     text-transform: uppercase;
-    margin-bottom: 16px;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+
+  .update-notice {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    color: #777777;
+    text-transform: uppercase;
+    margin-bottom: 20px;
     text-align: center;
   }
 
@@ -164,20 +174,6 @@
     transform: translateY(0);
   }
 
-  .skip-btn {
-    margin-top: 12px;
-    font-size: 11px;
-    letter-spacing: 2px;
-    color: #555555;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: color 0.2s ease;
-  }
-
-  .skip-btn:hover {
-    color: #999999;
-  }
-
   @keyframes fadeIn {
     to { opacity: 1; }
   }
@@ -200,8 +196,8 @@
 
     <div class="update-area" id="updateArea">
       <div class="update-title" id="updateTitle">YENİ GÜNCELLEME MEVCUT</div>
+      <div class="update-notice" id="updateNotice">DEVAM ETMEK İÇİN GÜNCELLEME ZORUNLUDUR</div>
       <button class="update-btn" id="updateBtn">GÜNCELLEMEYİ İNDİR</button>
-      <div class="skip-btn" id="skipBtn">ŞİMDİ DEĞİL (OYUNA GEÇ)</div>
     </div>
   </div>
 
@@ -212,8 +208,8 @@
     const progressArea = document.getElementById('progressArea');
     const updateArea   = document.getElementById('updateArea');
     const updateTitle  = document.getElementById('updateTitle');
+    const updateNotice = document.getElementById('updateNotice');
     const updateBtn    = document.getElementById('updateBtn');
-    const skipBtn      = document.getElementById('skipBtn');
 
     window.vexaClientReady = function () {
       barFill.classList.add('finish');
@@ -238,7 +234,7 @@
       if (data.status) status.textContent = data.status;
       
       // Yalnızca indirme işlemi yapılırken çubuğu yüzdeye bağla
-      if (typeof data.percent === 'number' && data.percent > 0 && data.percent < 100) {
+      if (typeof data.percent === 'number' && data.percent >= 0 && data.percent <= 100) {
         barFill.style.animation = 'none';
         barFill.style.left = '0';
         barFill.style.width = data.percent + '%';
@@ -249,6 +245,16 @@
       if (data && data.version) {
         updateTitle.textContent = `YENİ SÜRÜM: v${data.version}`;
       }
+      updateNotice.textContent = 'DEVAM ETMEK İÇİN GÜNCELLEME ZORUNLUDUR';
+      updateBtn.textContent = 'GÜNCELLEMEYİ İNDİR';
+      progressArea.style.display = 'none';
+      updateArea.style.display = 'flex';
+    };
+
+    window.showUpdateFailed = function (msg) {
+      updateTitle.textContent = 'İNDİRME BAŞARISIZ OLDU';
+      updateNotice.textContent = msg || 'LÜTFEN TEKRAR DENEYİN';
+      updateBtn.textContent = 'TEKRAR DENE';
       progressArea.style.display = 'none';
       updateArea.style.display = 'flex';
     };
@@ -262,15 +268,6 @@
       }
     };
 
-    skipBtn.onclick = function () {
-      updateArea.style.display = 'none';
-      progressArea.style.display = 'flex';
-      status.textContent = 'YÜKLENİYOR';
-      if (window.splashAPI && window.splashAPI.skipUpdate) {
-        window.splashAPI.skipUpdate();
-      }
-    };
-
     if (window.splashAPI) {
       window.splashAPI.onSplashUpdate((data) => {
         window.setSplashStatus(data);
@@ -278,6 +275,11 @@
       window.splashAPI.onShowUpdatePrompt((data) => {
         window.showUpdatePrompt(data);
       });
+      if (window.splashAPI.onUpdateFailed) {
+        window.splashAPI.onUpdateFailed((data) => {
+          window.showUpdateFailed(data && data.message);
+        });
+      }
     }
   </script>
 </body>

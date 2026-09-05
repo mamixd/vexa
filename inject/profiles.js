@@ -33,7 +33,7 @@
 
         box.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:10px; margin-bottom:12px;">
-                <h2 style="margin:0; font-size:15px; color:var(--vexa-accent, #f59e0b); font-weight:800; text-transform:uppercase; letter-spacing:1px;">${title}</h2>
+                <h2 style="margin:0; font-size:15px; color:var(--vexa-accent, #10b981); font-weight:800; text-transform:uppercase; letter-spacing:1px;">${title}</h2>
                 <button id="custom-alert-close" style="background:transparent; border:none; color:#6b7280; font-size:16px; cursor:pointer; line-height:1; padding:2px 6px; outline:none; transition:color 0.15s;">✕</button>
             </div>
             <div style="font-size:12.5px; line-height:1.6; color:#d1d5db;">${messageHtml}</div>
@@ -67,8 +67,8 @@
             const closeBtn = document.createElement('button');
             closeBtn.innerText = 'TAMAM';
             Object.assign(closeBtn.style, {
-                padding: '8px 20px', background: 'var(--vexa-accent, #f59e0b)', color: '#000000', border: 'none', 
-                borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.6px', transition: 'all 0.2s ease', boxShadow: '0 4px 15px rgba(var(--vexa-accent-rgb, 245, 158, 11), 0.3)'
+                padding: '8px 20px', background: 'var(--vexa-accent, #10b981)', color: '#000000', border: 'none', 
+                borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.6px', transition: 'all 0.2s ease', boxShadow: '0 4px 15px rgba(var(--vexa-accent-rgb, 16, 185, 129), 0.3)'
             });
             closeBtn.onclick = closeAlert;
             btnRow.appendChild(closeBtn);
@@ -197,22 +197,22 @@
             #custom-modal-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
             #custom-modal hr { display: none; }
             .profile-card { border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; text-align: left; display: flex; flex-direction: column; gap: 6px; position: relative; background: rgba(255, 255, 255, 0.02); transition: all 0.2s ease; }
-            .profile-card:hover { border-color: rgba(var(--vexa-accent-rgb, 245, 158, 11), 0.4); background: rgba(255, 255, 255, 0.035); }
+            .profile-card:hover { border-color: rgba(var(--vexa-accent-rgb, 16, 185, 129), 0.4); background: rgba(255, 255, 255, 0.035); }
             .profile-card button { padding: 6px 12px; font-size: 11px; font-weight: 700; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; background: rgba(255, 255, 255, 0.04); color: #d1d5db; cursor: pointer; transition: all 0.2s ease; text-transform: uppercase; letter-spacing: 0.5px; }
             .profile-card button:hover { background: rgba(255, 255, 255, 0.1); color: #ffffff; border-color: rgba(255, 255, 255, 0.2); }
             .button-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
             .auth-button-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; padding-top: 8px; border-top: 1px solid rgba(255, 255, 255, 0.05); }
             .delete-badge { position: absolute; top: 14px; right: 14px; background-color: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); padding: 3px 8px; border-radius: 4px; font-size: 10px; display: none; font-weight: bold; text-transform: uppercase; }
-            .save-badge { position: absolute; top: 14px; right: 14px; background-color: rgba(var(--vexa-accent-rgb, 245, 158, 11), 0.15); color: var(--vexa-accent, #f59e0b); border: 1px solid rgba(var(--vexa-accent-rgb, 245, 158, 11), 0.3); padding: 3px 8px; border-radius: 4px; font-size: 10px; display: none; font-weight: bold; text-transform: uppercase; }
+            .save-badge { position: absolute; top: 14px; right: 14px; background-color: rgba(var(--vexa-accent-rgb, 16, 185, 129), 0.15); color: var(--vexa-accent, #10b981); border: 1px solid rgba(var(--vexa-accent-rgb, 16, 185, 129), 0.3); padding: 3px 8px; border-radius: 4px; font-size: 10px; display: none; font-weight: bold; text-transform: uppercase; }
             #custom-modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }
-            #custom-modal-buttons button { padding: 10px 22px; font-size: 13px; font-weight: 700; border: none; border-radius: 8px; background: var(--vexa-accent, #f59e0b); color: #000000; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 15px rgba(var(--vexa-accent-rgb, 245, 158, 11), 0.3); text-transform: uppercase; letter-spacing: 0.6px;}
-            #custom-modal-buttons button:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(var(--vexa-accent-rgb, 245, 158, 11), 0.5); }
+            #custom-modal-buttons button { padding: 10px 22px; font-size: 13px; font-weight: 700; border: none; border-radius: 8px; background: var(--vexa-accent, #10b981); color: #000000; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 15px rgba(var(--vexa-accent-rgb, 16, 185, 129), 0.3); text-transform: uppercase; letter-spacing: 0.6px;}
+            #custom-modal-buttons button:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(var(--vexa-accent-rgb, 16, 185, 129), 0.5); }
             #custom-modal-close { background: transparent; border: 1px solid rgba(255,255,255,0.07); border-radius: 6px; color: #6b7280; cursor: pointer; font-size: 14px; width: 26px; height: 26px; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; padding: 0; outline: none; }
             #custom-modal-close:hover { color: #fff; border-color: rgba(255,255,255,0.2); }
             #blur-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3,7,18,0.68); backdrop-filter: blur(6px); z-index: 9999; display: none; opacity: 0; transition: opacity 0.2s ease; }
             .profile-field-label { font-weight: 600; font-size: 12px; color: #6b7280; }
-            .profile-field-label-mod { font-weight: 700; color: var(--vexa-accent, #f59e0b); font-size: 12px; }
-            .profile-field-mod { color: var(--vexa-accent, #f59e0b); font-size: 12px; font-weight: 700; }
+            .profile-field-label-mod { font-weight: 700; color: var(--vexa-accent, #10b981); font-size: 12px; }
+            .profile-field-mod { color: var(--vexa-accent, #10b981); font-size: 12px; font-weight: 700; }
             .profile-name { font-weight: 700; font-size: 15px; color: #ffffff; margin-bottom: 4px; letter-spacing: 0.4px; }
             .profile-val { font-size: 12px; color: #d1d5db; font-weight: 500; word-break: break-all; }
         `;
@@ -229,7 +229,7 @@
         hdrBox.id = 'custom-modal-hdr';
         hdrBox.innerHTML = `
             <div style="text-align:left;">
-                <div style="font-weight:900; color:var(--vexa-accent, #f59e0b); font-size:14px; letter-spacing:2px; line-height:1.2;">VEXA</div>
+                <div style="font-weight:900; color:var(--vexa-accent, #10b981); font-size:14px; letter-spacing:2px; line-height:1.2;">VEXA</div>
                 <div style="font-weight:600; color:#374151; font-size:9px; letter-spacing:2.5px; margin-top:2px;">PROFILES</div>
             </div>
             <h2 style="margin:0; font-size:13px; color:#9ca3af; font-weight:700; text-transform:uppercase; letter-spacing:1px;">Profil Yönetimi</h2>
@@ -254,7 +254,7 @@
         modal.appendChild(profileList);
 
         const tipNote = document.createElement('div');
-        tipNote.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--vexa-accent, #f59e0b)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg> <span>Değişikliklerin kaydedilmesi için <b>DEĞİŞİKLİKLERİ UYGULA</b>\'ya basmalısınız.</span>';
+        tipNote.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--vexa-accent, #10b981)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg> <span>Değişikliklerin kaydedilmesi için <b>DEĞİŞİKLİKLERİ UYGULA</b>\'ya basmalısınız.</span>';
         Object.assign(tipNote.style, {
             fontSize: '11px', color: '#9ca3af', margin: '0 0 14px 0',
             textAlign: 'center', background: 'rgba(255, 255, 255, 0.03)',
@@ -324,7 +324,7 @@
                 Object.assign(input.style, {
                     flex: '1',
                     background: '#0d0f12',
-                    border: '1px solid var(--vexa-accent, #f59e0b)',
+                    border: '1px solid var(--vexa-accent, #10b981)',
                     borderRadius: '5px',
                     padding: '4px 8px',
                     color: '#ffffff',
@@ -337,7 +337,7 @@
                 saveBtn.type = 'button';
                 saveBtn.textContent = 'KAYDET';
                 Object.assign(saveBtn.style, {
-                    background: 'var(--vexa-accent, #f59e0b)',
+                    background: 'var(--vexa-accent, #10b981)',
                     color: '#000000',
                     border: 'none',
                     borderRadius: '5px',
@@ -440,10 +440,10 @@
             const selectBtn = document.createElement('button');
             const styleSelectBtn = (btn, isSelected) => {
                 btn.textContent = isSelected ? 'SEÇİLDİ' : 'SEÇ';
-                btn.style.background = isSelected ? 'var(--vexa-accent, #f59e0b)' : 'rgba(255, 255, 255, 0.04)';
+                btn.style.background = isSelected ? 'var(--vexa-accent, #10b981)' : 'rgba(255, 255, 255, 0.04)';
                 btn.style.color = isSelected ? '#000000' : '#d1d5db';
                 btn.style.border = isSelected ? 'none' : '1px solid rgba(255, 255, 255, 0.08)';
-                btn.style.boxShadow = isSelected ? '0 4px 12px rgba(var(--vexa-accent-rgb, 245, 158, 11), 0.3)' : 'none';
+                btn.style.boxShadow = isSelected ? '0 4px 12px rgba(var(--vexa-accent-rgb, 16, 185, 129), 0.3)' : 'none';
             };
             styleSelectBtn(selectBtn, [selectedProfileId, currentProfileId].includes(profile.id));
             selectBtn.addEventListener('click', () => {
@@ -487,7 +487,7 @@
                 const pubId = getPublicIdFromAuth(targetKey);
                 if (pubId) {
                     navigator.clipboard.writeText(pubId).then(() => {
-                        customAlert("AUTH KOPYALANDI!", "Auth kimliği başarıyla kopyalandı.<br><br><code style='color:var(--vexa-accent, #f59e0b); word-break:break-all; font-weight:700;'>" + pubId + "</code>", []);
+                        customAlert("AUTH KOPYALANDI!", "Auth kimliği başarıyla kopyalandı.<br><br><code style='color:var(--vexa-accent, #10b981); word-break:break-all; font-weight:700;'>" + pubId + "</code>", []);
                     });
                 } else {
                     customAlert("AUTH BULUNAMADI", "Bu profilde kayıtlı herhangi bir Auth kimliği bulunmuyor.", []);
@@ -633,10 +633,10 @@
                 btn.style.cursor = 'pointer';
                 btn.style.transition = 'all 0.15s ease';
                 if (active) {
-                    btn.style.background = 'var(--vexa-accent, #f59e0b)';
+                    btn.style.background = 'var(--vexa-accent, #10b981)';
                     btn.style.color = '#000000';
                     btn.style.border = 'none';
-                    btn.style.boxShadow = '0 2px 10px rgba(var(--vexa-accent-rgb, 245, 158, 11), 0.35)';
+                    btn.style.boxShadow = '0 2px 10px rgba(var(--vexa-accent-rgb, 16, 185, 129), 0.35)';
                 } else {
                     btn.style.background = 'rgba(255, 255, 255, 0.04)';
                     btn.style.color = '#9ca3af';
@@ -690,11 +690,11 @@
                 restartButton.style.boxShadow = 'none';
             } else {
                 restartButton.disabled = false;
-                restartButton.style.background = 'var(--vexa-accent, #f59e0b)';
+                restartButton.style.background = 'var(--vexa-accent, #10b981)';
                 restartButton.style.color = '#000000';
                 restartButton.style.cursor = 'pointer';
                 restartButton.style.border = 'none';
-                restartButton.style.boxShadow = '0 4px 15px rgba(var(--vexa-accent-rgb, 245, 158, 11), 0.35)';
+                restartButton.style.boxShadow = '0 4px 15px rgba(var(--vexa-accent-rgb, 16, 185, 129), 0.35)';
             }
         };
 
@@ -747,11 +747,11 @@
                 </div>
                 <div style="border-top:1px solid rgba(255,255,255,0.05); padding-top:8px; display:flex; flex-direction:column; gap:6px;">
                     <div>
-                        <b style="color:var(--vexa-accent, #f59e0b);">Otomatik Kaydetme:</b>
+                        <b style="color:var(--vexa-accent, #10b981);">Otomatik Kaydetme:</b>
                         <span style="color:#cbd5e1;"> Açık olduğunda uygulamayı kapattığınızda veya profil değiştirdiğinizde oyun içi değişiklikler kaydedilir. Kapalıyken otomatik kaydedilmez.</span>
                     </div>
                     <div>
-                        <b style="color:var(--vexa-accent, #f59e0b);">Kimlik (Auth):</b>
+                        <b style="color:var(--vexa-accent, #10b981);">Kimlik (Auth):</b>
                         <span style="color:#cbd5e1;"> <b>Yeni Auth</b> bu profil için sıfır kimlik oluşturur. <b>Mevcut Auth</b> şu anki profilinizin kimliğini aktarır.</span>
                     </div>
                 </div>

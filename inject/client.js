@@ -534,7 +534,8 @@
             body .dialog select:hover,
             body .room-view select:hover {
                 background-color: rgba(255, 255, 255, 0.08) !important;
-                border-color: rgba(var(--vexa-accent-rgb), 0.4) !important;
+                border-color: var(--vexa-accent, #10b981) !important;
+                box-shadow: 0 0 10px rgba(var(--vexa-accent-rgb, 16, 185, 129), 0.35) !important;
                 color: #ffffff !important;
             }
 
@@ -1352,7 +1353,8 @@
             .header-btns button:hover {
                 background: #282f3d !important;
                 color: #ffffff !important;
-                border-color: rgba(255, 255, 255, 0.25) !important;
+                border-color: var(--vexa-accent, #10b981) !important;
+                box-shadow: 0 0 10px rgba(var(--vexa-accent-rgb, 16, 185, 129), 0.35) !important;
             }
 
             /* Dialog Action Buttons (Create, Ok) */
@@ -1764,16 +1766,16 @@
                 filter: none !important;
             }
 
-            /* Mouse üstündeyken kenarları turuncu */
+            /* Mouse ustundeyken kenarlari ve parildamasi secili tema rengi */
             .roomlist-view button:hover,
             .roomlist-view .buttons button:hover,
             .roomlist-view .tools button:hover,
             body .roomlist-view button[data-hook="join"]:not(:disabled):hover {
                 background-color: rgba(28, 33, 42, 0.85) !important;
                 background: rgba(28, 33, 42, 0.85) !important;
-                border: 1px solid #f59e0b !important;
-                border-color: #f59e0b !important;
-                box-shadow: 0 0 10px rgba(245, 158, 11, 0.35) !important;
+                border: 1px solid var(--vexa-accent, #10b981) !important;
+                border-color: var(--vexa-accent, #10b981) !important;
+                box-shadow: 0 0 12px rgba(var(--vexa-accent-rgb, 16, 185, 129), 0.45) !important;
                 color: #ffffff !important;
                 transform: none !important;
                 filter: none !important;
@@ -1857,9 +1859,9 @@
             .roomlist-view .filters .bool:hover,
             .roomlist-view .filters .vexa-custom-btn:hover {
                 background: rgba(28, 33, 42, 0.85) !important;
-                border: 1px solid #f59e0b !important;
-                border-color: #f59e0b !important;
-                box-shadow: 0 0 8px rgba(245, 158, 11, 0.3) !important;
+                border: 1px solid var(--vexa-accent, #10b981) !important;
+                border-color: var(--vexa-accent, #10b981) !important;
+                box-shadow: 0 0 10px rgba(var(--vexa-accent-rgb, 16, 185, 129), 0.35) !important;
                 color: #ffffff !important;
             }
         `;
@@ -1876,11 +1878,27 @@
         let _statsViewFound = false;
         let _lastSyncTime = 0;
 
+        function syncAccentVars(targetDoc) {
+            if (!targetDoc || !targetDoc.documentElement) return;
+            const currentAccent = localStorage.getItem('hax_accent_color') || '#10b981';
+            let hex = currentAccent.replace('#', '');
+            if (hex.length === 3) hex = hex.split('').map(c => c+c).join('');
+            const r = parseInt(hex.substring(0, 2), 16) || 16;
+            const g = parseInt(hex.substring(2, 4), 16) || 185;
+            const b = parseInt(hex.substring(4, 6), 16) || 129;
+            targetDoc.documentElement.style.setProperty('--vexa-accent', currentAccent);
+            targetDoc.documentElement.style.setProperty('--vexa-accent-rgb', `${r}, ${g}, ${b}`);
+        }
+
         // Şeffaflık durumunu önbelleğe al - her frame localStorage okumak FPS öldürür
         let _cachedTransparent = localStorage.getItem('vexa-ui-transparent') === 'true';
         window.addEventListener('storage', (e) => {
             if (e.key === 'vexa-ui-transparent') {
                 setTransparencyState(e.newValue === 'true');
+            } else if (e.key === 'hax_accent_color') {
+                syncAccentVars(document);
+                const iframe = document.querySelector(".gameframe") || document.querySelector("iframe");
+                if (iframe && iframe.contentDocument) syncAccentVars(iframe.contentDocument);
             }
         });
 
@@ -1922,6 +1940,9 @@
                 _lastIframeDoc = doc;
                 _statsViewFound = false;
             }
+
+            // Tema rengi değişkenlerini iframe'e garantiye al
+            syncAccentVars(doc);
 
             // 1. CSS Enjeksiyonu (Sadece yoksa)
             if (!doc.getElementById('vexa-iframe-css')) {

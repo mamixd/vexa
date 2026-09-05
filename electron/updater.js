@@ -91,150 +91,164 @@ async function checkAndApplyUpdate(splashWin) {
         return { updated: false };
     }
 
-    console.log(`[Updater] Yeni sürüm bulundu: v${remoteVersion} (Mevcut: v${localVersion}). Kullanıcı onayı bekleniyor...`);
+    console.log(`[Updater] Yeni sürüm bulundu: v${remoteVersion} (Mevcut: v${localVersion}). Zorunlu güncelleme onayı bekleniyor...`);
 
-    // Splash ekranına "GÜNCELLEMEYİ İNDİR" butonunu göster
-    if (splashWin && !splashWin.isDestroyed()) {
-        try {
-            splashWin.webContents.send('show-update-prompt', {
-                version: remoteVersion,
-                currentVersion: localVersion
-            });
-            splashWin.webContents.executeJavaScript(`
-                if (typeof window.showUpdatePrompt === 'function') {
-                    window.showUpdatePrompt(${JSON.stringify({ version: remoteVersion, currentVersion: localVersion })});
-                }
-            `).catch(() => {});
-        } catch (e) {}
-    }
-
-    // Kullanıcının "GÜNCELLEMEYİ İNDİR" butonuna basmasını bekle (otomatik indirmeye doğrudan başlama)
-    const userChoice = await new Promise((resolve) => {
-        const onDownload = () => {
-            cleanup();
-            resolve('download');
-        };
-        const onSkip = () => {
-            cleanup();
-            resolve('skip');
-        };
-        const onClose = () => {
-            cleanup();
-            resolve('skip');
-        };
-
-        const cleanup = () => {
-            ipcMain.removeListener('start-update-download', onDownload);
-            ipcMain.removeListener('skip-update', onSkip);
-            if (splashWin && !splashWin.isDestroyed()) {
-                splashWin.removeListener('closed', onClose);
-            }
-        };
-
-        ipcMain.once('start-update-download', onDownload);
-        ipcMain.once('skip-update', onSkip);
+    function showPrompt(version) {
         if (splashWin && !splashWin.isDestroyed()) {
-            splashWin.once('closed', onClose);
+            try {
+                splashWin.webContents.send('show-update-prompt', {
+                    version: version,
+                    currentVersion: localVersion
+                });
+                splashWin.webContents.executeJavaScript(`
+                    if (typeof window.showUpdatePrompt === 'function') {
+                        window.showUpdatePrompt(${JSON.stringify({ version, currentVersion: localVersion })});
+                    }
+                `).catch(() => {});
+            } catch (e) {}
         }
-    });
-
-    if (userChoice !== 'download') {
-        console.log('[Updater] Kullanıcı güncellemeyi atladı veya pencere kapandı. Oyuna geçiliyor.');
-        sendSplashUpdate(splashWin, 'YÜKLENİYOR', null);
-        return { updated: false };
     }
 
-    console.log('[Updater] Kullanıcı onayladı. İndirme başlıyor...');
-    sendSplashUpdate(splashWin, `GÜNCELLEME İNDİRİLİYOR: v${remoteVersion}`, 0, 'İndirme hazırlanıyor...');
+    showPrompt(remoteVersion);
 
-    const tempDir = os.tmpdir();
-    const setupFilePath = path.join(tempDir, `vexa-setup-${Date.now()}.exe`);
+    // Zorunlu güncelleme döngüsü: Güncelleme yapılmadan oyuna geçilmez.
+    while (true) {
+        if (!splashWin || splashWin.isDestroyed()) {
+            console.log('[Updater] Pencere kapalı. Uygulama sonlandırılıyor.');
+            app.quit();
+            return { updated: true };
+        }
 
-    try {
-        const response = await axios({
-            method: 'GET',
-            url: downloadUrl,
-            responseType: 'stream',
-            headers: { 'User-Agent': 'VexaClient-AutoUpdater' },
-            timeout: 60000
-        });
+        const userAction = await new Promise((resolve) => {
+            const onDownload = () => {
+                cleanup();
+                resolve('download');
+            };
+            const onClose = () => {
+                cleanup();
+                resolve('close');
+            };
 
-        const totalLength = parseInt(response.headers['content-length'], 10) || 0;
-        let downloadedLength = 0;
-        const startTime = Date.now();
-        let lastReport = 0;
+            const cleanup = () => {
+                ipcMain.removeListener('start-update-download', onDownload);
+                if (splashWin && !splashWin.isDestroyed()) {
+                    splashWin.removeListener('closed', onClose);
+                }
+            };
 
-        const writer = fs.createWriteStream(setupFilePath);
-
-        response.data.on('data', (chunk) => {
-            downloadedLength += chunk.length;
-            const now = Date.now();
-
-            if (now - lastReport >= 200 || downloadedLength === totalLength) {
-                lastReport = now;
-                const percent = totalLength > 0 ? Math.min(100, Math.round((downloadedLength / totalLength) * 100)) : 0;
-                const elapsedSec = Math.max((now - startTime) / 1000, 0.1);
-                const bytesPerSec = downloadedLength / elapsedSec;
-                const speedText = `${formatBytes(bytesPerSec)}/sn`;
-                const sizeText = totalLength > 0 
-                    ? `${formatBytes(downloadedLength)} / ${formatBytes(totalLength)}`
-                    : formatBytes(downloadedLength);
-
-                const detailText = `${sizeText} • ${speedText}`;
-                sendSplashUpdate(splashWin, `GÜNCELLEME İNDİRİLİYOR (%${percent})`, percent, detailText);
+            ipcMain.once('start-update-download', onDownload);
+            if (splashWin && !splashWin.isDestroyed()) {
+                splashWin.once('closed', onClose);
             }
         });
 
-        response.data.pipe(writer);
+        if (userAction === 'close') {
+            console.log('[Updater] Güncelleme penceresi kapatıldı. Zorunlu güncelleme nedeniyle çıkılıyor.');
+            app.quit();
+            return { updated: true };
+        }
 
-        await new Promise((resolve, reject) => {
-            writer.on('close', resolve);
-            writer.on('finish', () => {
-                // Ensure writer closes if close doesn't fire automatically
-                writer.close();
-            });
-            writer.on('error', reject);
-            response.data.on('error', reject);
-        });
+        console.log('[Updater] Kullanıcı onayladı. İndirme başlıyor...');
+        sendSplashUpdate(splashWin, `GÜNCELLEME İNDİRİLİYOR: v${remoteVersion}`, 0, 'İndirme hazırlanıyor...');
 
-        console.log('[Updater] İndirme tamamlandı. Kurulum başlatılıyor...');
-        sendSplashUpdate(splashWin, 'KURULUM BAŞLATILIYOR...', 100, 'Lütfen bekleyin, yeni sürüm açılıyor...');
+        const tempDir = os.tmpdir();
+        const setupFilePath = path.join(tempDir, `vexa-setup-${Date.now()}.exe`);
 
-        await new Promise(r => setTimeout(r, 1200));
-
-        // Kurulum exe'sini bağımsız Windows süreci olarak başlat
-        let launched = false;
         try {
-            const { shell } = require('electron');
-            const err = await shell.openPath(setupFilePath);
-            if (!err) {
-                launched = true;
-            } else {
-                console.warn('[Updater] shell.openPath hatası:', err);
-            }
-        } catch (launchErr) {
-            console.warn('[Updater] shell.openPath istisnası:', launchErr);
-        }
-
-        if (!launched) {
-            console.log('[Updater] cmd.exe /c start ile başlatılıyor...');
-            const cmdProcess = spawn('cmd.exe', ['/c', 'start', '""', setupFilePath], {
-                detached: true,
-                stdio: 'ignore'
+            const response = await axios({
+                method: 'GET',
+                url: downloadUrl,
+                responseType: 'stream',
+                headers: { 'User-Agent': 'VexaClient-AutoUpdater' },
+                timeout: 60000
             });
-            cmdProcess.unref();
+
+            const totalLength = parseInt(response.headers['content-length'], 10) || 0;
+            let downloadedLength = 0;
+            const startTime = Date.now();
+            let lastReport = 0;
+
+            const writer = fs.createWriteStream(setupFilePath);
+
+            response.data.on('data', (chunk) => {
+                downloadedLength += chunk.length;
+                const now = Date.now();
+
+                if (now - lastReport >= 200 || downloadedLength === totalLength) {
+                    lastReport = now;
+                    const percent = totalLength > 0 ? Math.min(100, Math.round((downloadedLength / totalLength) * 100)) : 0;
+                    const elapsedSec = Math.max((now - startTime) / 1000, 0.1);
+                    const bytesPerSec = downloadedLength / elapsedSec;
+                    const speedText = `${formatBytes(bytesPerSec)}/sn`;
+                    const sizeText = totalLength > 0 
+                        ? `${formatBytes(downloadedLength)} / ${formatBytes(totalLength)}`
+                        : formatBytes(downloadedLength);
+
+                    const detailText = `${sizeText} • ${speedText}`;
+                    sendSplashUpdate(splashWin, `GÜNCELLEME İNDİRİLİYOR (%${percent})`, percent, detailText);
+                }
+            });
+
+            response.data.pipe(writer);
+
+            await new Promise((resolve, reject) => {
+                writer.on('close', resolve);
+                writer.on('finish', () => {
+                    writer.close();
+                });
+                writer.on('error', reject);
+                response.data.on('error', reject);
+            });
+
+            console.log('[Updater] İndirme tamamlandı. Kurulum başlatılıyor...');
+            sendSplashUpdate(splashWin, 'KURULUM BAŞLATILIYOR...', 100, 'Lütfen bekleyin, yeni sürüm açılıyor...');
+
+            await new Promise(r => setTimeout(r, 1200));
+
+            // Kurulum exe'sini bağımsız Windows süreci olarak başlat
+            let launched = false;
+            try {
+                const { shell } = require('electron');
+                const err = await shell.openPath(setupFilePath);
+                if (!err) {
+                    launched = true;
+                } else {
+                    console.warn('[Updater] shell.openPath hatası:', err);
+                }
+            } catch (launchErr) {
+                console.warn('[Updater] shell.openPath istisnası:', launchErr);
+            }
+
+            if (!launched) {
+                console.log('[Updater] cmd.exe /c start ile başlatılıyor...');
+                const cmdProcess = spawn('cmd.exe', ['/c', 'start', '""', setupFilePath], {
+                    detached: true,
+                    stdio: 'ignore'
+                });
+                cmdProcess.unref();
+            }
+
+            setTimeout(() => {
+                app.exit(0);
+            }, 1200);
+
+            return { updated: true };
+        } catch (downloadErr) {
+            console.error('[Updater] Güncelleme indirme hatası:', downloadErr.message);
+            if (splashWin && !splashWin.isDestroyed()) {
+                try {
+                    splashWin.webContents.send('update-failed', {
+                        message: 'İndirme başarısız oldu. Lütfen tekrar deneyin.'
+                    });
+                    splashWin.webContents.executeJavaScript(`
+                        if (typeof window.showUpdateFailed === 'function') {
+                            window.showUpdateFailed('İndirme başarısız oldu. Lütfen tekrar deneyin.');
+                        }
+                    `).catch(() => {});
+                } catch (e) {}
+            }
+            // Hata durumunda döngü başa döner, kullanıcı "TEKRAR DENE"ye basınca yeniden dener
         }
-
-        setTimeout(() => {
-            app.exit(0);
-        }, 1200);
-
-        return { updated: true };
-    } catch (downloadErr) {
-        console.error('[Updater] Güncelleme indirme hatası:', downloadErr.message);
-        sendSplashUpdate(splashWin, 'İNDİRME BAŞARISIZ OLDU', null, 'Mevcut sürümle devam ediliyor...');
-        await new Promise(r => setTimeout(r, 1000));
-        return { updated: false };
     }
 }
 
