@@ -1,0 +1,25 @@
+{
+  "roomName": "🎯 Vexa | SNIPER [3-0 BAN] | vexaclient.com",
+  "playerName": "🎯 Vexa Bot",
+  "maxPlayers": 16,
+  "public": true,
+  "token": "BURAYA_HEADLESS_TOKEN_YAZIN",
+  "geo": {
+    "code": "tr",
+    "lat": 41.0082,
+    "lon": 28.9784
+  },
+  "adminPassword": "vexa_admin_2026",
+  "banDurationMinutes": 10,
+  "afkTimeoutSeconds": 20,
+  "broadcastIntervalMinutes": 3,
+  "discordUrl": "https://discord.gg/vexa",
+  "clientUrl": "https://vexaclient.com",
+  "broadcastMessages": [
+    "💡 0 Gecikme, özel temalar ve odada [VEXA] VIP ayrıcalıkları için Vexa Client indir: vexaclient.com",
+    "🎯 Sniper Odası Kuralları: 3-0 kaybeden oyuncular 10 dakika geçici banlanır! Bilgi için: !kurallar",
+    "⭐ Vexa Client kullananlar odada otomatik [VEXA] tagi ve Sniper sırasında VIP öncelik kazanır!",
+    "💬 Discord sunucumuza katılıp toplulukla sohbet etmek için: !discord",
+    "🏆 İstatistiklerini kaydetmek ve sıralamaya girmek için: !kayit <sifre>"
+  ]
+}

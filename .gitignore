@@ -11,9 +11,9 @@ obj/
 
 *.exe
 app.zip
-bot.js
-bot2.js
-bot3.js
+/bot.js
+/bot2.js
+/bot3.js
 bot-dashboard/
 bot-dashboard.zip
 package-lock.json

@@ -3868,5 +3868,53 @@
         });
     })();
 
+    // 12. Vexa Room Auto-Handshake (Vexa Client VIP Detection)
+    (() => {
+        let _vexaHandshakeSent = false;
+        setInterval(() => {
+            const iframe = document.querySelector(".gameframe") || document.querySelector("iframe");
+            if (!iframe || !iframe.contentDocument) {
+                _vexaHandshakeSent = false;
+                return;
+            }
+            const doc = iframe.contentDocument;
+            const inRoom = !!(doc.querySelector('.game-state-view') || doc.querySelector('.room-view') || doc.querySelector('.chatbox-view-contents'));
+            
+            if (inRoom && !_vexaHandshakeSent) {
+                _vexaHandshakeSent = true;
+                setTimeout(() => {
+                    try {
+                        const roomNameEl = doc.querySelector('.room-name') ||
+                                          doc.querySelector('.game-state-view h1') ||
+                                          doc.querySelector('.game-state-view .name') ||
+                                          doc.querySelector('.header-btns .name');
+                        const roomName = roomNameEl ? roomNameEl.textContent.trim().toLowerCase() : '';
+                        
+                        // Send silent handshake if in a Vexa room or room has vexa in title
+                        if (roomName.includes('vexa')) {
+                            const chatInput = doc.querySelector('.chatbox-view-contents input[data-hook="input"], [data-hook="input"]');
+                            const sendBtn = doc.querySelector('[data-hook="send"]');
+                            if (chatInput) {
+                                chatInput.value = '!vexa_auth';
+                                chatInput.dispatchEvent(new Event('input', { bubbles: true }));
+                                if (sendBtn) sendBtn.click();
+                                const ev = new KeyboardEvent('keydown', {
+                                    key: 'Enter',
+                                    code: 'Enter',
+                                    keyCode: 13,
+                                    which: 13,
+                                    bubbles: true,
+                                    cancelable: true
+                                });
+                                chatInput.dispatchEvent(ev);
+                            }
+                        }
+                    } catch(e) {}
+                }, 1200);
+            } else if (!inRoom && _vexaHandshakeSent) {
+                _vexaHandshakeSent = false;
+            }
+        }, 500);
+    })();
 
 })();

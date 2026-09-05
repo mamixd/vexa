@@ -203,34 +203,45 @@ async function checkAndApplyUpdate(splashWin) {
             console.log('[Updater] İndirme tamamlandı. Kurulum başlatılıyor...');
             sendSplashUpdate(splashWin, 'KURULUM BAŞLATILIYOR...', 100, 'Lütfen bekleyin, yeni sürüm açılıyor...');
 
-            await new Promise(r => setTimeout(r, 1200));
+            await new Promise(r => setTimeout(r, 800));
 
             // Kurulum exe'sini bağımsız Windows süreci olarak başlat
-            let launched = false;
-            try {
-                const { shell } = require('electron');
-                const err = await shell.openPath(setupFilePath);
-                if (!err) {
-                    launched = true;
-                } else {
-                    console.warn('[Updater] shell.openPath hatası:', err);
-                }
-            } catch (launchErr) {
-                console.warn('[Updater] shell.openPath istisnası:', launchErr);
-            }
+            console.log('[Updater] Setup dosyası bağımsız süreç olarak çalıştırılıyor:', setupFilePath);
 
-            if (!launched) {
-                console.log('[Updater] cmd.exe /c start ile başlatılıyor...');
-                const cmdProcess = spawn('cmd.exe', ['/c', 'start', '""', setupFilePath], {
+            // 1. Doğrudan bağımsız child_process.spawn
+            try {
+                const child = spawn(setupFilePath, [], {
                     detached: true,
                     stdio: 'ignore'
                 });
-                cmdProcess.unref();
+                child.unref();
+                console.log('[Updater] spawn ile setup süreci tetiklendi.');
+            } catch (spawnErr) {
+                console.warn('[Updater] spawn hatası:', spawnErr);
             }
+
+            // 2. PowerShell Start-Process (Explorer/Shell aracılığıyla bağımsız açma)
+            try {
+                const ps = spawn('powershell.exe', [
+                    '-NoProfile',
+                    '-Command',
+                    `Start-Process -FilePath "${setupFilePath}"`
+                ], {
+                    detached: true,
+                    stdio: 'ignore'
+                });
+                ps.unref();
+            } catch (e) {}
+
+            // 3. shell.openPath ile ek tetikleme
+            try {
+                const { shell } = require('electron');
+                shell.openPath(setupFilePath).catch(() => {});
+            } catch (e) {}
 
             setTimeout(() => {
                 app.exit(0);
-            }, 1200);
+            }, 1800);
 
             return { updated: true };
         } catch (downloadErr) {

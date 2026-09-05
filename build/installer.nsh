@@ -1,10 +1,8 @@
-!macro preInit
-  DetailPrint "Closing running Vexa processes..."
-  nsExec::ExecToLog 'taskkill /F /IM "Vexa Client.exe" /T'
-  nsExec::ExecToLog 'taskkill /F /IM "vexa-client.exe" /T'
-  nsExec::ExecToLog 'taskkill /F /IM "Vexa Launcher.exe" /T'
-  nsExec::ExecToLog 'taskkill /F /IM "vexa-launcher.exe" /T'
-  nsExec::ExecToLog 'taskkill /F /IM "Vexa.exe" /T'
-  nsExec::ExecToLog 'taskkill /F /IM "vexa.exe" /T'
-  Sleep 1500
+!macro customInit
+  ExecWait 'taskkill /F /IM "Vexa Client.exe"'
+  ExecWait 'taskkill /F /IM "vexa-client.exe"'
+  ExecWait 'taskkill /F /IM "Vexa Launcher.exe"'
+  ExecWait 'taskkill /F /IM "vexa-launcher.exe"'
+  ExecWait 'taskkill /F /IM "Vexa.exe"'
+  ExecWait 'taskkill /F /IM "vexa.exe"'
 !macroend
