@@ -144,18 +144,8 @@ function setActivity(state, details, nick) {
         return;
     }
     
-    let currentDetails = lastRpcActivity.details || 'Vexa Client';
-    let currentState = lastRpcActivity.state || 'Ana Menüde';
-
-    // Eğer arka planda müzik/medya çalıyorsa Discord RPC'ye yansıt
-    if (nowPlayingData && nowPlayingData.title && nowPlayingData.status === 'playing') {
-        const songStr = `🎵 ${nowPlayingData.title}${nowPlayingData.artist ? ' - ' + nowPlayingData.artist : ''}`.slice(0, 120);
-        if (!currentState || currentState === 'Ana Menüde') {
-            currentState = songStr;
-        } else {
-            currentDetails = songStr;
-        }
-    }
+    let currentDetails = (lastRpcActivity.details || 'Vexa Client').slice(0, 120);
+    let currentState = (lastRpcActivity.state || 'Ana Menü').slice(0, 120);
 
     rpc.setActivity({
         details: currentDetails,
@@ -336,7 +326,6 @@ async function syncMediaState() {
             if (nowPlayingData.title) {
                 nowPlayingData = { title: '', artist: '', thumbnail: '', appName: '', status: '' };
                 broadcastNowPlaying(nowPlayingData);
-                setActivity();
             }
             return nowPlayingData;
         }
@@ -355,7 +344,6 @@ async function syncMediaState() {
             || (newData.thumbnail && newData.thumbnail !== nowPlayingData.thumbnail)) {
             nowPlayingData = newData;
             broadcastNowPlaying(nowPlayingData);
-            setActivity();
         }
         return nowPlayingData;
     } catch (e) {
@@ -378,7 +366,6 @@ function startNowPlayingService() {
                     if (nowPlayingData.title) {
                         nowPlayingData = { title: '', artist: '', thumbnail: '', appName: '', status: '' };
                         broadcastNowPlaying(nowPlayingData);
-                        setActivity();
                     }
                     return;
                 }
@@ -397,7 +384,6 @@ function startNowPlayingService() {
                     || (newData.thumbnail && newData.thumbnail !== nowPlayingData.thumbnail)) {
                     nowPlayingData = newData;
                     broadcastNowPlaying(nowPlayingData);
-                    setActivity();
                 }
             });
         } catch (e) {
@@ -437,7 +423,6 @@ ipcMain.on('toggle-now-playing', async (event, state) => {
         stopNowPlayingService();
         nowPlayingData = { title: '', artist: '', thumbnail: '', appName: '', status: '' };
         broadcastNowPlaying(nowPlayingData);
-        setActivity();
     }
 });
 
@@ -464,11 +449,30 @@ ipcMain.on('media-control', (event, action) => {
 let currentRoomName = '';
 ipcMain.on('set-room-name', (event, name) => {
     // Dosya adı için geçersiz karakterleri temizle
-    currentRoomName = (name || '').replace(/[\\/:*?"<>|]/g, '').trim().slice(0, 60);
+    const cleaned = (name || '').replace(/[\\/:*?"<>|]/g, '').trim().slice(0, 60);
+    if (cleaned && cleaned !== 'Bilinmeyen Oda' && cleaned !== 'Vexa Client' && cleaned !== 'Oda' && cleaned !== 'HaxBall Odası') {
+        currentRoomName = cleaned;
+    }
 });
 
 ipcMain.on('update-rpc', (event, data) => {
-    setActivity(data.state, data.details, data.nick);
+    if (!data) return;
+    let state = data.state || 'Ana Menü';
+    let details = (data.details || '').trim();
+    const nick = data.nick || '';
+
+    if (state === 'Ana Menü') {
+        currentRoomName = '';
+        if (!details) details = 'Ana Menüde';
+    } else {
+        if (details && details !== 'Bilinmeyen Oda' && details !== 'Vexa Client' && details !== 'HaxBall Odası') {
+            currentRoomName = details.replace(/[\\/:*?"<>|]/g, '').trim().slice(0, 60);
+        } else if ((!details || details === 'Bilinmeyen Oda' || details === 'HaxBall Odası') && currentRoomName) {
+            details = currentRoomName;
+        }
+    }
+
+    setActivity(state, details, nick);
 });
 
 ipcMain.on('toggle-discord-rpc', (event, state) => {

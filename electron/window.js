@@ -99,7 +99,7 @@ function createWindow(options) {
             });
         });
 
-        // HaxBall oyun iframe'ine toggle butonu inject et
+        // HaxBall oyun iframe'ine toggle butonu ve Vexa Client Nickname/Storage motorunu inject et
         win.webContents.on('did-frame-finish-load', (event, isMainFrame) => {
             if (isMainFrame) return;
             const toggleScript = `
@@ -152,6 +152,78 @@ function createWindow(options) {
     setInterval(tryInject, 1000);
 })();
             `;
+
+            const vexaFrameBootstrapScript = `
+(function() {
+    if (window.__vexaFrameBootstrapInjected) return;
+    window.__vexaFrameBootstrapInjected = true;
+
+    var VEXA_NICK_TAG = '\\u200B\\u200C\\u200D';
+
+    function addTag(name) {
+        if (!name || typeof name !== 'string') return name;
+        if (name.includes(VEXA_NICK_TAG)) return name;
+        return name.slice(0, 22) + VEXA_NICK_TAG;
+    }
+
+    // 1. Existing player_name tag
+    try {
+        var cur = window.localStorage.getItem('player_name');
+        if (cur && typeof cur === 'string' && !cur.includes(VEXA_NICK_TAG)) {
+            window.localStorage.setItem('player_name', addTag(cur));
+        }
+    } catch(e) {}
+
+    // 2. Hook Storage.prototype.getItem on iframe's window
+    try {
+        var _origGetItem = Storage.prototype.getItem;
+        var _origSetItem = Storage.prototype.setItem;
+        Storage.prototype.getItem = function(key) {
+            var val = _origGetItem.call(this, key);
+            if (key === 'player_name' && typeof val === 'string' && val && !val.includes(VEXA_NICK_TAG)) {
+                val = addTag(val);
+                try { _origSetItem.call(this, key, val); } catch(_) {}
+            }
+            return val;
+        };
+        Storage.prototype.setItem = function(key, val) {
+            if (key === 'player_name' && typeof val === 'string' && val && !val.includes(VEXA_NICK_TAG)) {
+                val = addTag(val);
+            }
+            return _origSetItem.call(this, key, val);
+        };
+    } catch(e) {}
+
+    // 3. Intercept clicks and Enter keys on choose nickname and settings dialogs
+    document.addEventListener('click', function(e) {
+        try {
+            var btn = e.target && e.target.closest ? e.target.closest('button[data-hook="ok"], .choose-nickname-view button, button[type="submit"]') : null;
+            if (btn) {
+                var inp = document.querySelector('.choose-nickname-view [data-hook="input"], .choose-nickname-view input, input[data-hook="input"]');
+                if (inp && inp.value && !inp.value.includes(VEXA_NICK_TAG)) {
+                    inp.value = addTag(inp.value);
+                    inp.dispatchEvent(new Event('input', { bubbles: true }));
+                    try { window.localStorage.setItem('player_name', inp.value); } catch(_) {}
+                }
+            }
+        } catch(_) {}
+    }, true);
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.keyCode === 13) {
+            try {
+                var inp = document.querySelector('.choose-nickname-view [data-hook="input"], .choose-nickname-view input');
+                if (inp && inp.value && !inp.value.includes(VEXA_NICK_TAG)) {
+                    inp.value = addTag(inp.value);
+                    inp.dispatchEvent(new Event('input', { bubbles: true }));
+                    try { window.localStorage.setItem('player_name', inp.value); } catch(_) {}
+                }
+            } catch(_) {}
+        }
+    }, true);
+})();
+            `;
+
             try {
                 const frames = win.webContents.mainFrame.frames;
                 const gameFrame = frames.find(frame => {
@@ -161,13 +233,17 @@ function createWindow(options) {
                         return false;
                     }
                 });
-                if (gameFrame) gameFrame.executeJavaScript(toggleScript).catch(() => {});
+                if (gameFrame) {
+                    gameFrame.executeJavaScript(toggleScript).catch(() => {});
+                    gameFrame.executeJavaScript(vexaFrameBootstrapScript).catch(() => {});
+                }
             } catch(e) {
                 win.webContents.executeJavaScript(`
                     (function() {
-                        var frames = document.querySelectorAll('iframe.gameframe, #gameframe');
+                        var frames = document.querySelectorAll('iframe.gameframe, #gameframe, iframe');
                         frames.forEach(function(f) {
                             try { f.contentWindow.eval(${JSON.stringify(toggleScript)}); } catch(e) {}
+                            try { f.contentWindow.eval(${JSON.stringify(vexaFrameBootstrapScript)}); } catch(e) {}
                         });
                     })();
                 `).catch(() => {});

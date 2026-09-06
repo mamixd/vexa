@@ -3,19 +3,35 @@
     console.log("[Vexa HaxBall Client] Injecting Smart Client Logic...");
 
     const VEXA_NICK_TAG = '\u200B\u200C\u200D';
+    function addVexaNickTag(name) {
+        if (!name || typeof name !== 'string') return name;
+        if (name.includes(VEXA_NICK_TAG)) return name;
+        return name.slice(0, 22) + VEXA_NICK_TAG;
+    }
+
     try {
         const curName = localStorage.getItem('player_name');
         if (curName && typeof curName === 'string' && !curName.includes(VEXA_NICK_TAG)) {
-            localStorage.setItem('player_name', curName + VEXA_NICK_TAG);
+            localStorage.setItem('player_name', addVexaNickTag(curName));
         }
     } catch(e) {}
 
     const _origSetItem = Storage.prototype.setItem;
     Storage.prototype.setItem = function(key, value) {
         if (key === 'player_name' && typeof value === 'string' && value && !value.includes(VEXA_NICK_TAG)) {
-            value = value + VEXA_NICK_TAG;
+            value = addVexaNickTag(value);
         }
         return _origSetItem.call(this, key, value);
+    };
+
+    const _origGetItem = Storage.prototype.getItem;
+    Storage.prototype.getItem = function(key) {
+        let val = _origGetItem.call(this, key);
+        if (key === 'player_name' && typeof val === 'string' && val && !val.includes(VEXA_NICK_TAG)) {
+            val = addVexaNickTag(val);
+            try { _origSetItem.call(this, key, val); } catch(_) {}
+        }
+        return val;
     };
 
     window._vexaActivePCs = window._vexaActivePCs || new Set();
@@ -2122,7 +2138,10 @@
                     if (!isRecording) {
                         // Oda adını DOM'dan al ve Electron'a gönder
                         try {
-                            const roomNameEl = doc.querySelector('.room-name') ||
+                            const roomNameEl = doc.querySelector('.room-view .header h1') ||
+                                              doc.querySelector('.room-view h1') ||
+                                              doc.querySelector('.room-view .header') ||
+                                              doc.querySelector('.room-name') ||
                                               doc.querySelector('.game-state-view h1') ||
                                               doc.querySelector('.game-state-view .name') ||
                                               doc.querySelector('.header-btns .name');
@@ -3029,13 +3048,54 @@
             if (!window.haxballAPI || !window.haxballAPI.updateRPC) return;
 
             let lastRpcState = '';
+            let lastRpcDetails = '';
+            let cachedRoomName = '';
+            let lastSelectedRoomName = '';
 
             function getIframeDoc() {
                 try {
-                    const iframe = document.querySelector('iframe.gameframe');
-                    if (iframe && iframe.contentDocument) return iframe.contentDocument;
+                    const iframe = document.querySelector('iframe.gameframe') ||
+                                   document.querySelector('.gameframe') ||
+                                   document.querySelector('iframe#gameframe') ||
+                                   document.querySelector('iframe');
+                    if (iframe && iframe.contentDocument && iframe.contentDocument.body) {
+                        return iframe.contentDocument;
+                    }
+                } catch(e) {}
+                try {
+                    if (document.querySelector('.room-view') || document.querySelector('.roomlist-view') || document.querySelector('.choose-nickname-view')) {
+                        return document;
+                    }
                 } catch(e) {}
                 return null;
+            }
+
+            // Oda listesinde tıklanan veya seçilen odayı anında yakala
+            function attachRoomListTracker() {
+                try {
+                    const doc = getIframeDoc();
+                    if (!doc || doc.__vexaRoomTrackerAttached) return;
+                    doc.__vexaRoomTrackerAttached = true;
+
+                    doc.addEventListener('click', (e) => {
+                        try {
+                            const tr = e.target.closest && e.target.closest('tr');
+                            if (tr && tr.closest && tr.closest('.roomlist-view, [data-hook="list"], table')) {
+                                const nameCell = tr.querySelector('[data-hook="name"]') || tr.cells?.[0] || tr.children?.[0];
+                                if (nameCell) {
+                                    const txt = nameCell.textContent.replace(/^[\*⭐]\s*/, '').trim();
+                                    if (txt && txt.toLowerCase() !== 'room name' && txt.toLowerCase() !== 'oda adı') {
+                                        lastSelectedRoomName = txt;
+                                        cachedRoomName = txt;
+                                        if (window.electronAPI && window.electronAPI.setRoomName) {
+                                            window.electronAPI.setRoomName(txt);
+                                        }
+                                    }
+                                }
+                            }
+                        } catch(err) {}
+                    }, true);
+                } catch(e) {}
             }
 
             function getNickname() {
@@ -3048,16 +3108,14 @@
                 return '';
             }
 
-
-
             function isInRoom() {
                 try {
                     const doc = getIframeDoc();
                     if (!doc) return false;
                     const roomView = doc.querySelector('.room-view');
                     if (roomView) {
-                        const style = doc.defaultView.getComputedStyle(roomView);
-                        return style.display !== 'none';
+                        const style = doc.defaultView ? doc.defaultView.getComputedStyle(roomView) : null;
+                        return style ? style.display !== 'none' : true;
                     }
                 } catch(e) {}
                 return false;
@@ -3069,27 +3127,11 @@
                     if (!doc) return false;
                     const nickView = doc.querySelector('.choose-nickname-view');
                     if (nickView) {
-                        const style = doc.defaultView.getComputedStyle(nickView);
-                        return style.display !== 'none';
+                        const style = doc.defaultView ? doc.defaultView.getComputedStyle(nickView) : null;
+                        return style ? style.display !== 'none' : true;
                     }
                 } catch(e) {}
                 return false;
-            }
-
-            let cachedRoomName = '';
-
-            function getRoomName() {
-                try {
-                    const doc = getIframeDoc();
-                    if (!doc) return cachedRoomName;
-                    
-                    const roomNameEl = doc.querySelector('[data-hook="room-name"]') || doc.querySelector('.room-name');
-                    if (roomNameEl && roomNameEl.textContent.trim()) {
-                        cachedRoomName = roomNameEl.textContent.trim();
-                        return cachedRoomName;
-                    }
-                } catch(e) {}
-                return cachedRoomName;
             }
 
             function isInGame() {
@@ -3098,46 +3140,128 @@
                     if (!doc) return false;
                     
                     const gameView = doc.querySelector('.game-view');
-                    if (!gameView) return false;
+                    const gameStateView = doc.querySelector('.game-state-view');
+                    if (!gameView && !gameStateView) return false;
 
-                    // Haxball'da game-view hem lobiyi hem de maci kapsar.
-                    // Eger room-view (lobi) gorunur durumdaysa, macta degiliz (lobideyiz).
+                    // Haxball'da room-view (lobi) görünür durumdaysa maçta değiliz (lobideyiz)
                     const roomView = doc.querySelector('.room-view');
                     if (roomView) {
-                        const style = doc.defaultView.getComputedStyle(roomView);
-                        if (style.display !== 'none' && style.visibility !== 'hidden') {
+                        const style = doc.defaultView ? doc.defaultView.getComputedStyle(roomView) : null;
+                        if (style && style.display !== 'none' && style.visibility !== 'hidden') {
                             return false; 
                         }
                     }
                     
-                    // Oda arayuzu gizliyse ve game-view varsa, mactayiz demektir.
-                    const gameStyle = doc.defaultView.getComputedStyle(gameView);
-                    return gameStyle.display !== 'none';
+                    if (gameView) {
+                        const gameStyle = doc.defaultView ? doc.defaultView.getComputedStyle(gameView) : null;
+                        if (gameStyle && gameStyle.display !== 'none') return true;
+                    }
+                    if (gameStateView) {
+                        const stateStyle = doc.defaultView ? doc.defaultView.getComputedStyle(gameStateView) : null;
+                        if (stateStyle && stateStyle.display !== 'none') return true;
+                    }
                 } catch(e) {}
                 return false;
             }
 
+            function getRoomName() {
+                try {
+                    const doc = getIframeDoc();
+                    if (!doc) return cachedRoomName;
+
+                    // 1. Doğrudan HaxBall DOM elementleri
+                    const candidateSelectors = [
+                        '.room-view .header h1',
+                        '.room-view h1',
+                        '.room-view .header .name',
+                        '.room-view [data-hook="name"]',
+                        '.room-view .title',
+                        '.game-state-view h1',
+                        '.game-state-view .name',
+                        '.header-btns .name',
+                        '.top-section .name',
+                        '[data-hook="room-name"]',
+                        '.room-name'
+                    ];
+
+                    for (const sel of candidateSelectors) {
+                        const el = doc.querySelector(sel);
+                        if (el && el.textContent) {
+                            const txt = el.textContent.trim();
+                            if (txt && !/^(leave room|ayrıl|ayril|settings|ayarlar|haxball)$/i.test(txt)) {
+                                cachedRoomName = txt;
+                                if (window.electronAPI && window.electronAPI.setRoomName) {
+                                    window.electronAPI.setRoomName(txt);
+                                }
+                                return cachedRoomName;
+                            }
+                        }
+                    }
+
+                    // 2. .room-view .header başlığı
+                    const roomHeader = doc.querySelector('.room-view .header');
+                    if (roomHeader) {
+                        const h1 = roomHeader.querySelector('h1');
+                        const txt = h1 ? h1.textContent.trim() : (roomHeader.childNodes[0]?.textContent || '').trim();
+                        if (txt && !/^(leave room|ayrıl|ayril|settings|ayarlar|haxball)$/i.test(txt)) {
+                            cachedRoomName = txt;
+                            if (window.electronAPI && window.electronAPI.setRoomName) {
+                                window.electronAPI.setRoomName(txt);
+                            }
+                            return cachedRoomName;
+                        }
+                    }
+
+                    // 3. Iframe document.title (HaxBall içeride doc.title = "<Oda Adı> - HaxBall" yapar)
+                    if (doc.title) {
+                        const cleaned = doc.title
+                            .replace(/\s*[-–—:]\s*HaxBall\s*$/i, '')
+                            .replace(/^HaxBall\s*[-–—:]\s*/i, '')
+                            .replace(/^Vexa\s*Haxball\s*Play$/i, '')
+                            .trim();
+                        if (cleaned && !/^(HaxBall|HTML5 Football Game)$/i.test(cleaned)) {
+                            cachedRoomName = cleaned;
+                            if (window.electronAPI && window.electronAPI.setRoomName) {
+                                window.electronAPI.setRoomName(cleaned);
+                            }
+                            return cachedRoomName;
+                        }
+                    }
+
+                    // 4. Oda listesinde tıklanan / seçilen oda
+                    if (lastSelectedRoomName) {
+                        cachedRoomName = lastSelectedRoomName;
+                        return cachedRoomName;
+                    }
+                } catch(e) {}
+                return cachedRoomName;
+            }
+
             function updateDiscordRPC() {
                 try {
+                    attachRoomListTracker();
+
                     let state = '';
                     let details = 'Vexa Client';
                     const nick = getNickname();
                     const roomName = getRoomName();
 
                     if (isInGame()) {
-                        details = roomName ? roomName : 'Bilinmeyen Oda';
+                        details = roomName ? roomName : (cachedRoomName ? cachedRoomName : 'HaxBall Odası');
                         state = 'Maçta';
                     } else if (isInRoom()) {
-                        details = roomName ? roomName : 'Bilinmeyen Oda';
+                        details = roomName ? roomName : (cachedRoomName ? cachedRoomName : 'HaxBall Odası');
                         state = 'Odada Bekliyor';
                     } else if (isChoosingNickname()) {
                         details = 'İsim Seçiyor';
                         state = 'Ana Menü';
                         cachedRoomName = ''; 
+                        lastSelectedRoomName = '';
                     } else {
                         details = 'Oda Listesinde';
                         state = 'Ana Menü';
                         cachedRoomName = ''; 
+                        lastSelectedRoomName = '';
                     }
 
                     if (state !== lastRpcState || details !== lastRpcDetails) {
@@ -3714,9 +3838,92 @@
 
         const VEXA_NICK_TAG = '\u200B\u200C\u200D';
 
+        function addVexaNickTagLocal(name) {
+            if (!name || typeof name !== 'string') return name;
+            if (name.includes(VEXA_NICK_TAG)) return name;
+            return name.slice(0, 22) + VEXA_NICK_TAG;
+        }
+
+        function hookIframeStorageAndNickname(doc) {
+            if (!doc) return;
+            const win = doc.defaultView;
+            if (!win) return;
+
+            // 1. Tag existing player_name in this document's localStorage
+            try {
+                if (win.localStorage) {
+                    const cur = win.localStorage.getItem('player_name');
+                    if (cur && typeof cur === 'string' && !cur.includes(VEXA_NICK_TAG)) {
+                        win.localStorage.setItem('player_name', addVexaNickTagLocal(cur));
+                    }
+                }
+            } catch(e) {}
+
+            // 2. Hook Storage.prototype for this window if not hooked
+            if (!win._vexaStorageHooked && win.Storage && win.Storage.prototype) {
+                win._vexaStorageHooked = true;
+                try {
+                    const origGet = win.Storage.prototype.getItem;
+                    const origSet = win.Storage.prototype.setItem;
+                    win.Storage.prototype.getItem = function(key) {
+                        let val = origGet.call(this, key);
+                        if (key === 'player_name' && typeof val === 'string' && val && !val.includes(VEXA_NICK_TAG)) {
+                            val = addVexaNickTagLocal(val);
+                            try { origSet.call(this, key, val); } catch(_) {}
+                        }
+                        return val;
+                    };
+                    win.Storage.prototype.setItem = function(key, val) {
+                        if (key === 'player_name' && typeof val === 'string' && val && !val.includes(VEXA_NICK_TAG)) {
+                            val = addVexaNickTagLocal(val);
+                        }
+                        return origSet.call(this, key, val);
+                    };
+                } catch(e) {}
+            }
+
+            // 3. Intercept nickname submission inside this document
+            if (!doc._vexaClickHooked) {
+                doc._vexaClickHooked = true;
+                doc.addEventListener('click', (e) => {
+                    try {
+                        const target = e.target;
+                        if (target && (target.matches('[data-hook="ok"]') || (target.closest && target.closest('.choose-nickname-view button, button[data-hook="ok"]')))) {
+                            const nickInp = doc.querySelector('.choose-nickname-view [data-hook="input"], .choose-nickname-view input, input[data-hook="input"]');
+                            if (nickInp && nickInp.value && !nickInp.value.includes(VEXA_NICK_TAG)) {
+                                nickInp.value = addVexaNickTagLocal(nickInp.value);
+                                nickInp.dispatchEvent(new Event('input', { bubbles: true }));
+                                try {
+                                    if (win.localStorage) win.localStorage.setItem('player_name', nickInp.value);
+                                    localStorage.setItem('player_name', nickInp.value);
+                                } catch(err) {}
+                            }
+                        }
+                    } catch(err) {}
+                }, true);
+
+                doc.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.keyCode === 13) {
+                        try {
+                            const nickInp = doc.querySelector('.choose-nickname-view [data-hook="input"], .choose-nickname-view input');
+                            if (nickInp && nickInp.value && !nickInp.value.includes(VEXA_NICK_TAG)) {
+                                nickInp.value = addVexaNickTagLocal(nickInp.value);
+                                nickInp.dispatchEvent(new Event('input', { bubbles: true }));
+                                try {
+                                    if (win.localStorage) win.localStorage.setItem('player_name', nickInp.value);
+                                    localStorage.setItem('player_name', nickInp.value);
+                                } catch(err) {}
+                            }
+                        } catch(err) {}
+                    }
+                }, true);
+            }
+        }
+
         function ensureVexaNickTag(doc) {
             try {
                 const targetDoc = doc || document;
+                const win = targetDoc.defaultView || window;
                 const nickInp = targetDoc.querySelector('.choose-nickname-view [data-hook="input"], .choose-nickname-view input');
                 if (nickInp) {
                     if (nickInp.getAttribute('spellcheck') !== 'false') {
@@ -3726,14 +3933,20 @@
                         nickInp.setAttribute('autocapitalize', 'off');
                     }
                     if (nickInp.value && !nickInp.value.includes(VEXA_NICK_TAG)) {
-                        nickInp.value = nickInp.value + VEXA_NICK_TAG;
+                        nickInp.value = addVexaNickTagLocal(nickInp.value);
                         nickInp.dispatchEvent(new Event('input', { bubbles: true }));
                     }
                 }
                 
-                let storedName = localStorage.getItem('player_name');
-                if (storedName && !storedName.includes(VEXA_NICK_TAG)) {
-                    localStorage.setItem('player_name', storedName + VEXA_NICK_TAG);
+                if (win.localStorage) {
+                    let stored = win.localStorage.getItem('player_name');
+                    if (stored && !stored.includes(VEXA_NICK_TAG)) {
+                        win.localStorage.setItem('player_name', addVexaNickTagLocal(stored));
+                    }
+                }
+                let topStored = localStorage.getItem('player_name');
+                if (topStored && !topStored.includes(VEXA_NICK_TAG)) {
+                    localStorage.setItem('player_name', addVexaNickTagLocal(topStored));
                 }
             } catch(e) {}
         }
@@ -3767,6 +3980,7 @@
             if (!doc || !doc.body) return;
             injectBadgeCSS(doc);
             ensureVexaNickTag(doc);
+            hookIframeStorageAndNickname(doc);
 
             const isBadgeEnabled = localStorage.getItem('hax_vexa_badge') !== 'false';
             if (!isBadgeEnabled) {
@@ -3822,22 +4036,6 @@
             });
         }
 
-        // Intercept nickname OK button in capture phase to force tag into input.value before HaxBall reads it
-        document.addEventListener('click', (e) => {
-            try {
-                const target = e.target;
-                if (target && (target.matches('[data-hook="ok"]') || (target.closest && target.closest('.choose-nickname-view button')))) {
-                    const doc = target.ownerDocument || document;
-                    const nickInp = doc.querySelector('.choose-nickname-view [data-hook="input"], .choose-nickname-view input');
-                    if (nickInp && nickInp.value && !nickInp.value.includes(VEXA_NICK_TAG)) {
-                        nickInp.value = nickInp.value + VEXA_NICK_TAG;
-                        nickInp.dispatchEvent(new Event('input', { bubbles: true }));
-                        try { localStorage.setItem('player_name', nickInp.value); } catch(err) {}
-                    }
-                }
-            } catch(err) {}
-        }, true);
-
         function hookBadgeObserver(doc) {
             if (!doc || !doc.body || doc._vexaBadgeObserver) return;
             const obs = new MutationObserver(() => {
@@ -3851,9 +4049,11 @@
         // Ana döküman ve Iframe dökümanını sürekli senkronize et
         setInterval(() => {
             hookBadgeObserver(document);
+            hookIframeStorageAndNickname(document);
             const iframe = document.querySelector(".gameframe") || document.querySelector("iframe");
             if (iframe && iframe.contentDocument) {
                 hookBadgeObserver(iframe.contentDocument);
+                hookIframeStorageAndNickname(iframe.contentDocument);
             }
         }, 300);
 
@@ -3863,6 +4063,7 @@
                 const iframe = document.querySelector(".gameframe") || document.querySelector("iframe");
                 if (iframe && iframe.contentDocument) {
                     updateBadgesInDoc(iframe.contentDocument);
+                    hookIframeStorageAndNickname(iframe.contentDocument);
                 }
             }
         });
@@ -3884,7 +4085,10 @@
                 _vexaHandshakeSent = true;
                 setTimeout(() => {
                     try {
-                        const roomNameEl = doc.querySelector('.room-name') ||
+                        const roomNameEl = doc.querySelector('.room-view .header h1') ||
+                                          doc.querySelector('.room-view h1') ||
+                                          doc.querySelector('.room-view .header') ||
+                                          doc.querySelector('.room-name') ||
                                           doc.querySelector('.game-state-view h1') ||
                                           doc.querySelector('.game-state-view .name') ||
                                           doc.querySelector('.header-btns .name');
@@ -3893,20 +4097,26 @@
                         // Send silent handshake if in a Vexa room or room has vexa in title
                         if (roomName.includes('vexa')) {
                             const chatInput = doc.querySelector('.chatbox-view-contents input[data-hook="input"], [data-hook="input"]');
-                            const sendBtn = doc.querySelector('[data-hook="send"]');
                             if (chatInput) {
+                                chatInput.focus();
                                 chatInput.value = '!vexa_auth';
                                 chatInput.dispatchEvent(new Event('input', { bubbles: true }));
-                                if (sendBtn) sendBtn.click();
-                                const ev = new KeyboardEvent('keydown', {
-                                    key: 'Enter',
-                                    code: 'Enter',
-                                    keyCode: 13,
-                                    which: 13,
-                                    bubbles: true,
-                                    cancelable: true
-                                });
-                                chatInput.dispatchEvent(ev);
+                                const fireKey = (type) => {
+                                    const ev = new KeyboardEvent(type, {
+                                        key: 'Enter',
+                                        code: 'Enter',
+                                        keyCode: 13,
+                                        which: 13,
+                                        bubbles: true,
+                                        cancelable: true
+                                    });
+                                    try { Object.defineProperty(ev, 'keyCode', { get: () => 13 }); } catch(_) {}
+                                    try { Object.defineProperty(ev, 'which', { get: () => 13 }); } catch(_) {}
+                                    chatInput.dispatchEvent(ev);
+                                };
+                                fireKey('keydown');
+                                fireKey('keypress');
+                                fireKey('keyup');
                             }
                         }
                     } catch(e) {}
