@@ -1,6 +1,7 @@
-# 🚀 Vexa Client v1.4.8 — Güncelleme Notları
+# 🚀 Vexa Client v1.4.9 — Güncelleme Notları
 
-- **Vexa Client Doğrulama & Rozet Düzeltmesi:** Farklı bilgisayarlarda ve yeni kurulumlarda Vexa rozetinin ve bot doğrulamasının algılanmama sorunu çözüldü.
-- **Oyun İçi Depolama (Storage Hook) Entegrasyonu:** HaxBall oyun penceresiyle (iframe) istemci depolaması doğrudan senkronize edilerek Vexa Client kullanıcılarının odalarda ve bot sisteminde (10. slot önceliği, VIP tag) anında tanınması sağlandı.
-- **Bot & Sunucu İletişimi:** Vexa Client kullanıcı tespiti ve otomatik hesap eşleştirmesi güçlendirildi.
-- **Discord RPC & Performans İyileştirmeleri:** Oyun içi durum algılama ve arka plan optimizasyonları güncellendi.
+- **Sessiz ve Pürüzsüz Kurulum:** Setup açılırken art arda siyah CMD konsol pencerelerinin açılıp kapanma sorunu tamamen giderildi; kurulum süreci artık arka planda %100 sessiz ve temiz çalışıyor.
+- **İstemci Performans Optimizasyonu:** Uygulama açılışında ve arka planda çalışan eski/fazlalık sunucu heartbeat (ping) çağrıları temizlendi.
+- **1v1 Sniper Kırmızı Takım Kuralı:** Maç bitiminde kazanan oyuncu yeni maçta daima Kırmızı (Red - Takım 1) takımında kalacak/geçecek şekilde bot mantığı güncellendi.
+- **Sohbet Kısayolları Düzeltmesi:** "bende" yazıldığında "Top bende" olması gibi günlük konuşma dilini bozan kısayollar temizlendi; yalnızca gerçek oyun kısaltmaları korundu.
+- **Doğru İstemci Algılama:** Sadece Vexa Client uygulamasıyla bağlanan oyuncuların istemci statüsü alması sağlandı; harici tarayıcı veya Google Chrome girişleri ayrıştırıldı.

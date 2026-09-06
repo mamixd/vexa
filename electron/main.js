@@ -60,45 +60,7 @@ function initBundledBackgrounds() {
 }
 initBundledBackgrounds();
 
-// --- Live Active Users Heartbeat ---
-const VERCEL_API_URL = process.env.VERCEL_API_URL || 'https://api.vexaclient.com';
 
-// Oyna (Play) butonuna basılırken aktarılan gerçek hesap ID'si (Eğer giriş yapılmışsa)
-let launcherUserId = null;
-let launcherToken = null;
-for (const arg of process.argv) {
-    if (arg.startsWith('--user-id=')) {
-        launcherUserId = arg.split('=')[1];
-    } else if (arg.startsWith('--token=')) {
-        launcherToken = arg.split('=')[1];
-    }
-}
-
-function sendHeartbeat() {
-    const axios = require('axios');
-    
-    // Eğer hesaba giriş yapılmışsa (launcherUserId varsa), asıl backend pingini at
-    if (launcherUserId) {
-        const headers = { 'Content-Type': 'application/json' };
-        if (launcherToken) {
-            headers['Authorization'] = `Bearer ${launcherToken}`;
-        }
-        axios.post(`${VERCEL_API_URL}/api/ping`, {
-            userId: launcherUserId,
-            activity: 'In Game',
-            dot: 'online'
-        }, { headers }).catch(() => {});
-    }
-    
-    // Uygulama istatistikleri için anonim heartbeat'i de at
-    axios.post(`${VERCEL_API_URL}/api/ping`, { userId: settings.clientId }, {
-        headers: { 'Content-Type': 'application/json' }
-    }).catch(() => {});
-}
-
-// Send heartbeat immediately on startup, and then every 30 seconds
-sendHeartbeat();
-setInterval(sendHeartbeat, 30000);
 
 const candidateEnvPaths = [
     path.join(__dirname, '..', '.env'),
@@ -722,23 +684,7 @@ ipcMain.on('start-game', () => {
 });
 
 app.on('window-all-closed', () => {
-    // Kapanırken çevrimdışı yap ve temizce sonlandır
-    if (launcherUserId) {
-        const axios = require('axios');
-        const headers = { 'Content-Type': 'application/json' };
-        if (launcherToken) {
-            headers['Authorization'] = `Bearer ${launcherToken}`;
-        }
-        axios.post(`${VERCEL_API_URL}/api/ping`, {
-            userId: launcherUserId,
-            activity: 'offline',
-            dot: 'offline'
-        }, { headers }).catch(() => {}).finally(() => {
-            if (process.platform !== 'darwin') app.quit();
-        });
-    } else {
-        if (process.platform !== 'darwin') app.quit();
-    }
+    if (process.platform !== 'darwin') app.quit();
 });
 
 // IPC Communications

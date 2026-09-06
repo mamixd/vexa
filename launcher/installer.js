@@ -91,7 +91,7 @@ class InstallerManager {
         for (const proc of processes) {
             await new Promise((resolve) => {
                 const cmd = `taskkill /F /IM ${proc} /T 2>nul`;
-                spawn(cmd, { shell: true }).on('close', () => {
+                spawn(cmd, { shell: true, windowsHide: true }).on('close', () => {
                     setTimeout(resolve, 800);
                 });
             });

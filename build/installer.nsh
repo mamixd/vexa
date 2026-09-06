@@ -1,8 +1,3 @@
 !macro customInit
-  ExecWait 'taskkill /F /IM "Vexa Client.exe"'
-  ExecWait 'taskkill /F /IM "vexa-client.exe"'
-  ExecWait 'taskkill /F /IM "Vexa Launcher.exe"'
-  ExecWait 'taskkill /F /IM "vexa-launcher.exe"'
-  ExecWait 'taskkill /F /IM "Vexa.exe"'
-  ExecWait 'taskkill /F /IM "vexa.exe"'
+  nsExec::Exec 'taskkill /F /IM "Vexa Client.exe" /IM "vexa-client.exe" /IM "Vexa Launcher.exe" /IM "vexa-launcher.exe" /IM "Vexa.exe" /IM "vexa.exe"'
 !macroend

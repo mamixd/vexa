@@ -208,36 +208,21 @@ async function checkAndApplyUpdate(splashWin) {
             // Kurulum exe'sini bağımsız Windows süreci olarak başlat
             console.log('[Updater] Setup dosyası bağımsız süreç olarak çalıştırılıyor:', setupFilePath);
 
-            // 1. Doğrudan bağımsız child_process.spawn
             try {
                 const child = spawn(setupFilePath, [], {
                     detached: true,
-                    stdio: 'ignore'
+                    stdio: 'ignore',
+                    windowsHide: true
                 });
                 child.unref();
                 console.log('[Updater] spawn ile setup süreci tetiklendi.');
             } catch (spawnErr) {
-                console.warn('[Updater] spawn hatası:', spawnErr);
+                console.warn('[Updater] spawn hatası, shell.openPath deneniyor:', spawnErr);
+                try {
+                    const { shell } = require('electron');
+                    shell.openPath(setupFilePath).catch(() => {});
+                } catch (e) {}
             }
-
-            // 2. PowerShell Start-Process (Explorer/Shell aracılığıyla bağımsız açma)
-            try {
-                const ps = spawn('powershell.exe', [
-                    '-NoProfile',
-                    '-Command',
-                    `Start-Process -FilePath "${setupFilePath}"`
-                ], {
-                    detached: true,
-                    stdio: 'ignore'
-                });
-                ps.unref();
-            } catch (e) {}
-
-            // 3. shell.openPath ile ek tetikleme
-            try {
-                const { shell } = require('electron');
-                shell.openPath(setupFilePath).catch(() => {});
-            } catch (e) {}
 
             setTimeout(() => {
                 app.exit(0);

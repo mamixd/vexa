@@ -10,7 +10,8 @@ bin/
 obj/
 
 *.exe
-app.zip
+*.zip
+app*.zip
 /bot.js
 /bot2.js
 /bot3.js
